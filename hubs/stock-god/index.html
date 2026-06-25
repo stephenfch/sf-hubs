@@ -622,8 +622,12 @@
         <button class="nav-btn active" role="tab" aria-selected="true" data-page="overview" onclick="showPage('overview')">📈 概覽</button>
         <button class="nav-btn" role="tab" aria-selected="false" data-page="alpha" onclick="showPage('alpha')">🏆 選股排行</button>
         <button class="nav-btn" role="tab" aria-selected="false" data-page="hot" onclick="showPage('hot')">🔥 即時熱門</button>
-        <button class="nav-btn" role="tab" aria-selected="false" data-page="holdings" onclick="showPage('holdings')">📦 持倉列表</button>
+        <button class="nav-btn" role="tab" aria-selected="false" data-page="wave" onclick="showPage('wave')">🌊 波浪</button>
+        <button class="nav-btn" role="tab" aria-selected="false" data-page="flow" onclick="showPage('flow')">💰 資金流</button>
         <button class="nav-btn" role="tab" aria-selected="false" data-page="trade" onclick="showPage('trade')">💼 交易建議</button>
+        <button class="nav-btn" role="tab" aria-selected="false" data-page="risk" onclick="showPage('risk')">⚠️ 風險</button>
+        <button class="nav-btn" role="tab" aria-selected="false" data-page="holdings" onclick="showPage('holdings')">📦 持倉</button>
+        <button class="nav-btn" role="tab" aria-selected="false" data-page="tech" onclick="showPage('tech')">📐 技術</button>
     </div>
     <div class="main">
         <div id="page-overview">
@@ -919,7 +923,7 @@
 
         // Keyboard shortcut: 1-5 切 tab
         (function(){
-            var map={'1':'overview','2':'alpha','3':'hot','4':'holdings','5':'trade'};
+            var map={'1':'overview','2':'alpha','3':'hot','4':'wave','5':'flow','6':'trade','7':'risk','8':'holdings','9':'tech'};
             document.addEventListener('keydown',function(e){
                 // Skip if typing in input/textarea
                 var t=e.target;
@@ -939,7 +943,7 @@
             var hint=document.createElement('div');
             hint.className='pull-hint';
             hint.innerHTML='<span class="spin">⟳</span> 下拉刷新數據';
-            hint.style.cssText='position:fixed;top:calc(var(--mobile-total) + var(--safe-top) + 4px);left:10px;right:10px;z-index:200;transform:translateY(-100%);transition:transform 0.2s;';
+            hint.style.cssText='position:fixed;top:calc(var(--mobile-total) + var(--safe-top) + 4px);left:10px;right:10px;z-index:200;transform:translateY(-100%);transition:transform 0.2s;pointer-events:none;';
             document.body.appendChild(hint);
             document.addEventListener('touchstart',function(e){
                 if(window.scrollY>0) return;
