@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather App | SF-HUBS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { dark: '#0a0a0f', card: '#12121a', accent: '#6366f1' } } }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-dark text-white min-h-screen flex flex-col">
+
+  <!-- Nav -->
+  <nav class="border-b border-white/5 px-6 py-4 flex items-center gap-2">
+    <a href="../../" class="text-white/40 hover:text-white transition text-sm">← SF-HUBS</a>
+    <span class="text-white/20">/</span>
+    <span class="text-sm font-semibold">Weather App</span>
+  </nav>
+
+  <!-- Main -->
+  <main class="flex-1 flex items-center justify-center p-6">
+    <div class="w-full max-w-md">
+
+      <h1 class="text-3xl font-bold mb-2">🌤️ Weather</h1>
+      <p class="text-white/40 text-sm mb-8">Search any city for current conditions</p>
+
+      <!-- Search -->
+      <div class="flex gap-2 mb-6">
+        <input id="cityInput" type="text" placeholder="Enter city name..."
+          class="flex-1 bg-card border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-accent transition"
+          onkeydown="if(event.key==='Enter') getWeather()">
+        <button onclick="getWeather()"
+          class="bg-accent hover:bg-accent/80 px-5 py-3 rounded-xl text-sm font-semibold transition">
+          Search
+        </button>
+      </div>
+
+      <!-- Result -->
+      <div id="result" class="hidden bg-card border border-white/5 rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 id="cityName" class="text-xl font-bold"></h2>
+            <p id="description" class="text-white/50 text-sm capitalize"></p>
+          </div>
+          <div id="icon" class="text-5xl"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mt-4">
+          <div class="bg-white/5 rounded-xl p-4 text-center">
+            <p class="text-white/40 text-xs mb-1">Temperature</p>
+            <p id="temp" class="text-2xl font-bold"></p>
+          </div>
+          <div class="bg-white/5 rounded-xl p-4 text-center">
+            <p class="text-white/40 text-xs mb-1">Feels Like</p>
+            <p id="feelsLike" class="text-2xl font-bold"></p>
+          </div>
+          <div class="bg-white/5 rounded-xl p-4 text-center">
+            <p class="text-white/40 text-xs mb-1">Humidity</p>
+            <p id="humidity" class="text-2xl font-bold"></p>
+          </div>
+          <div class="bg-white/5 rounded-xl p-4 text-center">
+            <p class="text-white/40 text-xs mb-1">Wind</p>
+            <p id="wind" class="text-2xl font-bold"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div id="error" class="hidden bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400 text-sm text-center"></div>
+
+      <!-- Loading -->
+      <div id="loading" class="hidden text-center text-white/30 text-sm py-8">Loading...</div>
+
+    </div>
+  </main>
+
+  <script>
+    const weatherIcons = {
+      '01d': '☀️', '01n': '🌙', '02d': '⛅', '02n': '☁️',
+      '03d': '☁️', '03n': '☁️', '04d': '☁️', '04n': '☁️',
+      '09d': '🌧️', '09n': '🌧️', '10d': '🌦️', '10n': '🌧️',
+      '11d': '⛈️', '11n': '⛈️', '13d': '❄️', '13n': '❄️',
+      '50d': '🌫️', '50n': '🌫️'
+    };
+
+    async function getWeather() {
+      const city = document.getElementById('cityInput').value.trim();
+      if (!city) return;
+
+      document.getElementById('result').classList.add('hidden');
+      document.getElementById('error').classList.add('hidden');
+      document.getElementById('loading').classList.remove('hidden');
+
+      try {
+        // Using Open-Meteo (free, no API key needed)
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`);
+        const geoData = await geoRes.json();
+
+        if (!geoData.results || geoData.results.length === 0) {
+          throw new Error('City not found');
+        }
+
+        const { latitude, longitude, name, country } = geoData.results[0];
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=relativehumidity_2m&timezone=auto`);
+        const weatherData = await weatherRes.json();
+
+        const current = weatherData.current_weather;
+        const humidityIdx = weatherData.hourly.time.findIndex(t => t >= current.time);
+
+        document.getElementById('cityName').textContent = `${name}, ${country}`;
+        document.getElementById('temp').textContent = `${current.temperature}°C`;
+        document.getElementById('feelsLike').textContent = `${current.temperature}°C`;
+        document.getElementById('humidity').textContent = `${weatherData.hourly.relativehumidity_2m[humidityIdx]}%`;
+        document.getElementById('wind').textContent = `${current.windspeed} km/h`;
+
+        // Weather code to description
+        const codes = { 0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+          45: 'Foggy', 48: 'Rime fog', 51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle',
+          61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 71: 'Light snow', 73: 'Snow',
+          75: 'Heavy snow', 95: 'Thunderstorm', 96: 'Thunderstorm + hail' };
+        document.getElementById('description').textContent = codes[current.weathercode] || 'Unknown';
+        document.getElementById('icon').textContent = current.is_day ? '☀️' : '🌙';
+
+        document.getElementById('result').classList.remove('hidden');
+      } catch (e) {
+        document.getElementById('error').textContent = `❌ ${e.message}`;
+        document.getElementById('error').classList.remove('hidden');
+      } finally {
+        document.getElementById('loading').classList.add('hidden');
+      }
+    }
+  </script>
+
+</body>
+</html>

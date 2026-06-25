@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator | SF-HUBS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { dark: '#0a0a0f', card: '#12121a', accent: '#6366f1' } } }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .btn-calc { transition: all 0.15s ease; }
+    .btn-calc:active { transform: scale(0.95); }
+  </style>
+</head>
+<body class="bg-dark text-white min-h-screen flex flex-col">
+
+  <!-- Nav -->
+  <nav class="border-b border-white/5 px-6 py-4 flex items-center gap-2">
+    <a href="../../" class="text-white/40 hover:text-white transition text-sm">← SF-HUBS</a>
+    <span class="text-white/20">/</span>
+    <span class="text-sm font-semibold">Calculator</span>
+  </nav>
+
+  <!-- Main -->
+  <main class="flex-1 flex items-center justify-center p-6">
+    <div class="w-full max-w-xs">
+
+      <!-- Display -->
+      <div class="bg-card border border-white/5 rounded-2xl p-5 mb-4">
+        <div id="expression" class="text-white/30 text-sm text-right h-6 overflow-hidden"></div>
+        <div id="display" class="text-4xl font-bold text-right mt-1 overflow-hidden">0</div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="grid grid-cols-4 gap-2">
+        <button onclick="clearAll()" class="btn-calc bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl py-4 font-semibold text-sm">AC</button>
+        <button onclick="backspace()" class="btn-calc bg-white/5 hover:bg-white/10 text-white/60 rounded-xl py-4 font-semibold text-sm">⌫</button>
+        <button onclick="inputOp('%')" class="btn-calc bg-white/5 hover:bg-white/10 text-white/60 rounded-xl py-4 font-semibold text-sm">%</button>
+        <button onclick="inputOp('/')" class="btn-calc bg-accent/20 hover:bg-accent/30 text-accent rounded-xl py-4 font-semibold text-sm">÷</button>
+
+        <button onclick="inputNum('7')" class="btn-calc bg-card hover:bg-white/5 border border-white/5 rounded-xl py-4 font-semibold">7</button>
+        <button onclick="inputNum('8')" class="btn-calc bg-card hover:bg-white/5 border border-white/5 rounded-xl py-4 font-semibold">8</button>
+        <button onclick="inputNum('9')" class="btn-calc bg-card hover:bg-white/5 border border-white/5 rounded-xl py-4 font-semibold">9</button>
+        <button onclick="inputOp('*')" class="btn-calc bg-accent/20 hover:bg-accent/30 text-accent rounded-xl py-4 font-semibold text-sm">×</button>
+
+        <button onclick="inputNum('4')" class="btn-calc bg-card hover:bg-white/5 border border-white/5 rounded-xl py-4 font-semibold">4</button>
+        <button onclick="inputNum('5')" class="btn-calc bg-card hover:bg-white/5 border border-white/5 rounded-xl py-4 font-semibold">5</button>
+        <button onclick="inputNum('6')" class="btn-calc bg-card hover:bg-white/5 border border-white/5 rounded-xl py-4 font-semibold">6</button>
+        <button onclick="inputOp('-')" class="btn-calc bg-accent/20 hover:bg-accent/30 text-accent rounded-xl py-4 font-semibold text-sm">−</button>
+
+        <button onclick="inputNum('1')" class="btn-calc bg-card hover:bg-white/5 border border-white/5 rounded-xl py-4 font-semibold">1</button>
+        <button onclick="inputNum('2')" class="btn-calc bg-card hover:bg-white/5 border border-white/5 rounded-xl py-4 font-semibold">2</button>
+        <button onclick="inputNum('3')" class="btn-calc bg-card hover:bg-white/5 border border-white/5 rounded-xl py-4 font-semibold">3</button>
+        <button onclick="inputOp('+')" class="btn-calc bg-accent/20 hover:bg-accent/30 text-accent rounded-xl py-4 font-semibold text-sm">+</button>
+
+        <button onclick="inputNum('0')" class="btn-calc bg-card hover:bg-white/5 border border-white/5 rounded-xl py-4 font-semibold col-span-2">0</button>
+        <button onclick="inputNum('.')" class="btn-calc bg-card hover:bg-white/5 border border-white/5 rounded-xl py-4 font-semibold">.</button>
+        <button onclick="calculate()" class="btn-calc bg-accent hover:bg-accent/80 rounded-xl py-4 font-bold">=</button>
+      </div>
+
+      <!-- History -->
+      <div id="historySection" class="mt-6 hidden">
+        <p class="text-white/20 text-xs mb-2">History</p>
+        <div id="history" class="space-y-1"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    let current = '0';
+    let expression = '';
+    let history = [];
+    let justCalculated = false;
+
+    const display = document.getElementById('display');
+    const exprEl = document.getElementById('expression');
+
+    function updateDisplay() {
+      display.textContent = current;
+      exprEl.textContent = expression;
+    }
+
+    function inputNum(n) {
+      if (justCalculated) { current = '0'; expression = ''; justCalculated = false; }
+      if (n === '.' && current.includes('.')) return;
+      if (current === '0' && n !== '.') current = n;
+      else current += n;
+      updateDisplay();
+    }
+
+    function inputOp(op) {
+      justCalculated = false;
+      expression = current + ' ' + op.replace('*', '×').replace('/', '÷') + ' ';
+      current = '0';
+      updateDisplay();
+    }
+
+    function backspace() {
+      if (current.length > 1) current = current.slice(0, -1);
+      else current = '0';
+      updateDisplay();
+    }
+
+    function clearAll() {
+      current = '0';
+      expression = '';
+      justCalculated = false;
+      updateDisplay();
+    }
+
+    function calculate() {
+      if (!expression) return;
+      try {
+        const expr = expression.replace('×', '*').replace('÷', '/').trim() + current;
+        const result = Function('"use strict"; return (' + expr + ')')();
+        const formatted = Number.isFinite(result) ? parseFloat(result.toFixed(10)).toString() : 'Error';
+        history.unshift(`${expr} = ${formatted}`);
+        if (history.length > 5) history.pop();
+        renderHistory();
+        expression = expr.replace('*', '×').replace('/', '÷') + ' =';
+        current = formatted;
+        justCalculated = true;
+        updateDisplay();
+      } catch {
+        current = 'Error';
+        updateDisplay();
+        setTimeout(() => { current = '0'; expression = ''; updateDisplay(); }, 1500);
+      }
+    }
+
+    function renderHistory() {
+      const section = document.getElementById('historySection');
+      const list = document.getElementById('history');
+      if (history.length === 0) { section.classList.add('hidden'); return; }
+      section.classList.remove('hidden');
+      list.innerHTML = history.map(h => `<p class="text-white/20 text-xs font-mono">${h}</p>`).join('');
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', e => {
+      if (e.key >= '0' && e.key <= '9') inputNum(e.key);
+      else if (e.key === '.') inputNum('.');
+      else if (e.key === '+') inputOp('+');
+      else if (e.key === '-') inputOp('-');
+      else if (e.key === '*') inputOp('*');
+      else if (e.key === '/') { e.preventDefault(); inputOp('/'); }
+      else if (e.key === '%') inputOp('%');
+      else if (e.key === 'Enter' || e.key === '=') calculate();
+      else if (e.key === 'Backspace') backspace();
+      else if (e.key === 'Escape') clearAll();
+    });
+
+    updateDisplay();
+  </script>
+
+</body>
+</html>

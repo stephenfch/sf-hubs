@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo App | SF-HUBS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { dark: '#0a0a0f', card: '#12121a', accent: '#6366f1' } } }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .done { text-decoration: line-through; opacity: 0.4; }
+  </style>
+</head>
+<body class="bg-dark text-white min-h-screen flex flex-col">
+
+  <!-- Nav -->
+  <nav class="border-b border-white/5 px-6 py-4 flex items-center gap-2">
+    <a href="../../" class="text-white/40 hover:text-white transition text-sm">← SF-HUBS</a>
+    <span class="text-white/20">/</span>
+    <span class="text-sm font-semibold">Todo App</span>
+  </nav>
+
+  <!-- Main -->
+  <main class="flex-1 flex items-start justify-center p-6 pt-16">
+    <div class="w-full max-w-md">
+
+      <h1 class="text-3xl font-bold mb-2">✅ Todo</h1>
+      <p class="text-white/40 text-sm mb-8">Simple task manager · Data saved locally</p>
+
+      <!-- Input -->
+      <div class="flex gap-2 mb-6">
+        <input id="taskInput" type="text" placeholder="Add a new task..."
+          class="flex-1 bg-card border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-accent transition"
+          onkeydown="if(event.key==='Enter') addTask()">
+        <button onclick="addTask()"
+          class="bg-accent hover:bg-accent/80 px-5 py-3 rounded-xl text-sm font-semibold transition">
+          Add
+        </button>
+      </div>
+
+      <!-- Filter -->
+      <div class="flex gap-2 mb-4">
+        <button onclick="setFilter('all')" id="f-all" class="filter-btn text-xs px-3 py-1.5 rounded-lg bg-accent/20 text-accent font-medium">All</button>
+        <button onclick="setFilter('active')" id="f-active" class="filter-btn text-xs px-3 py-1.5 rounded-lg bg-white/5 text-white/40 hover:text-white/60 transition">Active</button>
+        <button onclick="setFilter('done')" id="f-done" class="filter-btn text-xs px-3 py-1.5 rounded-lg bg-white/5 text-white/40 hover:text-white/60 transition">Done</button>
+      </div>
+
+      <!-- List -->
+      <div id="taskList" class="space-y-2"></div>
+
+      <!-- Empty -->
+      <div id="empty" class="text-center text-white/20 text-sm py-12 hidden">
+        No tasks yet. Add one above! ✨
+      </div>
+
+      <!-- Stats -->
+      <div id="stats" class="mt-6 text-center text-white/30 text-xs hidden"></div>
+
+    </div>
+  </main>
+
+  <script>
+    let tasks = JSON.parse(localStorage.getItem('sfhubs-todos') || '[]');
+    let filter = 'all';
+
+    function save() {
+      localStorage.setItem('sfhubs-todos', JSON.stringify(tasks));
+    }
+
+    function addTask() {
+      const input = document.getElementById('taskInput');
+      const text = input.value.trim();
+      if (!text) return;
+      tasks.unshift({ id: Date.now(), text, done: false });
+      input.value = '';
+      save();
+      render();
+    }
+
+    function toggle(id) {
+      const t = tasks.find(t => t.id === id);
+      if (t) t.done = !t.done;
+      save();
+      render();
+    }
+
+    function remove(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      save();
+      render();
+    }
+
+    function setFilter(f) {
+      filter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.className = 'filter-btn text-xs px-3 py-1.5 rounded-lg bg-white/5 text-white/40 hover:text-white/60 transition';
+      });
+      document.getElementById(`f-${f}`).className = 'filter-btn text-xs px-3 py-1.5 rounded-lg bg-accent/20 text-accent font-medium';
+      render();
+    }
+
+    function render() {
+      const list = document.getElementById('taskList');
+      const empty = document.getElementById('empty');
+      const stats = document.getElementById('stats');
+
+      const filtered = tasks.filter(t => {
+        if (filter === 'active') return !t.done;
+        if (filter === 'done') return t.done;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+      } else {
+        empty.classList.add('hidden');
+        list.innerHTML = filtered.map(t => `
+          <div class="flex items-center gap-3 bg-card border border-white/5 rounded-xl px-4 py-3 group">
+            <button onclick="toggle(${t.id})" class="w-5 h-5 rounded-full border-2 ${t.done ? 'bg-accent border-accent' : 'border-white/20 hover:border-accent'} flex items-center justify-center transition flex-shrink-0">
+              ${t.done ? '<span class="text-xs">✓</span>' : ''}
+            </button>
+            <span class="flex-1 text-sm ${t.done ? 'done' : ''}">${escapeHtml(t.text)}</span>
+            <button onclick="remove(${t.id})" class="text-white/20 hover:text-red-400 transition opacity-0 group-hover:opacity-100 text-sm">✕</button>
+          </div>
+        `).join('');
+      }
+
+      const total = tasks.length;
+      const done = tasks.filter(t => t.done).length;
+      if (total > 0) {
+        stats.textContent = `${done}/${total} completed`;
+        stats.classList.remove('hidden');
+      } else {
+        stats.classList.add('hidden');
+      }
+    }
+
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    render();
+  </script>
+
+</body>
+</html>
