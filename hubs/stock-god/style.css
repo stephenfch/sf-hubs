@@ -1,0 +1,65 @@
+/* Computer Maintenance — Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+}
+
+.card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.tab-btn {
+    transition: all 0.15s ease;
+    color: #cbd5e1;
+}
+.tab-btn:hover {
+    background-color: #334155;
+    color: #f1f5f9;
+}
+.tab-btn.active {
+    background-color: #1e40af;
+    color: white;
+}
+
+.sort-btn {
+    background-color: #334155;
+    color: #cbd5e1;
+    transition: all 0.15s ease;
+}
+.sort-btn:hover {
+    background-color: #475569;
+}
+.sort-btn.active {
+    background-color: #2563eb;
+    color: white;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #0f172a; }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* Table rows */
+table tbody tr {
+    border-bottom: 1px solid #334155;
+    transition: background 0.1s;
+}
+table tbody tr:last-child { border-bottom: none; }
+
+/* Cleanup card — clickable, opens file in Explorer */
+.cleanup-card {
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    user-select: none;
+}
+.cleanup-card:hover {
+    border-color: #60a5fa !important;
+    background: #273449;
+}
+.cleanup-card:active {
+    transform: scale(0.99);
+}
