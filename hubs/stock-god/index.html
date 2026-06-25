@@ -45,6 +45,27 @@
         .nav-btn{padding:10px 18px;border:none;background:rgba(255,255,255,0.05);color:var(--dim);border-radius:8px;cursor:pointer;font-size:0.9rem}
         .nav-btn:hover{background:rgba(255,255,255,0.1);color:var(--text)}
         .nav-btn.active{background:var(--blue);color:#000;font-weight:600}
+
+        /* Hot Rankings */
+        .hotr-list{max-height:80vh;overflow-y:auto}
+        .hotr-row{display:grid;grid-template-columns:40px 1fr auto auto;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s}
+        .hotr-row:hover{background:rgba(255,255,255,0.03)}
+        .hotr-rank{font-size:1.1rem;font-weight:800;color:var(--dim);text-align:center;width:36px;height:36px;line-height:36px;border-radius:50%;background:rgba(255,255,255,0.04)}
+        .hotr-rank.top1{background:linear-gradient(135deg,#ffd700,#ffaa00);color:#000}
+        .hotr-rank.top2{background:linear-gradient(135deg,#c0c0c0,#a0a0a0);color:#000}
+        .hotr-rank.top3{background:linear-gradient(135deg,#cd7f32,#a0622e);color:#fff}
+        .hotr-info{min-width:0}
+        .hotr-code{font-weight:700;font-size:1rem;color:var(--text)}
+        .hotr-name{font-size:0.75rem;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .hotr-turnover{font-size:0.85rem;color:var(--dim);text-align:right;white-space:nowrap}
+        .hotr-turnover-val{font-weight:600;color:var(--text);display:block}
+        .hotr-turnover-label{font-size:0.6rem;color:var(--dim)}
+        .hotr-chg{text-align:right;min-width:70px}
+        .hotr-chg-val{font-weight:700;font-size:1rem;padding:4px 10px;border-radius:6px;display:inline-block;min-width:65px;text-align:center}
+        .hotr-chg-val.up{background:rgba(0,255,136,0.15);color:var(--green)}
+        .hotr-chg-val.down{background:rgba(255,71,87,0.15);color:var(--red)}
+        .hotr-chg-val.flat{background:rgba(136,153,166,0.15);color:var(--dim)}
+        .hotr-empty{text-align:center;padding:60px 20px;color:var(--dim);font-size:0.9rem}
         .main{padding:20px 25px;max-width:1700px;margin:0 auto}
         .hidden{display:none!important}
         .grid{display:grid;gap:20px}
@@ -270,6 +291,13 @@
                 scroll-snap-type:x proximity;
                 -webkit-overflow-scrolling:touch;
                 scrollbar-width:none;
+                scroll-padding-left:10px;
+            }
+            .nav-tabs::after{
+                content:'';position:sticky;right:0;top:0;bottom:0;
+                min-width:24px;flex-shrink:0;
+                background:linear-gradient(to right,transparent,rgba(10,14,23,0.96));
+                pointer-events:none;
             }
             .nav-tabs::-webkit-scrollbar{display:none}
             .nav-btn{
@@ -362,6 +390,15 @@
             .fb-fill{height:100%;border-radius:4px;transition:width 0.3s}
             .fb-score{font-size:0.72rem;font-weight:700;text-align:right}
 
+            /* Hot Rankings mobile */
+            .hotr-row{grid-template-columns:32px 1fr auto auto;gap:8px;padding:10px 8px}
+            .hotr-rank{font-size:0.85rem;width:30px;height:30px;line-height:30px}
+            .hotr-code{font-size:0.9rem}
+            .hotr-name{font-size:0.65rem}
+            .hotr-turnover{font-size:0.72rem}
+            .hotr-turnover-val{font-size:0.78rem}
+            .hotr-chg-val{font-size:0.82rem;padding:3px 6px;min-width:55px}
+
             /* 警報 card */
             .alert-card{
                 display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start;
@@ -416,7 +453,7 @@
 
             /* Fade-in animation */
             @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-            .card,.holding-card,.hot-card,.alert-card{animation:fadeUp 0.3s ease-out}
+            .card,.holding-card,.hot-card,.alert-card,.hotr-row{animation:fadeUp 0.3s ease-out}
 
             /* Pull-to-refresh hint */
             .pull-hint{
@@ -448,12 +485,18 @@
             .market-name{font-size:0.58rem}
             .market-value{font-size:0.75rem}
             .market-change{font-size:0.58rem}
+            .hotr-row{grid-template-columns:28px 1fr auto auto;gap:6px;padding:8px 6px}
+            .hotr-rank{font-size:0.75rem;width:26px;height:26px;line-height:26px}
+            .hotr-code{font-size:0.82rem}
+            .hotr-name{font-size:0.6rem}
+            .hotr-turnover-val{font-size:0.7rem}
+            .hotr-chg-val{font-size:0.72rem;padding:2px 5px;min-width:48px}
         }
 
         /* ===== TOUCH IMPROVEMENTS ===== */
         @media (hover:none) and (pointer:coarse){
             .nav-btn,.btn,.btn-icon{min-height:44px;min-width:44px}
-            .stock-item,.rank-item,.holding-card,.hot-card{min-height:48px;padding:12px 8px}
+            .stock-item,.rank-item,.holding-card,.hot-card,.hotr-row{min-height:48px;padding:12px 8px}
             .nav-btn:active,.btn:active{opacity:0.7;transform:scale(0.98)}
         }
         /* Mobile 預設 44px touch target */
@@ -577,13 +620,10 @@
     </div>
     <div class="nav nav-tabs" role="tablist" aria-label="主選單">
         <button class="nav-btn active" role="tab" aria-selected="true" data-page="overview" onclick="showPage('overview')">📈 概覽</button>
-        <button class="nav-btn" role="tab" aria-selected="false" data-page="alpha" onclick="showPage('alpha')">🎯 選股</button>
-        <button class="nav-btn" role="tab" aria-selected="false" data-page="wave" onclick="showPage('wave')">🌊 波浪</button>
-        <button class="nav-btn" role="tab" aria-selected="false" data-page="flow" onclick="showPage('flow')">💰 資金流</button>
-        <button class="nav-btn" role="tab" aria-selected="false" data-page="trade" onclick="showPage('trade')">💼 交易</button>
-        <button class="nav-btn" role="tab" aria-selected="false" data-page="risk" onclick="showPage('risk')">⚠️ 風險</button>
-        <button class="nav-btn" role="tab" aria-selected="false" data-page="holdings" onclick="showPage('holdings')">📦 持倉</button>
-        <button class="nav-btn" role="tab" aria-selected="false" data-page="tech" onclick="showPage('tech')">📐 技術</button>
+        <button class="nav-btn" role="tab" aria-selected="false" data-page="alpha" onclick="showPage('alpha')">🏆 選股排行</button>
+        <button class="nav-btn" role="tab" aria-selected="false" data-page="hot" onclick="showPage('hot')">🔥 即時熱門</button>
+        <button class="nav-btn" role="tab" aria-selected="false" data-page="holdings" onclick="showPage('holdings')">📦 持倉列表</button>
+        <button class="nav-btn" role="tab" aria-selected="false" data-page="trade" onclick="showPage('trade')">💼 交易建議</button>
     </div>
     <div class="main">
         <div id="page-overview">
@@ -666,6 +706,16 @@
                     <span id="alphaDqStats">—</span>
                 </div>
                 <div id="alphaResults"></div>
+            </div>
+        </div>
+
+        <!-- ===== HOT RANKINGS PAGE ===== -->
+        <div id="page-hot" class="hidden">
+            <div class="card">
+                <div class="card-title">🔥 即時熱門股票排行
+                    <span style="font-size:0.65rem;color:var(--dim);font-weight:400" id="hotUpdate">Mock 數據</span>
+                </div>
+                <div id="hotResults" class="hotr-list"></div>
             </div>
         </div>
 
@@ -864,11 +914,12 @@
             if(p==='trade'){renderTrade();}
             if(p==='risk'){renderRisk();}
             if(p==='tech'){initTechPage();}
+            if(p==='hot' && !window.__hotLoaded){renderHotRankings(); window.__hotLoaded=true;}
         }
 
-        // Keyboard shortcut: 1-7 切 tab
+        // Keyboard shortcut: 1-5 切 tab
         (function(){
-            var map={'1':'overview','2':'alpha','3':'wave','4':'flow','5':'trade','6':'risk','7':'holdings'};
+            var map={'1':'overview','2':'alpha','3':'hot','4':'holdings','5':'trade'};
             document.addEventListener('keydown',function(e){
                 // Skip if typing in input/textarea
                 var t=e.target;
@@ -1814,6 +1865,44 @@
                 .catch(function(err){
                     el.innerHTML = '<div class="alert alert-warn">⚠️ 載入失敗: '+err.message+' (請確認 Bridge 已啟動)</div>';
                 });
+        }
+
+        // ===== Hot Rankings (Mock Data) =====
+        function renderHotRankings(){
+            var el = document.getElementById('hotResults');
+            if(!el) return;
+            var data = [
+                {code:'00700',name:'騰訊控股',turnover:'48.2B',chg:+3.28},
+                {code:'09988',name:'阿里巴巴-W',turnover:'22.6B',chg:+2.15},
+                {code:'09999',name:'網易-S',turnover:'8.4B',chg:-1.37},
+                {code:'03690',name:'美團-W',turnover:'15.7B',chg:+4.52},
+                {code:'09618',name:'京東集團-SW',turnover:'9.1B',chg:+1.83},
+                {code:'01810',name:'小米集團-W',turnover:'12.3B',chg:-0.64},
+                {code:'09888',name:'百度集團-SW',turnover:'5.6B',chg:+2.91},
+                {code:'00388',name:'香港交易所',turnover:'3.8B',chg:+0.72},
+                {code:'02318',name:'中國平安',turnover:'4.1B',chg:-2.18},
+                {code:'00941',name:'中國移動',turnover:'2.9B',chg:+0.45},
+                {code:'01211',name:'比亞迪股份',turnover:'7.2B',chg:+5.16},
+                {code:'02020',name:'安踏體育',turnover:'1.8B',chg:-1.92},
+                {code:'09868',name:'小鵬汽車-W',turnover:'3.4B',chg:+6.33},
+                {code:'02269',name:'藥明生物',turnover:'2.1B',chg:-3.47},
+                {code:'00175',name:'吉利汽車',turnover:'2.6B',chg:+2.08}
+            ];
+            var html = '';
+            for(var i=0;i<data.length;i++){
+                var d = data[i];
+                var rankClass = i===0?'top1':i===1?'top2':i===2?'top3':'';
+                var chgClass = d.chg>0?'up':d.chg<0?'down':'flat';
+                var chgStr = d.chg>0?'+'+d.chg.toFixed(2)+'%':d.chg.toFixed(2)+'%';
+                html += '<div class="hotr-row">';
+                html += '<div class="hotr-rank '+rankClass+'">'+(i+1)+'</div>';
+                html += '<div class="hotr-info"><div class="hotr-code">'+d.code+'.HK</div><div class="hotr-name">'+d.name+'</div></div>';
+                html += '<div class="hotr-turnover"><span class="hotr-turnover-val">HK$'+d.turnover+'</span><span class="hotr-turnover-label">成交額</span></div>';
+                html += '<div class="hotr-chg"><span class="hotr-chg-val '+chgClass+'">'+chgStr+'</span></div>';
+                html += '</div>';
+            }
+            el.innerHTML = html;
+            document.getElementById('hotUpdate').textContent = 'Mock · '+new Date().toLocaleTimeString('zh-TW');
         }
 
         function renderTrade(){
