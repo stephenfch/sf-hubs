@@ -944,6 +944,8 @@
             document.addEventListener('touchstart',function(e){
                 if(window.scrollY>0) return;
                 if(e.touches.length!==1) return;
+                // 排除 nav/banner/market 區域，避免攔截 tab click
+                if(e.target && e.target.closest && e.target.closest('.nav-tabs,.banner,.market-bar,.nav-btn')) return;
                 startY=e.touches[0].clientY;
                 pulling=true; triggered=false;
             },{passive:true});
