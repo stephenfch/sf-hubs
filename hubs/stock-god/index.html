@@ -9,7 +9,8 @@
     <meta name="apple-mobile-web-app-title" content="股神">
     <script>
         // v99+: BRIDGE_URL 提前至 head 設定, 避免後續 fetch 撞 undefined
-        window.BRIDGE_URL = window.location.protocol + '//' + window.location.host;
+        // BRIDGE_URL 指向 Cloudflare Tunnel (futu_bridge.py :5555)
+        window.BRIDGE_URL = 'https://bridge.sf-hubs.dev';
     </script>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icon-192.svg">
@@ -2873,7 +2874,8 @@
 
         // 智能 Bridge URL: 用相對路徑走 reverse proxy (避免 mixed content)
         // file:// 載入時 fallback 直接連 127.0.0.1:5555
-        window.BRIDGE_URL = window.location.protocol + '//' + window.location.host;
+        // BRIDGE_URL 指向 Cloudflare Tunnel (futu_bridge.py :5555)
+        window.BRIDGE_URL = 'https://bridge.sf-hubs.dev';
 
         // 顯示連線資訊
         function renderConnInfo(){
