@@ -602,6 +602,59 @@
     </style>
 </head>
 <body>
+<!-- Login Overlay -->
+<div id="loginOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:linear-gradient(135deg,#0a0e17 0%,#1a1a2e 50%,#0a0e17 100%);display:flex;align-items:center;justify-content:center;">
+    <div style="background:rgba(20,30,50,0.95);border-radius:20px;padding:40px;max-width:380px;width:90%;border:1px solid rgba(0,212,255,0.2);box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+        <div style="text-align:center;margin-bottom:30px;">
+            <div style="font-size:3rem;margin-bottom:10px;">📈</div>
+            <h1 style="font-size:1.5rem;color:#00d4ff;font-weight:700;margin-bottom:5px;">股神投資</h1>
+            <p style="color:#8899a6;font-size:0.85rem;">請登入以繼續</p>
+        </div>
+        <form id="loginForm" onsubmit="return handleLogin(event)">
+            <div style="margin-bottom:15px;">
+                <label style="display:block;color:#8899a6;font-size:0.8rem;margin-bottom:5px;">用戶名</label>
+                <input type="text" id="loginUser" placeholder="輸入用戶名" autocomplete="username"
+                    style="width:100%;padding:12px 15px;background:rgba(255,255,255,0.05);border:1px solid #30363d;border-radius:10px;color:#e0e6ed;font-size:0.95rem;outline:none;transition:border-color 0.3s;"
+                    onfocus="this.style.borderColor='#00d4ff'" onblur="this.style.borderColor='#30363d'">
+            </div>
+            <div style="margin-bottom:25px;">
+                <label style="display:block;color:#8899a6;font-size:0.8rem;margin-bottom:5px;">密碼</label>
+                <input type="password" id="loginPass" placeholder="輸入密碼" autocomplete="current-password"
+                    style="width:100%;padding:12px 15px;background:rgba(255,255,255,0.05);border:1px solid #30363d;border-radius:10px;color:#e0e6ed;font-size:0.95rem;outline:none;transition:border-color 0.3s;"
+                    onfocus="this.style.borderColor='#00d4ff'" onblur="this.style.borderColor='#30363d'">
+            </div>
+            <div id="loginError" style="display:none;color:#ff4757;font-size:0.8rem;margin-bottom:15px;text-align:center;">❌ 用戶名或密碼錯誤</div>
+            <button type="submit" style="width:100%;padding:14px;background:linear-gradient(135deg,#00d4ff,#0099cc);color:#000;font-weight:700;font-size:1rem;border:none;border-radius:12px;cursor:pointer;transition:all 0.3s;"
+                onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 25px rgba(0,212,255,0.3)'"
+                onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                登入
+            </button>
+        </form>
+    </div>
+</div>
+<script>
+// Login check
+function handleLogin(e) {
+    e.preventDefault();
+    var user = document.getElementById('loginUser').value;
+    var pass = document.getElementById('loginPass').value;
+    if (user === 'admin' && pass === 'sfhubs') {
+        sessionStorage.setItem('sfhubs_loggedin', '1');
+        document.getElementById('loginOverlay').style.display = 'none';
+    } else {
+        document.getElementById('loginError').style.display = 'block';
+        document.getElementById('loginPass').value = '';
+    }
+    return false;
+}
+// Check if already logged in
+if (sessionStorage.getItem('sfhubs_loggedin') === '1') {
+    document.getElementById('loginOverlay').style.display = 'none';
+} else {
+    // Focus on username input
+    setTimeout(function(){ document.getElementById('loginUser').focus(); }, 100);
+}
+</script>
     <div class="banner">
         <div class="banner-title">📊 股神投資儀表板</div>
         <div class="banner-status">
