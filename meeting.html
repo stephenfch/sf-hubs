@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Meeting Copilot</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { background: #0f0f1a; color: #e0e0e0; font-family: 'Inter', system-ui, sans-serif; }
+        
+        /* Transcript panel */
+        .transcript-panel { scroll-behavior: smooth; }
+        .transcript-panel::-webkit-scrollbar { width: 4px; }
+        .transcript-panel::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+        
+        /* Pulse animation for recording */
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .recording-pulse { animation: pulse 1.5s ease-in-out infinite; }
+        
+        /* Fade in for new messages */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        
+        /* Suggestion card */
+        .suggestion-card { border-left: 3px solid #6366f1; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="sticky top-0 z-10 bg-[#0f0f1a]/95 backdrop-blur border-b border-gray-800 px-4 py-3">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">🎙️</span>
+                <h1 class="text-lg font-semibold text-white">Meeting Copilot</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="status-dot" class="w-2 h-2 rounded-full bg-gray-500"></span>
+                <span id="status-text" class="text-sm text-gray-400">Idle</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 py-3 gap-3 overflow-hidden">
+        
+        <!-- Controls -->
+        <div class="flex items-center gap-3">
+            <button id="btn-record" class="flex-1 py-3 px-6 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition-colors text-lg">
+                ▶️ Start
+            </button>
+            <button id="btn-clear" class="py-3 px-4 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Clear">
+                🗑️
+            </button>
+            <button id="btn-export" class="py-3 px-4 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Export">
+                📥
+            </button>
+        </div>
+
+        <!-- Duration -->
+        <div class="flex items-center justify-between text-sm text-gray-500">
+            <span id="duration">⏱️ 00:00</span>
+            <span id="turn-count">💬 0 turns</span>
+        </div>
+
+        <!-- Tabs (mobile: switch between transcript/suggestions) -->
+        <div class="flex md:hidden border-b border-gray-800">
+            <button id="tab-transcript" class="flex-1 py-2 text-sm font-medium text-indigo-400 border-b-2 border-indigo-400">📝 Transcription</button>
+            <button id="tab-suggestion" class="flex-1 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent">💡 Suggestions</button>
+        </div>
+
+        <!-- Content area -->
+        <div class="flex-1 flex flex-col md:flex-row gap-3 overflow-hidden min-h-0">
+            
+            <!-- Transcription panel -->
+            <div id="panel-transcript" class="flex-1 flex flex-col min-h-0">
+                <h2 class="hidden md:block text-sm font-medium text-gray-400 mb-2">📝 Transcription</h2>
+                <div id="transcript-list" class="transcript-panel flex-1 overflow-y-auto space-y-2 pb-4">
+                    <div id="transcript-placeholder" class="text-center text-gray-600 py-8">
+                        Press Start and begin speaking...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suggestions panel -->
+            <div id="panel-suggestion" class="flex-1 flex flex-col min-h-0 md:border-l md:border-gray-800 md:pl-3">
+                <h2 class="hidden md:block text-sm font-medium text-gray-400 mb-2">💡 AI Suggestions</h2>
+                <div id="suggestion-list" class="transcript-panel flex-1 overflow-y-auto space-y-2 pb-4">
+                    <div id="suggestion-placeholder" class="text-center text-gray-600 py-8">
+                        Suggestions appear after a few turns...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    // =========================================================================
+    // State
+    // =========================================================================
+    let ws = null;
+    let mediaRecorder = null;
+    let isRecording = false;
+    let startTime = null;
+    let durationInterval = null;
+    let turnCount = 0;
+    let currentTab = 'transcript';
+
+    // DOM refs
+    const btnRecord = document.getElementById('btn-record');
+    const btnClear = document.getElementById('btn-clear');
+    const btnExport = document.getElementById('btn-export');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const durationEl = document.getElementById('duration');
+    const turnCountEl = document.getElementById('turn-count');
+    const transcriptList = document.getElementById('transcript-list');
+    const suggestionList = document.getElementById('suggestion-list');
+    const transcriptPlaceholder = document.getElementById('transcript-placeholder');
+    const suggestionPlaceholder = document.getElementById('suggestion-placeholder');
+    const tabTranscript = document.getElementById('tab-transcript');
+    const tabSuggestion = document.getElementById('tab-suggestion');
+    const panelTranscript = document.getElementById('panel-transcript');
+    const panelSuggestion = document.getElementById('panel-suggestion');
+
+    // =========================================================================
+    // Tabs (mobile)
+    // =========================================================================
+    tabTranscript.addEventListener('click', () => switchTab('transcript'));
+    tabSuggestion.addEventListener('click', () => switchTab('suggestion'));
+
+    function switchTab(tab) {
+        currentTab = tab;
+        if (tab === 'transcript') {
+            tabTranscript.className = 'flex-1 py-2 text-sm font-medium text-indigo-400 border-b-2 border-indigo-400';
+            tabSuggestion.className = 'flex-1 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent';
+            panelTranscript.classList.remove('hidden');
+            panelSuggestion.classList.add('hidden');
+        } else {
+            tabTranscript.className = 'flex-1 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent';
+            tabSuggestion.className = 'flex-1 py-2 text-sm font-medium text-indigo-400 border-b-2 border-indigo-400';
+            panelTranscript.classList.add('hidden');
+            panelSuggestion.classList.remove('hidden');
+        }
+    }
+
+    // Init: show both on desktop, hide suggestion on mobile
+    if (window.innerWidth < 768) {
+        panelSuggestion.classList.add('hidden');
+    }
+
+    // =========================================================================
+    // WebSocket
+    // =========================================================================
+    function connectWS() {
+        // Backend: same host if served from meeting.sf-hubs.dev,
+        // or connect to meeting.sf-hubs.dev if served from sf-hubs.dev
+        const backendHost = location.hostname === 'meeting.sf-hubs.dev'
+            ? location.host
+            : 'meeting.sf-hubs.dev';
+        const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        ws = new WebSocket(`${proto}//${backendHost}/ws/audio`);
+        ws.binaryType = 'arraybuffer';
+
+        ws.onopen = () => {
+            console.log('WS connected');
+            setStatus('idle', 'Connected');
+        };
+
+        ws.onmessage = (event) => {
+            if (typeof event.data === 'string') {
+                const msg = JSON.parse(event.data);
+                handleMessage(msg);
+            }
+        };
+
+        ws.onclose = () => {
+            console.log('WS disconnected');
+            setStatus('error', 'Disconnected');
+            if (isRecording) stopRecording();
+            // Reconnect after 3s
+            setTimeout(connectWS, 3000);
+        };
+
+        ws.onerror = (err) => {
+            console.error('WS error:', err);
+            setStatus('error', 'Connection error');
+        };
+    }
+
+    function handleMessage(msg) {
+        switch (msg.type) {
+            case 'transcript':
+                addTranscript(msg);
+                break;
+            case 'suggestion':
+                addSuggestion(msg);
+                break;
+            case 'status':
+                const statusMap = {
+                    'Listening...': 'recording',
+                    'Processing...': 'processing',
+                    'Stopped': 'idle',
+                    'Cleared. Ready.': 'idle',
+                    'Connected. Ready to record.': 'idle',
+                };
+                setStatus(statusMap[msg.message] || 'idle', msg.message);
+                break;
+            case 'error':
+                setStatus('error', msg.message);
+                break;
+            case 'export':
+                downloadExport(msg.data);
+                break;
+        }
+    }
+
+    // =========================================================================
+    // Recording
+    // =========================================================================
+    btnRecord.addEventListener('click', () => {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    });
+
+    async function startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    channelCount: 1,
+                    sampleRate: 48000,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                }
+            });
+
+            // Prefer WebM/Opus, fallback to any supported format
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                ? 'audio/webm;codecs=opus'
+                : '';
+
+            mediaRecorder = new MediaRecorder(stream, {
+                mimeType: mimeType || undefined,
+            });
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0 && ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(e.data);
+                }
+            };
+
+            // Send audio chunks every 1 second
+            mediaRecorder.start(1000);
+
+            isRecording = true;
+            startTime = Date.now();
+            btnRecord.innerHTML = '⏹️ Stop';
+            btnRecord.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+            btnRecord.classList.add('bg-red-600', 'hover:bg-red-700', 'recording-pulse');
+            setStatus('recording', 'Listening...');
+
+            // Duration timer
+            durationInterval = setInterval(updateDuration, 1000);
+
+            // Wake lock (prevent screen sleep)
+            try {
+                if ('wakeLock' in navigator) {
+                    const wakeLock = await navigator.wakeLock.request('screen');
+                    mediaRecorder._wakeLock = wakeLock;
+                }
+            } catch (e) { console.log('Wake lock not available'); }
+
+            // Remove placeholder
+            if (transcriptPlaceholder) transcriptPlaceholder.remove();
+
+        } catch (err) {
+            console.error('Mic error:', err);
+            setStatus('error', 'Mic access denied');
+            alert('Could not access microphone. Please allow mic permission and try again.');
+        }
+    }
+
+    function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            // Release wake lock
+            if (mediaRecorder._wakeLock) {
+                mediaRecorder._wakeLock.release().catch(() => {});
+            }
+        }
+
+        isRecording = false;
+        btnRecord.innerHTML = '▶️ Start';
+        btnRecord.classList.remove('bg-red-600', 'hover:bg-red-700', 'recording-pulse');
+        btnRecord.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+        setStatus('idle', 'Stopped');
+
+        clearInterval(durationInterval);
+
+        // Notify server to flush remaining audio
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ action: 'stop' }));
+        }
+    }
+
+    // =========================================================================
+    // UI updates
+    // =========================================================================
+    function setStatus(state, text) {
+        statusText.textContent = text;
+        const colors = {
+            'idle': 'bg-gray-500',
+            'recording': 'bg-green-500',
+            'processing': 'bg-yellow-500',
+            'error': 'bg-red-500',
+        };
+        statusDot.className = `w-2 h-2 rounded-full ${colors[state] || 'bg-gray-500'}`;
+        if (state === 'recording') {
+            statusDot.classList.add('recording-pulse');
+        }
+    }
+
+    function updateDuration() {
+        if (!startTime) return;
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const ss = String(elapsed % 60).padStart(2, '0');
+        durationEl.textContent = `⏱️ ${mm}:${ss}`;
+    }
+
+    function addTranscript(msg) {
+        turnCount++;
+        turnCountEl.textContent = `💬 ${turnCount} turns`;
+
+        const div = document.createElement('div');
+        div.className = 'fade-in bg-gray-800/50 rounded-lg px-3 py-2';
+        div.innerHTML = `
+            <div class="flex items-center justify-between mb-1">
+                <span class="text-xs text-indigo-400 font-mono">${msg.time}</span>
+                <span class="text-xs text-gray-600">${msg.duration}s</span>
+            </div>
+            <p class="text-sm text-gray-200 leading-relaxed">${escapeHtml(msg.text)}</p>
+        `;
+        transcriptList.appendChild(div);
+        transcriptList.scrollTop = transcriptList.scrollHeight;
+
+        // Auto-switch to transcript tab on mobile when new content arrives
+        if (window.innerWidth < 768 && currentTab !== 'transcript') {
+            switchTab('transcript');
+        }
+    }
+
+    function addSuggestion(msg) {
+        if (suggestionPlaceholder) suggestionPlaceholder.remove();
+
+        const div = document.createElement('div');
+        div.className = 'fade-in suggestion-card bg-gray-800/30 rounded-lg px-3 py-2 ml-1';
+        div.innerHTML = `
+            <p class="text-sm text-indigo-300 leading-relaxed">${escapeHtml(msg.text)}</p>
+            <p class="text-xs text-gray-600 mt-1">Based on last ${msg.context_turns} turns</p>
+        `;
+        suggestionList.appendChild(div);
+        suggestionList.scrollTop = suggestionList.scrollHeight;
+
+        // Flash suggestion tab on mobile
+        if (window.innerWidth < 768 && currentTab !== 'suggestion') {
+            tabSuggestion.classList.add('text-yellow-400');
+            setTimeout(() => tabSuggestion.classList.remove('text-yellow-400'), 2000);
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // =========================================================================
+    // Clear & Export
+    // =========================================================================
+    btnClear.addEventListener('click', () => {
+        if (!confirm('Clear all transcripts and suggestions?')) return;
+        transcriptList.innerHTML = '<div id="transcript-placeholder" class="text-center text-gray-600 py-8">Press Start and begin speaking...</div>';
+        suggestionList.innerHTML = '<div id="suggestion-placeholder" class="text-center text-gray-600 py-8">Suggestions appear after a few turns...</div>';
+        turnCount = 0;
+        turnCountEl.textContent = '💬 0 turns';
+        durationEl.textContent = '⏱️ 00:00';
+        startTime = null;
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ action: 'clear' }));
+        }
+    });
+
+    btnExport.addEventListener('click', () => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ action: 'export' }));
+        }
+    });
+
+    function downloadExport(data) {
+        let text = `# Meeting Copilot — Meeting Notes\n`;
+        text += `# Date: ${data.meeting_start}\n\n`;
+        data.transcripts.forEach(t => {
+            text += `[${t.time}] ${t.text}\n\n`;
+        });
+
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `meeting-${new Date().toISOString().slice(0, 10)}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // =========================================================================
+    // Init
+    // =========================================================================
+    connectWS();
+    </script>
+</body>
+</html>
