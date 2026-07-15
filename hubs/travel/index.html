@@ -1164,13 +1164,39 @@
       });
       const mapViewUrl = `https://maps.google.com/maps?q=${encodeURIComponent(allCities.join("+"))}&output=embed`;
 
+      // ─ Map mode: Day-by-day 路線建立 ─
+      function buildDayRoute(trip, dayNum) {
+        const d = (trip.days || []).find(x => x.day === dayNum);
+        if (!d) return directionsUrl;
+        const items = d.items || [];
+        const urls = items.map(it => it.url).filter(u => u && (u.startsWith("http://") || u.startsWith("https://")) && !u.includes("google"));
+        // 如果有 item 嘅 url 係 Google Maps link，攞嚟做 waypoints
+        const gmUrls = items.map(it => it.url).filter(u => u && u.includes("goo.gl/maps") || u.includes("maps.app.goo.gl") || u.includes("google.com/maps"));
+        const enc = encodeURIComponent;
+        const prevCity = dayNum > 1 ? (trip.days.find(x => x.day === dayNum - 1)?.location?.split("→")[0]?.trim() || "") : "";
+        const currentCity = d.location?.split("→")[0]?.trim() || "";
+        const saddr = prevCity ? enc(prevCity + " Japan") : enc("關西國際機場 Kansai Airport");
+        const daddr = enc(currentCity + " Japan");
+        return `https://maps.google.com/maps?saddr=${saddr}&daddr=${daddr}&output=embed`;
+      }
+
       // Toggle buttons
       const toggleWrap = el("div", "flex gap-1 mb-2");
       toggleWrap.innerHTML = `
-        <button data-map-mode="directions" class="map-toggle-btn active px-3 py-1.5 text-xs font-medium rounded-xl bg-sakura-100 text-aka border border-sakura-200/50 shadow-sm">🧭 路線</button>
+        <button data-map-mode="directions" class="map-toggle-btn active px-3 py-1.5 text-xs font-medium rounded-xl bg-sakura-100 text-aka border border-sakura-200/50 shadow-sm">🧭 總覽路線</button>
         <button data-map-mode="view" class="map-toggle-btn px-3 py-1.5 text-xs font-medium rounded-xl bg-white/70 text-sumi/50 border border-sakura-200/30 hover:bg-sakura-50">🗺️ 地圖</button>
+        <button data-map-mode="daybyday" class="map-toggle-btn px-3 py-1.5 text-xs font-medium rounded-xl bg-white/70 text-sumi/50 border border-sakura-200/30 hover:bg-sakura-50">📅 每日</button>
       `;
       panes.map.appendChild(toggleWrap);
+
+      // Day-by-day select panel
+      const daySelectPanel = el("div", "flex flex-wrap gap-1.5 mb-2 hidden");
+      daySelectPanel.id = "day-select-panel";
+      daySelectPanel.innerHTML = `<span class="text-[10px] text-sumi/40 mr-1" style="font-family: 'Zen Maru Gothic', sans-serif;">Day</span>` +
+        (trip.days || []).map(d => `
+          <button data-day="${d.day}" class="day-select-btn text-xs px-2.5 py-1 rounded-lg bg-sakura-50/70 text-sumi/60 border border-sakura-200/30 hover:bg-sakura-100 hover:text-aka transition">${d.day}</button>
+        `).join("");
+      panes.map.appendChild(daySelectPanel);
 
       const iframeWrap = el("div", "w-full");
       iframeWrap.innerHTML = `<iframe id="map-iframe"
@@ -1202,8 +1228,27 @@
             const active = b.dataset.mapMode === mode;
             b.className = `map-toggle-btn px-3 py-1.5 text-xs font-medium rounded-xl ${active ? "bg-sakura-100 text-aka border border-sakura-200/50 shadow-sm" : "bg-white/70 text-sumi/50 border border-sakura-200/30 hover:bg-sakura-50"}`;
           });
+          // Show/hide day selector
+          if (mode === "daybyday") {
+            daySelectPanel.classList.remove("hidden");
+          } else {
+            daySelectPanel.classList.add("hidden");
+          }
           if (mode === "directions") iframeRaw.src = directionsUrl;
-          else iframeRaw.src = mapViewUrl;
+          else if (mode === "view") iframeRaw.src = mapViewUrl;
+          // daybyday: iframe stays as-is until a day is selected
+        });
+      });
+
+      // Day-by-day select logic
+      daySelectPanel.querySelectorAll(".day-select-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const dayNum = parseInt(btn.dataset.day, 10);
+          daySelectPanel.querySelectorAll(".day-select-btn").forEach(b => {
+            const active = parseInt(b.dataset.day, 10) === dayNum;
+            b.className = `day-select-btn text-xs px-2.5 py-1 rounded-lg ${active ? "bg-sakura-100 text-aka border border-sakura-200/50 shadow-sm" : "bg-sakura-50/70 text-sumi/60 border border-sakura-200/30 hover:bg-sakura-100 hover:text-aka transition"}`;
+          });
+          iframeRaw.src = buildDayRoute(trip, dayNum);
         });
       });
 
@@ -1252,17 +1297,31 @@
         })()}</span>
       </div>`;
       const spotsList = el("div", "space-y-2");
-      days.forEach((d) => {
+      days.forEach((d, di) => {
         const items = d.items || [];
         if (!items.length) return;
         const group = el("div", "border border-sakura-100/40 rounded-xl overflow-hidden");
         // Day group header — collapsible
         const headerRow = el("button", "w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gradient-to-r from-sakura-50/60 to-transparent hover:from-sakura-100/60 transition text-left cursor-pointer");
+        // 車程顯示
+        let driveHtml = "";
+        if (di > 0) {
+          const currentCity = (d.location || "").split("→")[0].trim();
+          const prevDay = days[di - 1];
+          const prevCity = prevDay ? (prevDay.location || "").split("→")[0].trim() : "";
+          const driveKey = prevCity + "→" + currentCity;
+          const driveKeyRev = currentCity + "→" + prevCity;
+          const driveTime = (trip.cityDrives && trip.cityDrives[driveKey]) || (trip.cityDrives && trip.cityDrives[driveKeyRev]) || null;
+          if (driveTime) {
+            driveHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-mizu-50/80 text-[10px] text-ao-600 font-medium border border-mizu-200/40">🚗 上一站：${esc(prevCity)} → ${esc(currentCity)} ≈ ${esc(driveTime)}</span>`;
+          }
+        }
         headerRow.innerHTML = `
           <div class="flex items-center gap-2">
             <span class="day-badge-sm inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-sakura-300 to-aka text-white text-xs font-bold shadow-sm" style="font-family: 'Klee One', cursive;">${d.day}</span>
             <span class="text-sm font-medium text-sumi/70" style="font-family: 'Klee One', cursive;">${esc(d.title)}</span>
             <span class="text-[10px] text-sumi/30">${fmtDate(d.date)} (${esc(d.weekday || "")}) · 📍 ${esc(d.location || "")}</span>
+            ${driveHtml}
           </div>
           <span class="collapse-icon text-sumi/30 transition-transform">▼</span>
         `;
