@@ -1165,59 +1165,18 @@
       const mapViewUrl = `https://maps.google.com/maps?q=${encodeURIComponent(allCities.join("+"))}&output=embed`;
 
       // ─ Map mode: Day-by-day 路線建立 ─
-      function parseDestCity(loc) {
-        // 取 location 嘅最後一個城市（destination / 住宿城市）
-        if (!loc) return "";
-        const parts = loc.split("→").map(s => s.trim()).filter(s => s);
-        return parts[parts.length - 1] || "";
-      }
-      function parseOriginCity(loc) {
-        // 取 location 嘅第一個城市（出發城市）
-        if (!loc) return "";
-        const parts = loc.split("→").map(s => s.trim()).filter(s => s);
-        return parts[0] || "";
-      }
       function buildDayRoute(trip, dayNum) {
         const d = (trip.days || []).find(x => x.day === dayNum);
         if (!d) return directionsUrl;
+        const items = d.items || [];
+        const urls = items.map(it => it.url).filter(u => u && (u.startsWith("http://") || u.startsWith("https://")) && !u.includes("google"));
+        // 如果有 item 嘅 url 係 Google Maps link，攞嚟做 waypoints
+        const gmUrls = items.map(it => it.url).filter(u => u && u.includes("goo.gl/maps") || u.includes("maps.app.goo.gl") || u.includes("google.com/maps"));
         const enc = encodeURIComponent;
-        const destCity = parseDestCity(d.location);
-        const originCity = parseOriginCity(d.location);
-        const currentDayIdx = (trip.days || []).findIndex(x => x.day === dayNum);
-
-        // 搵「上一個唔同嘅 destination city」作為起點
-        let prevDest = "";
-        for (let i = currentDayIdx - 1; i >= 0; i--) {
-          const pd = parseDestCity(trip.days[i].location);
-          if (pd && pd !== destCity) {
-            prevDest = pd;
-            break;
-          }
-        }
-
-        // Day 1 或無上一個不同城市：show KIX → 當日目的地
-        if (!prevDest) {
-          const saddr = enc("關西國際機場 Kansai Airport");
-          const daddr = enc(destCity + " Japan");
-          return `https://maps.google.com/maps?saddr=${saddr}&daddr=${daddr}&output=embed`;
-        }
-
-        // 同一城市內活動（prevDest === destCity）
-        if (prevDest === destCity) {
-          const items = d.items || [];
-          const spotQueries = items
-            .filter(it => it.title && !it.title.includes("住：") && it.url && !it.title.includes("Dinner") && !it.title.includes("Hotel"))
-            .slice(0, 3)
-            .map(it => enc(it.title + " " + destCity + " Japan"));
-          if (spotQueries.length > 0) {
-            return `https://maps.google.com/maps?q=${spotQueries.join("+")}&output=embed`;
-          }
-          return `https://maps.google.com/maps?q=${enc(destCity + " Japan")}&output=embed`;
-        }
-
-        // 跨城市移動
-        const saddr = enc(prevDest + " Japan");
-        const daddr = enc(destCity + " Japan");
+        const prevCity = dayNum > 1 ? (trip.days.find(x => x.day === dayNum - 1)?.location?.split("→")[0]?.trim() || "") : "";
+        const currentCity = d.location?.split("→")[0]?.trim() || "";
+        const saddr = prevCity ? enc(prevCity + " Japan") : enc("關西國際機場 Kansai Airport");
+        const daddr = enc(currentCity + " Japan");
         return `https://maps.google.com/maps?saddr=${saddr}&daddr=${daddr}&output=embed`;
       }
 
@@ -1344,16 +1303,17 @@
         const group = el("div", "border border-sakura-100/40 rounded-xl overflow-hidden");
         // Day group header — collapsible
         const headerRow = el("button", "w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gradient-to-r from-sakura-50/60 to-transparent hover:from-sakura-100/60 transition text-left cursor-pointer");
-        // 車程顯示（用 destination city）
+        // 車程顯示
         let driveHtml = "";
         if (di > 0) {
-          const prevDest = parseDestCity(days[di - 1].location);
-          const currentDest = parseDestCity(d.location);
-          const driveKey = prevDest + "→" + currentDest;
-          const driveKeyRev = currentDest + "→" + prevDest;
+          const currentCity = (d.location || "").split("→")[0].trim();
+          const prevDay = days[di - 1];
+          const prevCity = prevDay ? (prevDay.location || "").split("→")[0].trim() : "";
+          const driveKey = prevCity + "→" + currentCity;
+          const driveKeyRev = currentCity + "→" + prevCity;
           const driveTime = (trip.cityDrives && trip.cityDrives[driveKey]) || (trip.cityDrives && trip.cityDrives[driveKeyRev]) || null;
-          if (driveTime && prevDest !== currentDest) {
-            driveHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-mizu-50/80 text-[10px] text-ao-600 font-medium border border-mizu-200/40">🚗 上一站：${esc(prevDest)} → ${esc(currentDest)} ≈ ${esc(driveTime)}</span>`;
+          if (driveTime) {
+            driveHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-mizu-50/80 text-[10px] text-ao-600 font-medium border border-mizu-200/40">🚗 上一站：${esc(prevCity)} → ${esc(currentCity)} ≈ ${esc(driveTime)}</span>`;
           }
         }
         headerRow.innerHTML = `
@@ -1378,10 +1338,6 @@
             ? it.url
             : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(it.title + " " + (d.location || ""))}`;
           const gmHtml = `<a href="${esc(gmUrl2)}" target="_blank" rel="noopener" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-matcha-50/70 text-[10px] text-matcha-400 hover:bg-matcha-100">🗺️ Google Maps ↗</a>`;
-          // 🆕 點對點車程 badge（來自 data.js item.drive field）
-          const driveHtml2 = it.drive
-            ? `<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-aka-50/70 text-[10px] text-aka font-medium" title="由上一個景點車程">🚗 ${esc(it.drive)}</span>`
-            : "";
           // intro snippet
           const introClean = it.info ? stripParkingFromIntro(it.info.intro) : "";
           const introSnippet = introClean ? `<span class="text-[10px] text-sumi/40 leading-relaxed block mt-1">${esc(introClean.substring(0, 80))}${introClean.length > 80 ? "…" : ""}</span>` : "";
@@ -1389,7 +1345,6 @@
             <span class="text-sm text-sumi/15 w-4 shrink-0">${items.indexOf(it) + 1}.</span>
             <span class="text-xs font-medium text-sumi/75 flex-1 min-w-0" title="${esc(it.title)}">${esc(it.title)}</span>
             <div class="flex items-center gap-1 flex-wrap">
-              ${driveHtml2}
               ${mcHtml}
               ${parkingHtml}
               ${gmHtml}
