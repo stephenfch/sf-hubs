@@ -679,6 +679,19 @@
   }
   // ── Print 行程 ──
   function printTrip() { window.print(); }
+
+  // ── 匯率 Badge ──
+  async function renderRateBadge(badge) {
+    if (!badge) return;
+    const rate = await fetchJPYRate();
+    if (rate) {
+      badge.textContent = `💱 ¥100 = HK$${rate}`;
+      badge.className = "inline-block px-2 py-0.5 rounded-full text-[10px] bg-matcha-50/80 text-matcha-400 border border-matcha-200/40";
+    } else {
+      badge.textContent = "💱 匯率暫不可用";
+    }
+  }
+
   // ── Budget 追蹤 ──
   function renderBudgetTable(trip) {
     if (!trip.budget || !trip.budget.length) return null;
