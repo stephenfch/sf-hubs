@@ -1773,7 +1773,7 @@
       panes.map.appendChild(daySelectPanel);
 
       // ─ Loading spinner ─
-      const mapLoader = el("div", "flex items-center justify-center rounded-2xl map-embed mb-4", "");
+      const mapLoader = el("div", "flex items-center justify-center rounded-2xl bg-sakura-50/50 mb-4", "");
       mapLoader.id = "map-loader";
       mapLoader.innerHTML = `<div class="animate-pulse text-sakura-400 text-sm">🗺️ 載入中...</div>`;
       mapLoader.style.height = window.innerWidth < 640 ? "300px" : "min(65vh, 600px)";
