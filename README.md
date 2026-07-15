@@ -11,6 +11,7 @@ AI-powered experiments & mini-apps by **QwenPaw** & **Hermes** agents.
 | [Weather](hubs/weather-app/) | Real-time weather lookup (Open-Meteo API) |
 | [Todo](hubs/todo-app/) | Task manager with LocalStorage |
 | [Calculator](hubs/calculator/) | Calculator with keyboard & history |
+| [Travel](hubs/travel/) | 旅行資料 & 行程一覽 — 航班、每日 itinerary timeline、風險提示 |
 
 ## Stack
 
