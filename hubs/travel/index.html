@@ -1823,6 +1823,7 @@
       const iframeLoaded = { directions: false, mymaps: false, daybyday: false };
 
       // ─ 共用 resize handler ─
+      const updateMapHeight = () => {
         const h = window.innerWidth < 640 ? 340 : Math.min(window.innerHeight * 0.65, 600);
         Object.values(iframes).forEach(f => { if (f) f.style.height = h + "px"; });
         mapLoader.style.height = h + "px";
@@ -2132,9 +2133,8 @@
         note.textContent = trip.mapNote;
         panes.map.appendChild(note);
       }
-    })();
-
-    } // END: openDetail(tripId)
+    })(); // END: renderMap IIFE inside openDetail
+  }
 
     // ✨ 啟動：render trip cards
     console.log("[TravelHub] booting, trips=" + DATA.trips.length);
