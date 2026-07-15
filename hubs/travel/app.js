@@ -75,6 +75,106 @@
     return `https://www.mapion.co.jp/route/?nl=1&uc=${encodeURIComponent(code)}`;
   }
 
+  // ---- WMO weather codes → emoji mapping（Open-Meteo 免費 API）--------------
+  const WMO = {
+    0:  { icon: "☀️", label: "天晴" },
+    1:  { icon: "🌤️", label: "大致天晴" },
+    2:  { icon: "⛅", label: "多雲" },
+    3:  { icon: "☁️", label: "陰天" },
+    45: { icon: "🌫️", label: "霧" },
+    48: { icon: "🌫️", label: "霧淞" },
+    51: { icon: "🌦️", label: "微雨" },
+    53: { icon: "🌦️", label: "毛毛雨" },
+    55: { icon: "🌦️", label: "密毛雨" },
+    56: { icon: "🌦️", label: "凍毛毛雨" },
+    57: { icon: "🌦️", label: "密凍毛毛雨" },
+    61: { icon: "🌧️", label: "雨" },
+    63: { icon: "🌧️", label: "中雨" },
+    65: { icon: "🌧️", label: "大雨" },
+    66: { icon: "🌧️", label: "凍雨" },
+    67: { icon: "🌧️", label: "密凍雨" },
+    71: { icon: "❄️", label: "雪" },
+    73: { icon: "❄️", label: "中雪" },
+    75: { icon: "❄️", label: "大雪" },
+    77: { icon: "❄️", label: "雪粒" },
+    80: { icon: "🌦️", label: "陣雨" },
+    81: { icon: "🌦️", label: "中陣雨" },
+    82: { icon: "🌦️", label: "大陣雨" },
+    85: { icon: "❄️", label: "小陣雪" },
+    86: { icon: "❄️", label: "大陣雪" },
+    95: { icon: "⛈️", label: "雷暴" },
+    96: { icon: "⛈️", label: "雷暴+雹" },
+    99: { icon: "⛈️", label: "強雷暴+雹" },
+  };
+  const _weatherCache = {}; // "lat,lon|date" → promise of { icon, label, high, low }
+
+  // 從 location 字串拎主要城市 → weatherCoords
+  function resolveCoords(locStr, trip) {
+    const coords = trip.weatherCoords || {};
+    if (coords[locStr]) return coords[locStr];
+    const parts = locStr.split(/[→,、\/\s]+/).filter(Boolean);
+    for (const p of parts) {
+      if (coords[p]) return coords[p];
+    }
+    for (const key of Object.keys(coords)) {
+      if (locStr.includes(key)) return coords[key];
+    }
+    return null;
+  }
+
+  // 用 Open-Meteo API（free，no API key）fetch 單日天氣
+  async function fetchWeather(lat, lon, dateStr) {
+    const cacheKey = `${lat},${lon}|${dateStr}`;
+    if (_weatherCache[cacheKey]) return _weatherCache[cacheKey];
+    const promise = (async () => {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Asia%2FTokyo&start_date=${dateStr}&end_date=${dateStr}`;
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        const day = data.daily;
+        if (!day || !day.time || !day.time.length) throw new Error("no data");
+        const wcode = day.weathercode[0];
+        const w = WMO[wcode] || { icon: "🌡️", label: "未知" };
+        return { icon: w.icon, label: w.label, high: day.temperature_2m_max[0], low: day.temperature_2m_min[0] };
+      } catch (e) {
+        console.warn("Weather fetch fail:", e);
+        return null;
+      }
+    })();
+    _weatherCache[cacheKey] = promise;
+    return promise;
+  }
+
+  // Fetch 全日程天氣 → 更新 DOM
+  async function loadWeatherForTrip(trip) {
+    if (!trip.days) return;
+    const unique = {};
+    trip.days.forEach((d) => {
+      const coords = resolveCoords(d.location, trip);
+      if (coords) {
+        const key = `${coords.lat},${coords.lon}|${d.date}`;
+        if (!unique[key]) unique[key] = { lat: coords.lat, lon: coords.lon, date: d.date, day: d.day };
+      }
+    });
+    const results = await Promise.allSettled(
+      Object.values(unique).map((u) => fetchWeather(u.lat, u.lon, u.date))
+    );
+    Object.values(unique).forEach((u, i) => {
+      const badge = document.querySelector(`[data-weather="${u.day}"]`);
+      if (!badge) return;
+      const r = results[i];
+      if (r.status === "fulfilled" && r.value) {
+        badge.textContent = `${r.value.icon} ${r.value.high}°/${r.value.low}°`;
+        badge.title = `${r.value.label} · 最高 ${r.value.high}°C · 最低 ${r.value.low}°C`;
+        badge.className = "weather-badge text-xs px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/20";
+      } else {
+        badge.textContent = "🌡️ N/A";
+        badge.className = "weather-badge text-xs px-1.5 py-0.5 rounded bg-white/5 text-white/40";
+      }
+    });
+  }
+
   // ---- 加相 modal（A 模式：貼 URL → 生成要 push 嘅 snippet）-----------------
   function openAddPhoto(tripId, dayNum, itemTitle, itemIndex) {
     const overlay = el("div", "fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4");
@@ -279,7 +379,10 @@
               <span class="px-2 py-0.5 rounded-md bg-accent/15 text-accent text-xs font-bold">Day ${d.day}</span>
               <span class="text-sm font-semibold">${esc(d.title)}</span>
             </div>
-            <span class="text-xs text-white/40">${fmtDate(d.date)} (${esc(d.weekday || "")}) · 📍 ${esc(d.location || "")}</span>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span data-weather="${d.day}" class="weather-badge text-xs px-1.5 py-0.5 rounded bg-white/5 text-white/40 border border-white/10">⏳ 載入天氣...</span>
+              <span class="text-xs text-white/40">${fmtDate(d.date)} (${esc(d.weekday || "")}) · 📍 ${esc(d.location || "")}</span>
+            </div>
           </div>`;
 
         const list = el("div", "space-y-2");
@@ -345,6 +448,8 @@
         tl.appendChild(node);
       });
       panes.itinerary.appendChild(tl);
+      // 非同步載入天氣（auto-update！）
+      loadWeatherForTrip(trip);
     }
 
     // ---- 旅行日誌（📔 獨立 tab）：按 Day/時間 排時間線 ----

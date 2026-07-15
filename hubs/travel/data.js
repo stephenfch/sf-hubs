@@ -29,6 +29,19 @@ window.TRAVEL_DATA = {
       summary:
         "姬路 → 鳥取（3晚）→ 真庭 → 岡山摘桃 → 姬路 → 大阪天神祭，9日8夜親子自駕。",
 
+      // 天氣查詢用經緯度 mapping（自動 match location → Open-Meteo API）
+      weatherCoords: {
+        "姬路":    { lat: 34.8167, lon: 134.6833 },
+        "鳥取":    { lat: 35.5039, lon: 134.2378 },
+        "真庭":    { lat: 35.0833, lon: 133.7500 },
+        "岡山":    { lat: 34.6618, lon: 133.9350 },
+        "大阪":    { lat: 34.6937, lon: 135.5023 },
+        "關西機場":{ lat: 34.4320, lon: 135.2304 },
+        "KIX":     { lat: 34.4320, lon: 135.2304 },
+        "吹田":    { lat: 34.7667, lon: 135.5167 },
+        "堺":      { lat: 34.5833, lon: 135.4667 },
+      },
+
       // =====================================================================
       // 旅行日誌（📔 獨立 tab）：去到現場影相 + 寫 caption，加落呢個陣列
       // 格式：{ day, time, spot, caption, photo }
@@ -69,6 +82,7 @@ window.TRAVEL_DATA = {
           title: "抵達關西 + 神戶牛",
           location: "姬路",
           hotel: "姬路大和 ROYNET 酒店",
+          weather: { icon: "🌦️", high: 32, low: 26, cond: "多雲有驟雨", note: "氣候平均 · 出發前 3 日再確認實際預報" },
           items: [
             { time: "10:25", icon: "✈️", title: "CX506 起飛", desc: "HKG T1 07:00 check-in", url: "" },
             { time: "15:10", icon: "🛬", title: "到達 KIX 關西機場", desc: "入境 + 領行李，最快 16:00 出閘", url: "https://www.kansai-airport.or.jp/" },
