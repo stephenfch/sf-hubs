@@ -24,7 +24,7 @@ window.TRAVEL_DATA = {
       startDate: "2026-07-18",
       endDate: "2026-07-26",
       status: "upcoming", // upcoming | ongoing | past
-      party: "6大4小（共 10 人）",
+      party: "4大3小（共 7 人）",
       transport: "全程自駕 · 🚙 ① Honda Step WGN + 🚙 ② Mazda Biante 8座 MPV（Times CAR RENTAL × 2）",
       summary:
         "姬路 → 鳥取（3晚）→ 真庭 → 岡山摘桃 → 姬路 → 大阪天神祭，9日8夜親子自駕。",
@@ -244,7 +244,7 @@ window.TRAVEL_DATA = {
 
       // 風險 / 注意事項（level: red | orange | yellow）
       risks: [
-        { level: "green", icon: "✅", title: "租車超載：已解決", desc: "已改：⓵ Honda Step WGN + ⓶ Mazda Biante 8座（Times CAR RENTAL），兩部車共 15 座位，10 人冇問題。取車 18/7 16:00 @ KIX，還車 26/7 16:00 @ KIX。" },
+        { level: "green", icon: "✅", title: "租車超載：已解決", desc: "已改：⓵ Honda Step WGN + ⓶ Mazda Biante 8座（Times CAR RENTAL），兩部車共 15 座位，7 人 + 行李冇問題。取車 18/7 16:00 @ KIX，還車 26/7 16:00 @ KIX。" },
         { level: "green", icon: "✅", title: "取車時間：已解決", desc: "航班 15:10 到 KIX，取車單寫 16:00 可取，時間 fit ✅。員工會分兩組：一組去 Times counter 取兩部車，一組睇行李+細路。" },
         { level: "orange", icon: "⚠️", title: "兩部車車高 vs 大阪泊車場", desc: "Biante 約 1.85m、Step WGN 約 1.85m，大阪機械式泊車場限高 155-175cm 入唔到 → 兩部都要揀平面位/ハイルーフ對應，或 akippa 預約。" },
         { level: "orange", icon: "🎆", title: "天神祭管制 + 泊車", desc: "7/25 本宮約 130 萬人，13:00-23:00 通行禁止 → 泊梅田/北區，搭地鐵入會場。" },

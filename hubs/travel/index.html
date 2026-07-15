@@ -1527,14 +1527,8 @@
 
       // Build mode URLs
       const directionsUrl = trip.mapEmbed || buildOverview(trip);
-      // Map mode: collect all unique city names for search
-      const allCities = [];
-      const citySet2 = new Set();
-      days.forEach((d) => {
-        const loc = String(d.location || "").split(/[→,]/)[0].trim();
-        if (loc && !citySet2.has(loc)) { citySet2.add(loc); allCities.push(loc + " Japan"); }
-      });
-      const mapViewUrl = `https://maps.google.com/maps?q=${encodeURIComponent(allCities.join("+"))}&output=embed`;
+      // My Maps embed: Google My Maps（自訂 marker / 圖層 / 路線）
+      const mymapsUrl = `https://www.google.com/maps/d/u/0/embed?mid=1LuuiiWAbTEBuR2loYXmtRSgLz-vNYZE&ehbc=2E312F`;
 
       // ─ Map mode: Day-by-day 路線建立 ─
       function parseDestCity(loc) {
@@ -1597,7 +1591,7 @@
       const toggleWrap = el("div", "flex gap-1 mb-2");
       toggleWrap.innerHTML = `
         <button data-map-mode="directions" class="map-toggle-btn active px-3 py-1.5 text-xs font-medium rounded-xl bg-sakura-100 text-aka border border-sakura-200/50 shadow-sm">🧭 總覽路線</button>
-        <button data-map-mode="view" class="map-toggle-btn px-3 py-1.5 text-xs font-medium rounded-xl bg-white/70 text-sumi/50 border border-sakura-200/30 hover:bg-sakura-50">🗺️ 地圖</button>
+        <button data-map-mode="mymaps" class="map-toggle-btn px-3 py-1.5 text-xs font-medium rounded-xl bg-white/70 text-sumi/50 border border-sakura-200/30 hover:bg-sakura-50">🗺️ 自訂地圖</button>
         <button data-map-mode="daybyday" class="map-toggle-btn px-3 py-1.5 text-xs font-medium rounded-xl bg-white/70 text-sumi/50 border border-sakura-200/30 hover:bg-sakura-50">📅 每日</button>
       `;
       panes.map.appendChild(toggleWrap);
@@ -1648,7 +1642,7 @@
             daySelectPanel.classList.add("hidden");
           }
           if (mode === "directions") iframeRaw.src = directionsUrl;
-          else if (mode === "view") iframeRaw.src = mapViewUrl;
+          else if (mode === "mymaps") iframeRaw.src = mymapsUrl;
           // daybyday: iframe stays as-is until a day is selected
         });
       });
