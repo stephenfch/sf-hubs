@@ -1816,8 +1816,10 @@
         daybyday: iframeWrap.querySelector('#map-iframe-daybyday'),
       };
 
+      // ─ 紀錄每個 iframe 係咪已經 load 過（解决 switch mode 時 loader 唔消失）─
+      const iframeLoaded = { directions: false, mymaps: false, daybyday: false };
+
       // ─ 共用 resize handler ─
-      const updateMapHeight = function() {
         const h = window.innerWidth < 640 ? 340 : Math.min(window.innerHeight * 0.65, 600);
         Object.values(iframes).forEach(f => { if (f) f.style.height = h + "px"; });
         mapLoader.style.height = h + "px";
@@ -1826,10 +1828,11 @@
       window.addEventListener('resize', updateMapHeight);
 
       // ─ 每個 iframe 各自 loading handler ─
-      Object.entries(iframes).forEach(([, f]) => {
+      Object.entries(iframes).forEach(([name, f]) => {
         if (!f) return;
         // 先加 listener，避免 race condition（browser cache 可能 already loaded）
         f.addEventListener('load', () => {
+          iframeLoaded[name] = true;
           // 只處理當前 visible 嘅 iframe
           if (f.style.display !== 'none') {
             mapLoader.style.display = 'none';
@@ -1848,10 +1851,14 @@
           if (!f) return;
           f.style.display = m === mode ? 'block' : 'none';
         });
-        // Show loader for the active iframe (will be hidden on load)
-        mapLoader.style.display = 'flex';
+        // 如果呢個 iframe 已經 load 過，直接 hide loader
+        if (iframeLoaded[mode]) {
+          mapLoader.style.display = 'none';
+        } else {
+          mapLoader.style.display = 'flex';
+        }
         const activeIframe = iframes[mode];
-        if (activeIframe && activeIframe.contentWindow) {
+        if (activeIframe && activeIframe.contentWindow && !iframeLoaded[mode]) {
           // 如果已 load 過（contentDocument），即刻 hide loader
           try {
             if (activeIframe.contentDocument && activeIframe.contentDocument.body) {
