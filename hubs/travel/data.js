@@ -199,7 +199,7 @@ window.TRAVEL_DATA = {
           weekday: "五",
           title: "彈性日（A / B / C 三選一）",
           location: "姬路/岡山→大阪",
-          hotel: "大阪",
+          hotel: "大阪北濱布萊頓酒店",
           items: [
             { time: "", icon: "🅰️", title: "選項 A：姬路中央公園 姫路セントラルパーク", desc: "可揸自己車入園睇動物（Biante MPV OK；開篷/車斗車唔入得）", url: "https://www.central-park.co.jp/",
               info: { hours: "9:30–17:00（季節變動）", mapcode: "24 436 128*13", intro: "西日本最大級 Safari + 遊園地，揸自己車入 Safari 區睇動物，Biante MPV 入得", photoSpot: "車入 Safari 影長頸鹿探頭", photos: [] } },
@@ -207,7 +207,8 @@ window.TRAVEL_DATA = {
               info: { hours: "營業時間随季節", mapcode: "", intro: "生駒山上遊園地嘅空中自轉單軌，踩單車 360° 睇大阪平野絕景", photoSpot: "車廂內影大阪全景", photos: [] } },
             { time: "", icon: "🅲️", title: "選項 C：向日葵公園", desc: "需 23/7 住岡山先可以咁排", url: "https://maps.app.goo.gl/2wizmnHLECd81YsH8", tbc: true, drive: "30min",
               info: { hours: "", mapcode: "", intro: "岡山向日葵公園（ひまわりの丘公園等），7-8 月花季", photoSpot: "花海打卡", photos: [] } },
-            { time: "", icon: "🏨", title: "住：大阪", desc: "", url: "", drive: "1hr" },
+            { time: "", icon: "🏨", title: "住：大阪北濱布萊頓酒店 (Hotel Brighton City Osaka Kitahama)", desc: "Check-in 15:00 · 🅿️ 北濱站附近平面泊車場（Biante 1.85m 入到）", url: "https://www.trip.com/w/HkHrHLP6XV2", drive: "1hr",
+              info: { hours: "Check-in 15:00 / Check-out 11:00", intro: "🏨 大阪北濱布萊頓酒店 ⭐ 9.2/10（Trip.com）📍 北長狭通1丁目1 — 北濱站5號口步行1分鐘 🚇 🏪 樓下7-11 🅿️ Biante(1.85m)要揀平面位／akippa 🛁 有浴缸 🧺 洗衣機+微波爐 🚰 大堂免費瓶裝水 🍳 早餐自助06:30–10:00（成人¥2,200/6歲以下免費/7-12歲¥1,350）" } },
           ],
         },
         {
@@ -216,7 +217,7 @@ window.TRAVEL_DATA = {
           weekday: "六",
           title: "未來兒童館 + 天神祭（全步行日）",
           location: "大阪",
-          hotel: "大阪",
+          hotel: "大阪北濱布萊頓酒店",
           items: [
             { time: "", icon: "🧒", title: "キッズプラザ大阪 (Kids Plaza Osaka) 未來兒童館", desc: "室內有冷氣，5層樓兒童博物館，行路到天神祭", url: "https://www.kidsplaza.or.jp",
               info: { hours: "9:30–17:00（最終入館 16:15）", mapcode: "", intro: "大阪市北區扇町嘅兒童博物館 🕐 9:30–17:00 💴 大人¥1,500 / 小中¥800 / 幼兒(3歲↑)¥500 🚇 堺筋線「扇町」站2號出口直達 🅿️ 無専用場 → 酒店泊車搭地鐵 ⭐ 職業體驗/科學實驗/チューブスライダー/文化コーナー 📞 06-6311-6601", photoSpot: "5F 文化コーナー同チューブスライダー", photos: [] } },
@@ -224,7 +225,8 @@ window.TRAVEL_DATA = {
               info: { hours: "13:00–23:00（本宮）", mapcode: "", intro: "日本三大祭之一，大阪天滿宮 🗓️ 本宮13:30→陸渡御15:30→船渡御18:00→奉納花火19:30–20:50 📍會場大阪天満宮（南森町站/大阪天満宮站）🚶 扇町站行5-10分鐘就到，全步行日！ ⚠️ 全日唔揸車，酒店泊車後搭地鐵/行路", photoSpot: "河岸影船渡御 + 夜祭燈火", photos: [] } },
             { time: "19:30", icon: "🎆", title: "天神祭花火", desc: "19:30-21:00 · 帶細路去毛馬桜之宮公園北側避人逼", url: "https://maps.app.goo.gl/xxxxTenjin", drive: "步行約10-15min",
               info: { hours: "19:30–21:00", mapcode: "", intro: "天神祭花火大會，毛馬桜之宮公園北側相對冇咁逼，帶細路睇得舒服啲", photoSpot: "河邊影花火倒影", photos: [] } },
-            { time: "", icon: "🏨", title: "住：大阪（梅田/北區）", desc: "用 akippa 預約高 2.0m 以上平面位泊 Biante", url: "", drive: "搭車約15min" },
+            { time: "", icon: "🏨", title: "住：大阪北濱布萊頓酒店 (Hotel Brighton City Osaka Kitahama)", desc: "Check-in 15:00 · 🅿️ 北濱站附近平面泊車場（Biante 1.85m 入到）", url: "https://www.trip.com/w/HkHrHLP6XV2", drive: "搭車約15min",
+              info: { hours: "Check-in 15:00 / Check-out 11:00", intro: "🏨 大阪北濱布萊頓酒店 ⭐ 9.2/10（Trip.com）📍 北長狭通1丁目1 — 北濱站5號口步行1分鐘 🚇 🏪 樓下7-11 🅿️ Biante(1.85m)要揀平面位／akippa 🛁 有浴缸 🧺 洗衣機+微波爐 🚰 大堂免費瓶裝水 🍳 早餐自助06:30–10:00（成人¥2,200/6歲以下免費/7-12歲¥1,350）" } },
           ],
         },
         {
