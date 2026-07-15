@@ -1,0 +1,17 @@
+# ── sf-hubs Cloudflare Pages 自訂 HTTP Headers ──────────────────────────
+# 語法： URL path → headers（indented）
+# 所有 route 都有 fallback cache policy，但 Travel Hub 特別需要 no-cache
+# 因為 JS/HTML 一體式 inline，每次 deploy 都應該即刻反映
+
+# ── 根目錄：一般不超過 5 分鐘 cache ──
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# ── Travel Hub — 全部 HTML 要 always fresh ──
+/hubs/travel/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# ── Stock God — 道理同上，inline JS 一體式 ──
+/hubs/stock-god/*
+  Cache-Control: public, max-age=0, must-revalidate
