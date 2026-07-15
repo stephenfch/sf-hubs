@@ -224,7 +224,7 @@ window.TRAVEL_DATA = {
             { time: "~14:00", icon: "🎐", title: "天神祭 本宮", desc: "日本三大祭！玩完 Kids Plaza 行過去，逛逛祭典攤位", url: "https://www.tenjinmatsuri.com/",
               info: { hours: "陸渡御 15:30→船渡御 18:00", mapcode: "", intro: "日本三大祭之一，大阪天滿宮 🗓️ 本宮13:30→陸渡御15:30→船渡御18:00→奉納花火19:30–20:50 📍會場大阪天満宮（南森町站/大阪天満宮站）🚶 扇町站行5-10分鐘就到，全步行日！ ⚠️ 全日唔揸車，酒店泊車後搭地鐵/行路", photoSpot: "河岸影船渡御 + 夜祭燈火", photos: [] } },
             { time: "17:30", icon: "🎆", title: "天神祭奉納花火（B会場指定席）", desc: "17:30 開場／18:00 開演 · B会場指定席 3列1〜7番（已買 7 張飛）", url: "https://www.tenjinmatsuri.com/", drive: "步行約10-15min",
-              info: { hours: "17:30 開場／18:00 開演 · 花火 19:30–20:50", mapcode: "", intro: "天神祭奉納花火 🎫 B会場指定席 3列1〜7番（已購 7 張飛）🕐 開場 17:30／開演 18:00／花火 19:30–20:50 📍 桜之宮公園／大川沿岸 ⚠️ 28/7 前買嘅飛要去便利店取票（ローソン・ファミマ・セブン）", photoSpot: "從指定席影花火打上大阪天空", photos: [] } },
+              info: { hours: "17:30 開場／18:00 開演 · 花火 19:30–20:50", mapcode: "", intro: "天神祭奉納花火 🎫 B会場指定席 3列1〜7番（已購 7 張飛）🕐 開場 17:30／開演 18:00／花火 19:30–20:50 📍 桜之宮公園／大川沿岸 ✅ 已喺 Family Mart 拎飛", photoSpot: "從指定席影花火打上大阪天空", photos: [] } },
             { time: "", icon: "🏨", title: "住：大阪北濱布萊頓酒店 (Hotel Brighton City Osaka Kitahama)", desc: "Check-in 15:00 · 🅿️ 北濱站附近平面泊車場（Biante 1.85m 入到）", url: "https://www.trip.com/w/HkHrHLP6XV2", drive: "搭車約15min",
               info: { hours: "Check-in 15:00 / Check-out 11:00", intro: "🏨 大阪北濱布萊頓酒店 ⭐ 9.2/10（Trip.com）📍 北長狭通1丁目1 — 北濱站5號口步行1分鐘 🚇 🏪 樓下7-11 🅿️ Biante(1.85m)要揀平面位／akippa 🛁 有浴缸 🧺 洗衣機+微波爐 🚰 大堂免費瓶裝水 🍳 早餐自助06:30–10:00（成人¥2,200/6歲以下免費/7-12歲¥1,350）" } },
           ],
