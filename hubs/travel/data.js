@@ -2,15 +2,15 @@
 // TRAVEL DATA — window.TRAVEL_DATA
 // 用 .js 而唔係 .json 嘅原因：俾老大可以直接 file:// 雙撃開 index.html，
 // 唔會被瀏覽器 block 本地 fetch（CORS / origin=null）。
-// 改行程只需 edit 呢個 file，唔使 rebuild，push 去 master 即 deploy。
+// 改行程只需 edit 呢個 file，唔使 rebuild。部署：push 去 main 分支（Cloudflare Pages 讀 main）即 redeploy。
 //
 // 想加相 / 加日誌？睇最底嘅「HOW TO UPDATE」註解。
 // =============================================================================
 window.TRAVEL_DATA = {
   meta: {
-    version: "2.0.0",
+    version: "2.1.0",
     updated: "2026-07-15",
-    note: "種子數據 = Osaka 2026 鳥取 9日8夜自駕遊（來源：TravelExpert 行程分析 T-3）",
+    note: "Osaka 2026 關西/鳥取自駕遊 9日8夜 · 已補齊景點收費/電話/預約 deadline/泊車（來源：Osaka2026_itinerary.md）",
   },
 
   trips: [
@@ -72,8 +72,8 @@ window.TRAVEL_DATA = {
           items: [
             { time: "10:25", icon: "✈️", title: "CX506 起飛", desc: "HKG T1 07:00 check-in", url: "" },
             { time: "15:10", icon: "🛬", title: "到達 KIX 關西機場", desc: "入境 + 領行李，最快 16:00 出閘", url: "https://www.kansai-airport.or.jp/" },
-            { time: "18:00", icon: "🍽️", title: "神戶牛 Dinner", desc: "落機後直去食神戶牛", url: "",
-              info: { hours: "店未定", mapcode: "", intro: "落機第一餐獎勵，神戶牛燒肉/鐵板燒", photoSpot: "燒肉上枱影特寫", photos: [] } },
+            { time: "18:00", icon: "🍽️", title: "神戶牛 雅 三北店 (Kobe Gyu Miyabi)", desc: "落機後直去食神戶牛 · 建議先行訂位", url: "https://www.koubegyuu.com/miyabi-sankita",
+              info: { hours: "午11:30–15:00(L.O.) / 晚17:00–23:00", mapcode: "", intro: "神戶牛 雅 三北店 (Kobe Gyu Miyabi Sankita) · 落機第一餐獎勵 📍兵庫県神戸市中央区北長狹通1-2-7 プラチナビル1–3F（三宮站徒步1分） 💴 午餐A餐(赤身)¥2,750起；晚餐course更貴 📞 建議訂位 078-331-5029（尤其晚餐三宮站旁好旺） 🅿️ 餐廳無専用場，泊三宮站周邊收費停車場 · 由KIX自駕約1.5hr", photoSpot: "燒肉/鐵板燒上枱影特寫", photos: [] } },
             { time: "", icon: "🏨", title: "住：姬路大和 ROYNET 酒店", desc: "Himeji Daiwa Roynet Hotel", url: "" },
           ],
         },
@@ -185,9 +185,9 @@ window.TRAVEL_DATA = {
           hotel: "大阪",
           items: [
             { time: "", icon: "🎡", title: "大阪府立大型児童館ビッグバン", desc: "親子室內遊樂", url: "https://maps.app.goo.gl/Quh1nbtdTJG6s6xx6",
-              info: { hours: "10:00–17:00（入館 16:30 止）· 月休", mapcode: "10 556 899*37", intro: "堺市嘅未來型兒童館，時光隧道 + 巨大遊具，落雨/酷暑室內放電首選", photoSpot: "室內遊具影細路玩到癲", photos: [] } },
+              info: { hours: "10:00–17:00（入館 16:30 止）· 月休", mapcode: "10 556 899*37", intro: "堺市嘅未來型兒童館，時光隧道 + 巨大遊具，落雨/酷暑室內放電首選 💴 大人¥1,000 / 中學¥800 / 小學¥800 / 3歲↑幼兒¥600 / 3歲未満免費 🅿️ 3hr¥700→每hr¥300（平日上限¥1,000）；休館日不可用 🗓️ 月曜休（假→翌火）但夏休月曜開館", photoSpot: "室內遊具影細路玩到癲", photos: [] } },
             { time: "13:00", icon: "🎐", title: "天神祭 本宮", desc: "約 130 萬人！13:00-23:00 會場周邊交通管制 → 搭車入，唔揸車入", url: "https://www.tenjinmatsuri.com/",
-              info: { hours: "13:00–23:00（本宮）", mapcode: "", intro: "日本三大祭之一，大阪天滿宮。陸渡御 + 船渡御 + 花火。130 萬人逼爆，搭地鐵入唔揸車", photoSpot: "河岸影船渡御 + 夜祭燈火", photos: [] } },
+              info: { hours: "13:00–23:00（本宮）", mapcode: "", intro: "日本三大祭之一，大阪天滿宮 🗓️ 本宮13:30→陸渡御15:30→船渡御18:00→奉納花火19:30–20:50 📍會場大阪天満宮（南森町站/大阪天満宮站）；大川兩岸(桜之宮公園/川崎公園)最佳，櫻宮神社係相對冇咁迫嘅穴場 🌧️ 雨天決行（颱風/大雨警報先中止） ⚠️ 25/7全大阪最癲 → 建議朝早玩完Big Bang就返酒店泊車，搭電車去天満宮，千萬唔好揸車入祭典區", photoSpot: "河岸影船渡御 + 夜祭燈火", photos: [] } },
             { time: "19:30", icon: "🎆", title: "天神祭花火", desc: "19:30-21:00 · 帶細路去毛馬桜之宮公園北側避人逼", url: "https://maps.app.goo.gl/xxxxTenjin",
               info: { hours: "19:30–21:00", mapcode: "", intro: "天神祭花火大會，毛馬桜之宮公園北側相對冇咁逼，帶細路睇得舒服啲", photoSpot: "河邊影花火倒影", photos: [] } },
             { time: "", icon: "🏨", title: "住：大阪（梅田/北區）", desc: "用 akippa 預約高 2.0m 以上平面位泊 Biante", url: "" },
