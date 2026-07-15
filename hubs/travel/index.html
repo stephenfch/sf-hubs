@@ -601,6 +601,14 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
   }
+  function escAttr(s) {
+    if (s === undefined || s === null) return "";
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
   function fmtDate(d) {
     const dt = new Date(d + "T00:00:00");
     return dt.toLocaleDateString("zh-HK", { month: "short", day: "numeric" });
@@ -1530,7 +1538,8 @@
       // My Maps embed: Google My Maps（自訂 marker / 圖層 / 路線）
       const mymapsEmbed = trip.myMapsEmbed || `https://www.google.com/maps/d/u/0/embed?mid=1LuuiiWAbTEBuR2loYXmtRSgLz-vNYZE&ehbc=2E312F`;
       const mymapsViewer = trip.myMapsViewer || `https://www.google.com/maps/d/u/0/viewer?mid=1LuuiiWAbTEBuR2loYXmtRSgLz-vNYZE`;
-      const mymapsUrl = mymapsEmbed + `&hl=zh-Hant`;
+      const mymapsUrl = mymapsEmbed + `&hl=zh-Hant&ll=35.0%2C134.3&z=8`;
+      const mymapsUrlView = mymapsViewer + `?ll=35.0%2C134.3&z=8`;
 
       // ─ Map mode: Day-by-day 路線建立 ─
       function parseDestCity(loc) {
@@ -1599,11 +1608,27 @@
         "inline-flex items-center gap-1 text-xs text-ao hover:text-ao-dark underline mb-2",
         "🔗 在 Google Maps 開啟全螢幕地圖 ↗");
       openMyMaps.id = "open-mymaps-link";
-      openMyMaps.href = mymapsViewer;
+      openMyMaps.href = mymapsUrlView;
       openMyMaps.target = "_blank";
       openMyMaps.rel = "noopener";
       openMyMaps.style.display = "none";
       panes.map.appendChild(openMyMaps);
+
+      // ─ ✏️ 編輯地圖 + 📱 手機開（mymaps mode 專用） ─
+      const myMapsActions = el("div", "flex flex-wrap gap-2 mb-2", "");
+      myMapsActions.id = "mymaps-actions";
+      myMapsActions.style.display = "none";
+      myMapsActions.innerHTML = `
+        <a href="${escAttr(mymapsUrlView)}" target="_blank" rel="noopener"
+           class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-xl bg-sakura-50/70 text-aka border border-sakura-200/50 hover:bg-sakura-100 shadow-sm">
+          ✏️ 編輯地圖
+        </a>
+        <a href="${escAttr(mymapsUrlView)}" target="_blank" rel="noopener"
+           class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-xl bg-mizu-50/70 text-ao border border-mizu-200/50 hover:bg-mizu-100 shadow-sm">
+          📱 手機開
+        </a>
+      `;
+      panes.map.appendChild(myMapsActions);
 
       // Toggle buttons
       const toggleWrap = el("div", "flex gap-1 mb-2");
@@ -1631,35 +1656,99 @@
       panes.map.appendChild(mapLoader);
 
       const iframeWrap = el("div", "w-full");
-      iframeWrap.innerHTML = `<iframe id="map-iframe"
-        width="100%"
-        height="${window.innerWidth < 640 ? 300 : Math.min(window.innerHeight * 0.65, 600)}"
-        style="border:0; display:none;"
-        allowfullscreen=""
-        loading="eager"
-        referrerpolicy="no-referrer-when-downgrade"
-        title="Journey Map"
-      ></iframe>`;
+      iframeWrap.innerHTML = `
+        <iframe id="map-iframe-directions"
+          width="100%"
+          height="${window.innerWidth < 640 ? 300 : Math.min(window.innerHeight * 0.65, 600)}"
+          style="border:0; display:none;"
+          allowfullscreen=""
+          loading="eager"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Directions Map"
+          data-src="${escAttr(directionsUrl)}"
+        ></iframe>
+        <iframe id="map-iframe-mymaps"
+          width="100%"
+          height="${window.innerWidth < 640 ? 300 : Math.min(window.innerHeight * 0.65, 600)}"
+          style="border:0; display:none;"
+          allowfullscreen=""
+          loading="eager"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Custom Map"
+          data-src="${escAttr(mymapsUrl)}"
+        ></iframe>
+        <iframe id="map-iframe-daybyday"
+          width="100%"
+          height="${window.innerWidth < 640 ? 300 : Math.min(window.innerHeight * 0.65, 600)}"
+          style="border:0; display:none;"
+          allowfullscreen=""
+          loading="eager"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Day-by-day Map"
+        ></iframe>
+      `;
       panes.map.appendChild(iframeWrap);
 
-      const iframeRaw = iframeWrap.querySelector('iframe');
-      if (iframeRaw) {
-        const updateMapHeight = function() {
-          const h = window.innerWidth < 640 ? 300 : Math.min(window.innerHeight * 0.65, 600);
-          iframeRaw.style.height = h + "px";
-          mapLoader.style.height = h + "px";
-        };
-        updateMapHeight();
-        window.addEventListener('resize', updateMapHeight);
+      const iframes = {
+        directions: iframeWrap.querySelector('#map-iframe-directions'),
+        mymaps: iframeWrap.querySelector('#map-iframe-mymaps'),
+        daybyday: iframeWrap.querySelector('#map-iframe-daybyday'),
+      };
 
-        // Show iframe on load, hide loader
-        iframeRaw.addEventListener('load', () => {
-          mapLoader.style.display = 'none';
-          iframeRaw.style.display = 'block';
+      // ─ 共用 resize handler ─
+      const updateMapHeight = function() {
+        const h = window.innerWidth < 640 ? 340 : Math.min(window.innerHeight * 0.65, 600);
+        Object.values(iframes).forEach(f => { if (f) f.style.height = h + "px"; });
+        mapLoader.style.height = h + "px";
+      };
+      updateMapHeight();
+      window.addEventListener('resize', updateMapHeight);
+
+      // ─ 每個 iframe 各自 loading handler ─
+      Object.entries(iframes).forEach(([, f]) => {
+        if (!f) return;
+        // 從 data-src 讀取 src（等於可以 lazy init）
+        if (f.dataset.src) {
+          f.src = f.dataset.src;
+          delete f.dataset.src;
+        }
+        f.addEventListener('load', () => {
+          // 只處理當前 visible 嘅 iframe
+          if (f.style.display !== 'none') {
+            mapLoader.style.display = 'none';
+          }
         });
+      });
 
-        // Initial load
-        iframeRaw.src = directionsUrl;
+      // ─ 共用 helper：切 iframe display ─
+      function showMapMode(mode) {
+        Object.entries(iframes).forEach(([m, f]) => {
+          if (!f) return;
+          f.style.display = m === mode ? 'block' : 'none';
+        });
+        // Show loader for the active iframe (will be hidden on load)
+        mapLoader.style.display = 'flex';
+        const activeIframe = iframes[mode];
+        if (activeIframe && activeIframe.contentWindow) {
+          // 如果已 load 過（contentDocument），即刻 hide loader
+          try {
+            if (activeIframe.contentDocument && activeIframe.contentDocument.body) {
+              mapLoader.style.display = 'none';
+            }
+          } catch(e) { /* cross-origin, wait for load event */ }
+        }
+      }
+
+      // ─ Initial mode from hash ─
+      let initialMode = "directions";
+      try {
+        const m = location.hash.match(/mapmode=(\w+)/);
+        if (m && ["directions","mymaps","daybyday"].includes(m[1])) initialMode = m[1];
+      } catch(e) {}
+      showMapMode(initialMode);
+      if (initialMode !== "directions") {
+        const initBtn = toggleWrap.querySelector(`[data-map-mode="${initialMode}"]`);
+        if (initBtn) initBtn.click();
       }
 
       // ─ Mode descriptions ─
@@ -1681,18 +1770,25 @@
           modeDesc.textContent = modeDescriptions[mode] || "";
           // Show/hide "開啟全螢幕" link
           openMyMaps.style.display = mode === "mymaps" ? "inline-flex" : "none";
+          // Show/hide ✏️ 編輯地圖 + 📱 手機開
+          myMapsActions.style.display = mode === "mymaps" ? "flex" : "none";
           // Show/hide day selector
           if (mode === "daybyday") {
             daySelectPanel.classList.remove("hidden");
           } else {
             daySelectPanel.classList.add("hidden");
           }
-          // Show loader, hide iframe
-          mapLoader.style.display = "flex";
-          iframeRaw.style.display = "none";
-          if (mode === "directions") iframeRaw.src = directionsUrl;
-          else if (mode === "mymaps") iframeRaw.src = mymapsUrl;
-          // daybyday: iframe stays as-is until a day is selected
+          // Show loader, hide iframe — but now we just showMapMode
+          showMapMode(mode);
+          let src = "";
+          if (mode === "directions") src = directionsUrl;
+          else if (mode === "mymaps") src = mymapsUrl;
+          // daybyday: src stays as-is, handled by day select
+          if (iframes[mode] && iframes[mode].src !== src && src) {
+            iframes[mode].src = src;
+          }
+          // ─ URL hash persistence ─
+          try { history.replaceState(null, "", "#mapmode=" + mode); } catch(e) {}
         });
       });
 
@@ -1704,7 +1800,7 @@
             const active = parseInt(b.dataset.day, 10) === dayNum;
             b.className = `day-select-btn text-xs px-2.5 py-1 rounded-lg ${active ? "bg-sakura-100 text-aka border border-sakura-200/50 shadow-sm" : "bg-sakura-50/70 text-sumi/60 border border-sakura-200/30 hover:bg-sakura-100 hover:text-aka transition"}`;
           });
-          iframeRaw.src = buildDayRoute(trip, dayNum);
+          iframes.daybyday.src = buildDayRoute(trip, dayNum);
         });
       });
 
