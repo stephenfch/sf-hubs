@@ -1,0 +1,20 @@
+# =============================================================================
+# Travel Journal Worker — CF Workers + KV
+# =============================================================================
+name = "travel-journal"
+main = "journal-worker.js"
+compatibility_date = "2025-07-15"
+
+# KV namespace for journal entries
+[[kv_namespaces]]
+binding = "JOURNAL_KV"
+id = "d1b1e89759d541ac838f78139333157f"
+
+# Rate limiting config
+[vars]
+RATE_LIMIT = "30"
+ALLOWED_ORIGIN = "*"
+
+[observability]
+enabled = true
+head_sampling_rate = 1

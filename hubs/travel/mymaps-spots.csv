@@ -1,32 +1,34 @@
-﻿Name,Day,Category,Time,Note,MapLink
-"姫路ロイネットホテル",Day1,酒店,,姬路大和 ROYNET 酒店 住宿（抵達夜）,
-"神戸牛 ステーキ",Day1,餐飲,18:00,落機後直去食神戶牛（店未定，geocode 可能偏，手動拖 marker）,
-"笹ヶ丘公園",Day2,景點,,小朋友放電公園 | 地址 423 Enkoji Sayo Hyogo,https://maps.app.goo.gl/Gmcb4U6UByx3fKcJ8
-"東徳久 ひまわり畑",Day2,景點(tbc),,向日葵 7/18-7/25 開花 | 原 plan 漆野本村 19/7 未開,https://maps.app.goo.gl/LxDkKXbH4QP1JnkH8
-"テンマヤハピネス 久谷",Day2,購物,,Daiso/超市補給 | Tenmaya Happies Koge 214-1 Okudani Yazu,https://maps.app.goo.gl/H73NKakvsUVfdpZB9
-"鳥取駅前 グリーンリッチホテル",Day2,酒店,,鳥取 Green Rich Hotel 住宿（3 晚第 1 晚）,
-"鳥取砂丘こどもの国",Day3,景點,,アイエム電子鳥取砂丘こどもの国,https://kodomonokuni.tottori.jp/
-"鳥取駅前 グリーンリッチホテル",Day3,酒店,,鳥取 Green Rich Hotel 住宿（第 2 晚）,
-"鳥取砂丘",Day4,景點,,砂丘活動 Camel/滑沙,https://www.sakyu-vc.com/jp/activity/
-"砂の美術館",Day4,景點,,砂丘旁室內冷氣 35°C 酷暑最佳中途站,
-"鳥取駅前 グリーンリッチホテル",Day4,酒店,,鳥取 Green Rich Hotel 住宿（第 3 晚）,
-"とっとり花回廊",Day5,景點,09:00,9:00-17:00 週二休→週三 OK,https://maps.app.goo.gl/baQ8LfdeNz2DBpJA8
-"大山 美居温泉リゾート",Day5,酒店,,鳥取大山美居溫泉度假酒店 溫泉親子友善,
-"あぐりガーデン 真庭",Day6,景點,11:00,11:00-14:00 公園+動物 10-18 營業週三休,https://maps.app.goo.gl/MbLUfyzQZLkoDC9p9
-"岡山 桃狩り農園",Day6,景點,15:00,吉井農園/TOMOMIEN 桃茂実苑/美作農園 桃放題需預約,
-"姫路ロイネットホテル",Day6,酒店,,住宿（23/7 住姬路 or 岡山待定）,
-"姫路セントラルパーク",Day7,景點(選A),,可揸自己車入園睇動物 Biante MPV OK,
-"サイクルモノレール",Day7,景點(選B),,吹田/北大阪,https://maps.app.goo.gl/UMtjBTqck7JcHsY99
-"ひまわり公園",Day7,景點(選C tbc),,需 23/7 住岡山先可以咁排,https://maps.app.goo.gl/2wizmnHLECd81YsH8
-"大阪 ホテル",Day7,酒店,,住宿（梅田/北區）,
-"大阪府立大型児童館ビッグバン",Day8,景點,,親子室內遊樂,https://maps.app.goo.gl/Quh1nbtdTJG6s6xx6
-"大阪天満宮 天神祭",Day8,景點,13:00,天神祭本宮 13:00-23:00 交通管制 搭車入唔揸車,
-"毛馬桜之宮公園",Day8,景點,19:30,天神祭花火 19:30-21:00 帶細路去北側避人逼,
-"大阪 梅田 ホテル",Day8,酒店,,用 akippa 預約高 2.0m 以上平面位泊 Biante,
-"イオン夢みの森公園",Day9,景點,,近機場輕鬆活動,https://maps.app.goo.gl/4ZRT2DJKN7nw1XiUA
-"関西国際空港 KIX",Day9,交通,,16:00 還車 + 18:30 CX595 起飛返港,
-"水木しげるロード",備選,景點,,境港 妖怪銅像 177 座 細路鍾意,
-"わらべ館",備選,景點,,鳥取市內室內玩具館 落雨/酷暑 backup,
-"姫路城",備選,景點,,住姬路兩晚但冇 plan 入城 抽 1-2hr 外圍都好,
-"鶉野飛行場跡地",備選,景點,,26/7 備選 近 KIX,https://www.city.kasai.hyogo.jp/life/3/
-"兵庫県立国見の森公園",備選,景點,,26/7 備選,https://www.kuniminomori.jp/sp/
+﻿Name,Day,Category,Lat,Lon,Mapcode,DriveToNext,URL,Note
+"✈️ CX506 HKG→KIX",Day1_交通,交通,22.3080,113.9145,,"4.5hr(飛)",,"10:25-15:10 去程"
+"🛬 KIX 關西國際機場",Day1_交通,交通,34.4320,135.2304,,"1.5hr→神戶",https://www.kansai-airport.or.jp/,"15:10抵達・16:00出閘"
+"🍽️ 神戸牛 雅 三北店",Day1_神戶,餐飲,34.6930,135.1940,,"1hr→姬路",https://www.koubegyuu.com/miyabi-sankita,"18:00 落機第一餐・建議訂位"
+"🏨 姬路大和ROYNET酒店",Day1_姬路,酒店,34.8167,134.6833,,"—(住)",,"Check-in Day1"
+"🌳 笹ヶ丘公園 Sasagaoka Park",Day2_姬路→鳥取,景點,34.9530,134.3660,,"15min→向日葵",https://maps.app.goo.gl/Gmcb4U6UByx3fKcJ8,"100m滑梯・小朋友放電"
+"🌻 東徳久向日葵畑",Day2_姬路→鳥取,景點(tbc),35.0100,134.4100,,"→Tea Time(沿途)",https://maps.app.goo.gl/LxDkKXbH4QP1JnkH8,"7/18-7/25見頃・原漆野本村改此"
+"🛒 Tenmaya Happies 超市補給",Day2_姬路→鳥取,購物,35.4300,134.2200,,"30min→Green Rich",https://maps.app.goo.gl/H73NKakvsUVfdpZB9,"Daiso/超市・鳥取八頭町"
+"🏨 鳥取 Green Rich Hotel 駅前",Day2_鳥取,酒店,35.5039,134.2378,,"—(住3晚)",,"Day2-4住宿・3晚"
+"🧒 鳥取沙丘兒童之國",Day3_鳥取,景點,35.5339,134.2243,125 702 668,"15min→酒店",https://kodomonokuni.tottori.jp/,"免費入場・動物區+遊具"
+"🏨 鳥取 Green Rich Hotel 駅前",Day3_鳥取,酒店,35.5039,134.2378,,"—",,"Day3 住宿"
+"🏜️ 鳥取沙丘",Day4_鳥取,景點,35.5350,134.2350,125 733 831*70,"5min→美術館",https://www.sakyu-vc.com/jp/activity/,"騎駱駝/滑沙/散步"
+"🎨 砂の美術館",Day4_鳥取,景點,35.5340,134.2330,125 733 357*74,"15min→酒店",https://www.sakyu-vc.com/jp/sandmuseum/,"室內冷氣・酷暑backup"
+"🏨 鳥取 Green Rich Hotel 駅前",Day4_鳥取,酒店,35.5039,134.2378,,"—",,"Day4 住宿"
+"🌸 鳥取花回廊",Day5_鳥取→大山,景點,35.3453,133.4236,252 335 299*37,"15min→大山美居",https://maps.app.goo.gl/baQ8LfdeNz2DBpJA8,"9:00-17:00・週二休→週三OK"
+"🏨 大山美居溫泉度假酒店",Day5_大山,酒店,35.4100,133.4800,,"—(住)",,"溫泉親子友善"
+"🌿 真庭あぐりガーデン",Day6_真庭,景點,35.0593,133.7522,235 795 677*12,"45min→岡山",https://maps.app.goo.gl/MbLUfyzQZLkoDC9p9,"11:00-14:00・公園+動物"
+"🍑 岡山摘桃 (桃茂実苑)",Day6_岡山,景點,34.6800,133.9200,,"1.5hr→姬路",https://www.tomomien-okayama.com/,"15:00・需預約"
+"🏨 姬路大和ROYNET酒店",Day6_姬路,酒店,34.8167,134.6833,,"—(住)",,"Day6 住宿"
+"🅰️ 🦁 姫路中央公園 Safari",Day7_選A,景點,34.8400,134.7000,24 436 128*13,"—→大阪",https://www.central-park.co.jp/,"可揸車入Safari區"
+"🅱️ 🚲 Cycle Monorail 生駒山",Day7_選B,景點,34.6800,135.6800,,"—→大阪",https://maps.app.goo.gl/UMtjBTqck7JcHsY99,"空中自轉單軌360°絕景"
+"🅲️ 🌻 向日葵公園(岡山)",Day7_選C,景點,34.6600,133.9000,,"—→大阪",https://maps.app.goo.gl/2wizmnHLECd81YsH8,"需23/7住岡山先排到"
+"🏨 大阪酒店(梅田/北區)",Day7_大阪,酒店,34.7000,135.5000,,"—(住)",,"高2.0m以上平面位泊車"
+"🎡 大阪府立兒童館 ビッグバン",Day8_堺,景點,34.5833,135.4667,10 556 899*37,"30min→天神祭",https://maps.app.goo.gl/Quh1nbtdTJG6s6xx6,"室內親子・酷暑backup"
+"⛩️ 大阪天満宮 天神祭",Day8_大阪,景點,34.6960,135.5126,,"徒歩→花火",https://www.tenjinmatsuri.com/,"13:00-23:00・搭車入唔揸車"
+"🎆 毛馬桜之宮公園 天神祭花火",Day8_大阪,景點,34.7050,135.5200,,"—→酒店",,"19:30-21:00・北側較少人"
+"🏨 大阪酒店(梅田/北區)",Day8_大阪,酒店,34.7000,135.5000,,"—(住)",,"akippa預約平面泊位"
+"🌳 永旺夢美園公園 Eiraku",Day9_大阪→KIX,景點,34.4200,135.2500,,"15min→KIX",https://maps.app.goo.gl/4ZRT2DJKN7nw1XiUA,"還車前放電"
+"✈️ KIX 還車 + CX595 返港",Day9_KIX,交通,34.4320,135.2304,,"—",,"16:00還車・18:30起飛"
+"💡 水木しげるロード(境港)",備選,景點,35.5422,133.2500,109 762 136*35,,"https://maps.app.goo.gl/mizuki","妖怪銅像177座・細路鍾意"
+"💡 わらべ館(鳥取)",備選,景點,35.5000,134.2300,125 613 130*05,,"https://warabe.or.jp/","室內玩具館・落雨backup"
+"💡 姬路城",備選,景點,34.8394,134.6939,24 308 317*17,,"https://www.himejicastle.jp/","日本第一名城・抽1-2hr外圍"
+"💡 鶉野飛行場跡地(加西)",備選,景點,34.9000,134.9500,,,,"26/7備選・近KIX"
+"💡 国見の森公園(加東)",備選,景點,34.9300,135.0100,114 828 841*64,,"https://www.kuniminomori.jp/sp/","BBQ+自然體驗・返機場前"

@@ -929,18 +929,19 @@
       </div>`;
     detail.appendChild(header);
 
-    // flights strip
+    // flights strip — compact inline
     if (trip.flights && trip.flights.length) {
-      const fwrap = el("div", "grid grid-cols-1 md:grid-cols-2 gap-4 mb-8");
+      const fwrap = el("div", "flex flex-wrap gap-x-4 gap-y-1.5 mb-6 px-0.5");
       trip.flights.forEach((f) => {
-        const fcard = el("div", "bg-white/80 border border-sakura-200/30 rounded-xl p-4 flex items-center gap-3 shadow-wa hover:shadow-sakura transition-all");
+        const fcard = el("span", "inline-flex items-center gap-1.5 text-xs text-sumi/50");
         fcard.innerHTML = `
-          <div class="text-2xl animate-float">${f.from === "HKG" ? "🛫" : "🛬"}</div>
-          <div class="flex-1">
-            <div class="text-sm font-medium text-sumi/75">✈️ ${esc(f.flight)} · ${esc(f.from)} → ${esc(f.to)}</div>
-            <div class="text-xs text-sumi/40 mt-0.5">📅 ${fmtDate(f.date)} · ${esc(f.depart)} – ${esc(f.arrive)}</div>
-            <div class="text-xs text-sumi/25 mt-0.5">${esc(f.note || "")}</div>
-          </div>`;
+          <span>${f.from === "HKG" ? "🛫" : "🛬"}</span>
+          <span class="font-medium text-sumi/60">${esc(f.flight)}</span>
+          <span>${esc(f.from)}→${esc(f.to)}</span>
+          <span class="text-sumi/30">·</span>
+          <span>📅 ${fmtDate(f.date)}</span>
+          <span>${esc(f.depart)}–${esc(f.arrive)}</span>
+          ${f.note ? `<span class="text-sumi/25">· ${esc(f.note)}</span>` : ""}`;
         fwrap.appendChild(fcard);
       });
       detail.appendChild(fwrap);
@@ -1270,6 +1271,34 @@
       });
 
       // ─ Imgur Upload ─
+      async function uploadToImgur(file, cid, maxRetries) {
+        const form = new FormData();
+        form.append('image', file);
+        let lastErr;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          if (attempt > 1) await new Promise(r => setTimeout(r, 1000 * attempt));
+          try {
+            const res = await fetch('https://api.imgur.com/3/image', {
+              method: 'POST',
+              headers: { 'Authorization': `Client-ID ${cid}` },
+              body: form
+            });
+            const bodyText = await res.text();
+            let data;
+            try { data = JSON.parse(bodyText); } catch (_) {
+              const snippet = bodyText.replace(/\n/g, ' ').substring(0, 80);
+              throw new Error(`Imgur server error（HTTP ${res.status}）: ${snippet}`);
+            }
+            if (data.success && data.data?.link) return data.data.link;
+            if (data.data?.error) throw new Error(`Imgur: ${data.data.error}`);
+            throw new Error('Imgur upload failed (unknown)');
+          } catch (e) {
+            lastErr = e;
+            if (attempt < maxRetries && res && res.status === 503) continue;
+          }
+        }
+        throw lastErr;
+      }
       document.getElementById('btn-upload-imgur').addEventListener('click', async () => {
         if (!selectedFile) return;
         const cid = localStorage.getItem('imgur_client_id');
@@ -1278,44 +1307,22 @@
         progress.classList.remove('hidden');
         document.getElementById('btn-upload-imgur').disabled = true;
         try {
-          const form = new FormData();
-          form.append('image', selectedFile);
-          const res = await fetch('https://api.imgur.com/3/image', {
-            method: 'POST',
-            headers: { 'Authorization': `Client-ID ${cid}`, 'Accept': 'application/json' },
-            body: form
-          });
-          // 先讀 text，避免 XML/HTML response 令 .json() 爆
-          const bodyText = await res.text();
-          let data;
-          try {
-            data = JSON.parse(bodyText);
-          } catch (_parseErr) {
-            // 唔係 JSON — 睇返 response 狀態同 body 頭幾十字
-            const snippet = bodyText.substring(0, 120).replace(/\n/g, ' ');
-            throw new Error(`Imgur 回傳非 JSON（HTTP ${res.status}）: ${snippet}`);
-          }
-          if (data.success && data.data?.link) {
-            uploadedUrl = data.data.link;
-            document.getElementById('imgur-result').classList.remove('hidden');
-            document.getElementById('imgur-result').textContent = `✅ 已上載 → ${uploadedUrl}`;
-            // ── 自動同步到 Cloudflare Worker KV ──
-            const day = parseInt(document.getElementById('j-day').value, 10);
-            const spot = document.getElementById('j-spot').value.trim();
-            const caption = document.getElementById('j-caption').value.trim();
-            const now = new Date();
-            const time = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-            const entry = { day, time, spot: spot || "(未填)", caption: caption || "", photo: uploadedUrl };
-            postJournalEntry(trip.id, entry).then((res) => {
-              if (res && res.ok) {
-                document.getElementById('imgur-result').textContent = `✅ 已同步 ☁️ → 共 ${res.total} 筆`;
-                document.getElementById('btn-copy-journal').disabled = false;
-              }
-            }).catch(() => {});
-            // ── /Worker KV sync ──
-          } else {
-            throw new Error(data.data?.error || 'Upload failed');
-          }
+          uploadedUrl = await uploadToImgur(selectedFile, cid, 3);
+          document.getElementById('imgur-result').classList.remove('hidden');
+          document.getElementById('imgur-result').textContent = `✅ 已上載 → ${uploadedUrl}`;
+          // ── 自動同步到 Cloudflare Worker KV ──
+          const day = parseInt(document.getElementById('j-day').value, 10);
+          const spot = document.getElementById('j-spot').value.trim();
+          const caption = document.getElementById('j-caption').value.trim();
+          const now = new Date();
+          const time = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+          const entry = { day, time, spot: spot || "(未填)", caption: caption || "", photo: uploadedUrl };
+          postJournalEntry(trip.id, entry).then((res) => {
+            if (res && res.ok) {
+              document.getElementById('imgur-result').textContent = `✅ 已同步 ☁️ → 共 ${res.total} 筆`;
+              document.getElementById('btn-copy-journal').disabled = false;
+            }
+          }).catch(() => {});
         } catch (err) {
           document.getElementById('imgur-result').classList.remove('hidden');
           document.getElementById('imgur-result').textContent = `❌ 上載失敗: ${err.message}（繼續用 placeholder）`;
