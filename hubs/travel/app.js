@@ -1,5 +1,5 @@
 // =============================================================================
-// Travel Hub — app.js
+// Travel Hub — app.js (和風輕亮版)
 // 渲染 window.TRAVEL_DATA → trip 卡片 + 每日 itinerary + 景點 info + 📸加相 + 📔日誌
 // Vanilla JS，zero dependency
 // =============================================================================
@@ -27,14 +27,14 @@
     return dt.toLocaleDateString("zh-HK", { month: "short", day: "numeric" });
   }
   function statusMeta(s) {
-    if (s === "upcoming") return { label: "Upcoming", cls: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" };
-    if (s === "ongoing") return { label: "Ongoing", cls: "bg-sky-500/15 text-sky-300 border-sky-500/30" };
-    return { label: "Past", cls: "bg-white/10 text-white/50 border-white/20" };
+    if (s === "upcoming") return { label: "Upcoming", cls: "bg-matcha/15 text-matcha border-matcha/30" };
+    if (s === "ongoing") return { label: "Ongoing", cls: "bg-ai/15 text-ai border-ai/30" };
+    return { label: "Past", cls: "bg-sumi/10 text-sumi/40 border-sumi/20" };
   }
   function riskMeta(l) {
-    if (l === "red") return { dot: "bg-red-500", tag: "bg-red-500/15 text-red-300 border-red-500/30", label: "高" };
-    if (l === "orange") return { dot: "bg-orange-500", tag: "bg-orange-500/15 text-orange-300 border-orange-500/30", label: "中" };
-    return { dot: "bg-yellow-500", tag: "bg-yellow-500/15 text-yellow-300 border-yellow-500/30", label: "低" };
+    if (l === "red") return { dot: "bg-aka", tag: "bg-aka/15 text-aka border-aka/30", label: "高" };
+    if (l === "orange") return { dot: "bg-orange-400", tag: "bg-orange-100 text-orange-600 border-orange-200", label: "中" };
+    return { dot: "bg-amber-400", tag: "bg-amber-100 text-amber-700 border-amber-200", label: "低" };
   }
 
   // 移除 emoji / 裝飾符號，拎出純地名做 Google Maps 搜尋 query
@@ -71,30 +71,44 @@
   }
   // MapCode → Mapion 導航網址
   function mapcodeUrl(mc) {
-    const code = String(mc).replace(/\s+/g, "");
-    return `https://www.mapion.co.jp/route/?nl=1&uc=${encodeURIComponent(code)}`;
+    const code = String(mc).replace(/\s/g, "");
+    return `https://www.mapion.co.jp/m/${code}`;
   }
 
-  // ---- WMO weather codes → emoji mapping（Open-Meteo 免費 API）--------------
+  // ---- Day card 背景圖 mapping（Unsplash 日本主題）--------------------------
+  const DAY_BG = [
+    "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=60&w=400&auto=format", // bamboo
+    "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?q=60&w=400&auto=format", // fushimi inari
+    "https://images.unsplash.com/photo-1578271887552-5ac3a72752bc?q=60&w=400&auto=format", // tokyo tower
+    "https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?q=60&w=400&auto=format", // jp garden
+    "https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?q=60&w=400&auto=format", // lantern
+    "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=60&w=400&auto=format", // mt fuji
+    "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=60&w=400&auto=format", // jp street
+    "https://images.unsplash.com/photo-1528360983277-13d401cdc186?q=60&w=400&auto=format", // cherry blossoms
+    "https://images.unsplash.com/photo-1504196606672-aef0c2b87fef?q=60&w=400&auto=format", // onsen
+  ];
+  function dayBg(day) { return DAY_BG[(day - 1) % DAY_BG.length]; }
+
+  // ---- 天氣 data / fetch（Open-Meteo free API）-----------------------------
   const WMO = {
-    0:  { icon: "☀️", label: "天晴" },
-    1:  { icon: "🌤️", label: "大致天晴" },
+    0:  { icon: "☀️", label: "晴朗" },
+    1:  { icon: "🌤️", label: "大致晴朗" },
     2:  { icon: "⛅", label: "多雲" },
     3:  { icon: "☁️", label: "陰天" },
     45: { icon: "🌫️", label: "霧" },
-    48: { icon: "🌫️", label: "霧淞" },
-    51: { icon: "🌦️", label: "微雨" },
+    48: { icon: "🌫️", label: "霧凇" },
+    51: { icon: "🌦️", label: "小毛毛雨" },
     53: { icon: "🌦️", label: "毛毛雨" },
-    55: { icon: "🌦️", label: "密毛雨" },
+    55: { icon: "🌦️", label: "大毛毛雨" },
     56: { icon: "🌦️", label: "凍毛毛雨" },
-    57: { icon: "🌦️", label: "密凍毛毛雨" },
-    61: { icon: "🌧️", label: "雨" },
-    63: { icon: "🌧️", label: "中雨" },
+    57: { icon: "🌦️", label: "凍大毛毛雨" },
+    61: { icon: "🌦️", label: "小雨" },
+    63: { icon: "🌦️", label: "中雨" },
     65: { icon: "🌧️", label: "大雨" },
     66: { icon: "🌧️", label: "凍雨" },
-    67: { icon: "🌧️", label: "密凍雨" },
-    71: { icon: "❄️", label: "雪" },
-    73: { icon: "❄️", label: "中雪" },
+    67: { icon: "🌧️", label: "凍大雨" },
+    71: { icon: "🌨️", label: "小雪" },
+    73: { icon: "🌨️", label: "中雪" },
     75: { icon: "❄️", label: "大雪" },
     77: { icon: "❄️", label: "雪粒" },
     80: { icon: "🌦️", label: "陣雨" },
@@ -108,7 +122,6 @@
   };
   const _weatherCache = {}; // "lat,lon|date" → promise of { icon, label, high, low }
 
-  // 從 location 字串拎主要城市 → weatherCoords
   function resolveCoords(locStr, trip) {
     const coords = trip.weatherCoords || {};
     if (coords[locStr]) return coords[locStr];
@@ -122,7 +135,6 @@
     return null;
   }
 
-  // 用 Open-Meteo API（free，no API key）fetch 單日天氣
   async function fetchWeather(lat, lon, dateStr) {
     const cacheKey = `${lat},${lon}|${dateStr}`;
     if (_weatherCache[cacheKey]) return _weatherCache[cacheKey];
@@ -146,7 +158,6 @@
     return promise;
   }
 
-  // Fetch 全日程天氣 → 更新 DOM
   async function loadWeatherForTrip(trip) {
     if (!trip.days) return;
     const unique = {};
@@ -167,34 +178,34 @@
       if (r.status === "fulfilled" && r.value) {
         badge.textContent = `${r.value.icon} ${r.value.high}°/${r.value.low}°`;
         badge.setAttribute("data-tip", `${r.value.label} · 最高 ${r.value.high}°C · 最低 ${r.value.low}°C`);
-        badge.className = "weather-badge text-xs px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/20 cursor-default relative";
+        badge.className = "weather-badge text-xs px-1.5 py-0.5 rounded bg-ao-50/70 text-ao/80 border border-ao-100/50 cursor-default relative";
       } else {
         badge.textContent = "🌡️ N/A";
-        badge.className = "weather-badge text-xs px-1.5 py-0.5 rounded bg-white/5 text-white/40";
+        badge.className = "weather-badge text-xs px-1.5 py-0.5 rounded bg-sumi/5 text-sumi/40";
       }
     });
   }
 
-  // ---- 加相 modal（A 模式：貼 URL → 生成要 push 嘅 snippet）-----------------
+  // ---- 加相 modal（A 模式）--------------------------------------------------
   function openAddPhoto(tripId, dayNum, itemTitle, itemIndex) {
-    const overlay = el("div", "fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4");
-    const box = el("div", "w-full max-w-lg bg-card border border-white/10 rounded-2xl p-5 shadow-2xl");
+    const overlay = el("div", "fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4");
+    const box = el("div", "w-full max-w-lg bg-paper-100 border border-paper-200 rounded-2xl p-5 shadow-wa-lg");
     box.innerHTML = `
       <div class="flex items-center justify-between mb-3">
-        <h3 class="text-base font-bold text-white/90">📸 加相 — ${esc(itemTitle)}</h3>
-        <button class="text-white/40 hover:text-white text-xl leading-none" data-close>✕</button>
+        <h3 class="text-base font-bold text-sumi/90">📸 加相 — ${esc(itemTitle)}</h3>
+        <button class="text-sumi/40 hover:text-sumi text-xl leading-none" data-close>✕</button>
       </div>
-      <p class="text-xs text-white/50 mb-3 leading-relaxed">貼你嘅相 URL（Google Photos / Imgur / GitHub issue 附件）。呢度只係<b class="text-white/70">本機預覽</b>；要 publish 就 copy 底嘅 code 貼落 <code class="text-accent">data.js</code> 再 push 去 main。</p>
-      <label class="block text-xs text-white/60 mb-1">相片 URL</label>
-      <input data-url class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90 outline-none focus:border-accent mb-3" placeholder="https://photos.app.goo.gl/xxxx 或 https://i.imgur.com/yyyy.jpg" />
-      <label class="block text-xs text-white/60 mb-1">Caption（一句說明，可留空）</label>
-      <input data-cap class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90 outline-none focus:border-accent mb-3" placeholder="例如：滑沙超好玩！" />
+      <p class="text-xs text-sumi/50 mb-3 leading-relaxed">貼你嘅相 URL（Google Photos / Imgur / GitHub issue 附件）。呢度只係<b class="text-sumi/80">本機預覽</b>；要 publish 就 copy 底嘅 code 貼落 <code class="text-aka">data.js</code> 再 push 去 main。</p>
+      <label class="block text-xs text-sumi/60 mb-1">相片 URL</label>
+      <input data-url class="w-full bg-white border border-paper-200 rounded-lg px-3 py-2 text-sm text-sumi/90 outline-none focus:border-aka/50 mb-3" placeholder="https://photos.app.goo.gl/xxxx 或 https://i.imgur.com/yyyy.jpg" />
+      <label class="block text-xs text-sumi/60 mb-1">Caption（一句說明，可留空）</label>
+      <input data-cap class="w-full bg-white border border-paper-200 rounded-lg px-3 py-2 text-sm text-sumi/90 outline-none focus:border-aka/50 mb-3" placeholder="例如：滑沙超好玩！" />
       <div data-preview class="mb-3 hidden"></div>
       <div class="flex gap-2 mb-3">
-        <button data-prev class="flex-1 px-3 py-2 rounded-lg bg-accent/15 text-accent text-sm font-medium hover:bg-accent/25 transition">👁 本機預覽</button>
-        <button data-copy class="flex-1 px-3 py-2 rounded-lg bg-emerald-500/15 text-emerald-300 text-sm font-medium hover:bg-emerald-500/25 transition">📋 複製 code</button>
+        <button data-prev class="flex-1 px-3 py-2 rounded-lg bg-aka/15 text-aka text-sm font-medium hover:bg-aka/25 transition">👁 本機預覽</button>
+        <button data-copy class="flex-1 px-3 py-2 rounded-lg bg-matcha/15 text-matcha text-sm font-medium hover:bg-matcha/25 transition">📋 複製 code</button>
       </div>
-      <div data-snippet class="hidden text-[11px] bg-black/40 border border-white/10 rounded-lg p-3 text-white/70 font-mono whitespace-pre-wrap break-all"></div>
+      <div data-snippet class="hidden text-[11px] bg-white border border-paper-200 rounded-lg p-3 text-sumi/70 font-mono whitespace-pre-wrap break-all"></div>
     `;
     overlay.appendChild(box);
     document.body.appendChild(overlay);
@@ -222,7 +233,7 @@
       const u = urlI.value.trim();
       if (!u) { prevBox.classList.add("hidden"); return; }
       prevBox.classList.remove("hidden");
-      prevBox.innerHTML = `<img src="${esc(u)}" class="w-full max-h-60 object-contain rounded-lg bg-black/30" onerror="this.parentNode.innerHTML='<div class=\\'text-xs text-red-300 p-2\\'>⚠️ 相 URL 載唔到，檢查下個 link</div>'" /><div class="text-xs text-white/50 mt-1">${esc(capI.value.trim() || "(無 caption)")}</div>`;
+      prevBox.innerHTML = `<img src="${esc(u)}" class="w-full max-h-60 object-contain rounded-lg bg-white" onerror="this.parentNode.innerHTML='<div class=\'text-xs text-red-400 p-2\'>⚠️ 相 URL 載唔到，檢查下個 link</div>'" /><div class="text-xs text-sumi/50 mt-1">${esc(capI.value.trim() || "(無 caption)")}</div>`;
     }
     function showSnippet() {
       const snip = buildSnippet();
@@ -248,32 +259,38 @@
   // ---- render: trip cards --------------------------------------------------
   function renderTrips(container) {
     if (!DATA.trips.length) {
-      container.appendChild(el("div", "text-white/40 text-sm", "暫時無行程資料"));
+      container.appendChild(el("div", "text-sumi/40 text-sm", "暫時無行程資料"));
       return;
     }
     DATA.trips.forEach((trip) => {
       const st = statusMeta(trip.status);
-      const card = el("div", "card-hover block bg-card border border-white/5 rounded-2xl overflow-hidden cursor-pointer group");
+      const card = el("div", "card-hover block bg-white/90 border border-sakura-200/40 rounded-[20px] overflow-hidden cursor-pointer group shadow-wa");
       card.dataset.tripId = trip.id;
 
-      const hero = el("div", `h-28 bg-gradient-to-br ${trip.gradient} relative flex items-end p-4`);
+      const hero = el("div", "h-24 relative flex items-end p-4 overflow-hidden");
+      // Hero 背景：用 Unsplash 日系隨機圖片
+      const heroBg = dayBg(Math.floor(Math.random() * 9) + 1);
+      hero.style.backgroundImage = `url(${heroBg})`;
+      hero.style.backgroundSize = 'cover';
+      hero.style.backgroundPosition = 'center';
       hero.innerHTML = `
-        <div class="absolute top-3 right-3 px-2 py-0.5 rounded-full text-xs border ${st.cls} bg-card/60 backdrop-blur">${st.label}</div>
-        <span class="text-3xl drop-shadow">${esc(trip.emoji || "✈️")}</span>`;
+        <div class="absolute inset-0" style="background: linear-gradient(0deg, rgba(255,245,247,0.85) 0%, rgba(255,245,247,0.3) 70%, rgba(255,245,247,0.1) 100%);"></div>
+        <div class="absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[10px] border ${st.cls} bg-white/90 backdrop-blur-sm shadow-sm">${st.label}</div>
+        <span class="text-3xl relative z-[1] drop-shadow-lg">${esc(trip.emoji || "✈️")}</span>`;
       card.appendChild(hero);
 
       const body = el("div", "p-4");
       body.innerHTML = `
-        <h3 class="font-semibold text-lg group-hover:text-accent transition">${esc(trip.title)}</h3>
-        <p class="text-white/40 text-xs mt-0.5">${esc(trip.region || "")}</p>
-        <p class="text-white/60 text-sm mt-2 leading-relaxed">${esc(trip.summary || "")}</p>
-        <div class="mt-3 flex flex-wrap gap-2 text-xs">
-          <span class="px-2 py-1 rounded-lg bg-white/5 text-white/60">📅 ${fmtDate(trip.startDate)} – ${fmtDate(trip.endDate)}</span>
-          <span class="px-2 py-1 rounded-lg bg-white/5 text-white/60">👥 ${esc(trip.party || "")}</span>
-          <span class="px-2 py-1 rounded-lg bg-white/5 text-white/60">${esc(trip.transport || "")}</span>
+        <h3 class="font-semibold text-lg text-sumi/80 group-hover:text-aka transition" style="font-family: 'Klee One', cursive;">${esc(trip.title)}</h3>
+        <p class="text-sumi/30 text-xs mt-0.5">${esc(trip.region || "")}</p>
+        <p class="text-sumi/50 text-sm mt-1.5 leading-relaxed">${esc(trip.summary || "")}</p>
+        <div class="mt-3 flex flex-wrap gap-1.5 text-xs">
+          <span class="px-2 py-1 rounded-lg bg-sakura-50/60 text-sumi/50 border border-sakura-200/30">📅 ${fmtDate(trip.startDate)} – ${fmtDate(trip.endDate)}</span>
+          <span class="px-2 py-1 rounded-lg bg-sakura-50/60 text-sumi/50 border border-sakura-200/30">👥 ${esc(trip.party || "")}</span>
+          <span class="px-2 py-1 rounded-lg bg-sakura-50/60 text-sumi/50 border border-sakura-200/30">${esc(trip.transport || "")}</span>
         </div>
-        <div class="mt-3 flex items-center gap-2 text-accent text-xs font-medium opacity-0 group-hover:opacity-100 transition">
-          睇行程 <span>→</span>
+        <div class="mt-3 flex items-center gap-2 text-aka/60 text-xs font-medium opacity-0 group-hover:opacity-100 transition" style="font-family: 'Klee One', cursive;">
+          睇行程 <span>→ 🌸</span>
         </div>`;
       card.appendChild(body);
 
@@ -289,45 +306,46 @@
     document.getElementById("view-list").classList.add("hidden");
     const detail = document.getElementById("view-detail");
     detail.classList.remove("hidden");
+    detail.className = "max-w-5xl mx-auto px-6 py-8 pb-24 animate-fadeIn";
     detail.innerHTML = "";
 
     const st = statusMeta(trip.status);
 
-    const back = el("button", "mb-5 inline-flex items-center gap-2 text-white/50 hover:text-white transition text-sm", "← 返去所有行程");
+    const back = el("button", "mb-6 inline-flex items-center gap-2 text-sumi/40 hover:text-aka transition text-sm", "← 🌸 返去所有行程");
     back.addEventListener("click", backToList);
     detail.appendChild(back);
 
     // header
-    const header = el("div", "mb-6");
+    const header = el("div", "mb-8");
     header.innerHTML = `
       <div class="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <div class="flex items-center gap-2 mb-1">
-            <span class="text-3xl">${esc(trip.emoji || "✈️")}</span>
-            <h1 class="text-3xl font-black tracking-tight gradient-text">${esc(trip.title)}</h1>
+          <div class="flex items-center gap-3 mb-1">
+            <span class="text-4xl animate-float">${esc(trip.emoji || "✈️")}</span>
+            <h1 class="text-3xl md:text-4xl font-black tracking-tight gradient-text" style="font-family: 'Klee One', cursive;">${esc(trip.title)}</h1>
           </div>
-          <p class="text-white/40 text-sm">${esc(trip.region || "")} · ${esc(trip.summary || "")}</p>
+          <p class="text-sumi/30 text-sm" style="font-family: 'Zen Maru Gothic', sans-serif;">${esc(trip.region || "")} · ${esc(trip.summary || "")}</p>
         </div>
-        <span class="px-3 py-1 rounded-full text-xs border ${st.cls}">${st.label}</span>
+        <span class="stamp mt-1">${st.label}</span>
       </div>
       <div class="mt-4 flex flex-wrap gap-2 text-xs">
-        <span class="px-3 py-1.5 rounded-lg bg-white/5 text-white/70">📅 ${fmtDate(trip.startDate)} – ${fmtDate(trip.endDate)}</span>
-        <span class="px-3 py-1.5 rounded-lg bg-white/5 text-white/70">👥 ${esc(trip.party || "")}</span>
-        <span class="px-3 py-1.5 rounded-lg bg-white/5 text-white/70">${esc(trip.transport || "")}</span>
+        <span class="px-3 py-1.5 rounded-xl bg-sakura-50/70 text-sumi/60 border border-sakura-200/30">📅 ${fmtDate(trip.startDate)} – ${fmtDate(trip.endDate)}</span>
+        <span class="px-3 py-1.5 rounded-xl bg-sakura-50/70 text-sumi/60 border border-sakura-200/30">👥 ${esc(trip.party || "")}</span>
+        <span class="px-3 py-1.5 rounded-xl bg-sakura-50/70 text-sumi/60 border border-sakura-200/30">${esc(trip.transport || "")}</span>
       </div>`;
     detail.appendChild(header);
 
     // flights strip
     if (trip.flights && trip.flights.length) {
-      const fwrap = el("div", "grid grid-cols-1 md:grid-cols-2 gap-3 mb-6");
+      const fwrap = el("div", "grid grid-cols-1 md:grid-cols-2 gap-4 mb-8");
       trip.flights.forEach((f) => {
-        const fcard = el("div", "bg-card border border-white/5 rounded-xl p-3 flex items-center gap-3");
+        const fcard = el("div", "bg-white/80 border border-sakura-200/30 rounded-xl p-4 flex items-center gap-3 shadow-wa hover:shadow-sakura transition-all");
         fcard.innerHTML = `
-          <div class="text-2xl">${f.from === "HKG" ? "🛫" : "🛬"}</div>
+          <div class="text-2xl animate-float">${f.from === "HKG" ? "🛫" : "🛬"}</div>
           <div class="flex-1">
-            <div class="text-sm font-medium">${esc(f.flight)} · ${esc(f.from)} → ${esc(f.to)}</div>
-            <div class="text-xs text-white/50">${fmtDate(f.date)} · ${esc(f.depart)} – ${esc(f.arrive)}</div>
-            <div class="text-xs text-white/30">${esc(f.note || "")}</div>
+            <div class="text-sm font-medium text-sumi/75">✈️ ${esc(f.flight)} · ${esc(f.from)} → ${esc(f.to)}</div>
+            <div class="text-xs text-sumi/40 mt-0.5">📅 ${fmtDate(f.date)} · ${esc(f.depart)} – ${esc(f.arrive)}</div>
+            <div class="text-xs text-sumi/25 mt-0.5">${esc(f.note || "")}</div>
           </div>`;
         fwrap.appendChild(fcard);
       });
@@ -335,7 +353,7 @@
     }
 
     // tabs
-    const tabs = el("div", "flex gap-2 mb-5 border-b border-white/5 flex-wrap");
+    const tabs = el("div", "flex gap-2 mb-5 border-b border-sakura-200/40 flex-wrap");
     const tabDefs = [
       { id: "itinerary", label: "📅 每日行程" },
       { id: "journal", label: "📔 旅行日誌" },
@@ -346,7 +364,7 @@
     ];
     const panes = {};
     tabDefs.forEach((t, i) => {
-      const btn = el("button", `px-4 py-2 text-sm font-medium border-b-2 transition ${i === 0 ? "text-accent border-accent" : "text-white/40 border-transparent hover:text-white/70"}`, t.label);
+      const btn = el("button", `tab-btn px-4 py-2 text-sm font-medium ${i === 0 ? "active text-aka" : "text-sumi/40 hover:text-sumi/70"}`, t.label);
       btn.dataset.tab = t.id;
       btn.addEventListener("click", () => switchTab(t.id));
       tabs.appendChild(btn);
@@ -357,7 +375,7 @@
     function switchTab(id) {
       tabs.querySelectorAll("button").forEach((b) => {
         const on = b.dataset.tab === id;
-        b.className = `px-4 py-2 text-sm font-medium border-b-2 transition ${on ? "text-accent border-accent" : "text-white/40 border-transparent hover:text-white/70"}`;
+        b.className = `tab-btn px-4 py-2 text-sm font-medium ${on ? "active text-aka" : "text-sumi/40 hover:text-sumi/70"}`;
       });
       Object.keys(panes).forEach((k) => panes[k].classList.toggle("hidden", k !== id));
       detail.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -365,65 +383,73 @@
 
     // ---- itinerary timeline ----
     if (trip.days && trip.days.length) {
-      const tl = el("div", "relative pl-6");
-      tl.innerHTML = `<div class="absolute left-[7px] top-2 bottom-2 w-px bg-gradient-to-b from-accent/60 to-white/10"></div>`;
+      const tl = el("div", "relative pl-8");
+      tl.innerHTML = `<div class="absolute left-[15px] top-2 bottom-2 w-[2px] bg-gradient-to-b from-aka/40 via-sakura-200 to-matcha-100"></div>`;
       trip.days.forEach((d) => {
-        const node = el("div", "relative mb-6");
-        const dot = el("div", "absolute -left-[22px] top-1.5 w-3.5 h-3.5 rounded-full bg-accent ring-4 ring-accent/20");
+        const node = el("div", "relative mb-8 animate-fadeIn");
+        const dot = el("div", "absolute -left-[19px] top-1.5");
+        dot.innerHTML = `<div class="day-badge">${esc(d.day)}</div>`;
         node.appendChild(dot);
 
-        const card = el("div", "bg-card border border-white/5 rounded-xl p-4");
-        card.innerHTML = `
-          <div class="flex items-center justify-between gap-2 flex-wrap mb-3">
-            <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded-md bg-accent/15 text-accent text-xs font-bold">Day ${d.day}</span>
-              <span class="text-sm font-semibold">${esc(d.title)}</span>
-            </div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span data-weather="${d.day}" class="weather-badge text-xs px-1.5 py-0.5 rounded bg-white/5 text-white/40 border border-white/10">⏳ 載入天氣...</span>
-              <span class="text-xs text-white/40">${fmtDate(d.date)} (${esc(d.weekday || "")}) · 📍 ${esc(d.location || "")}</span>
-            </div>
+        const card = el("div", "bg-white/85 border border-sakura-200/30 rounded-xl p-5 shadow-wa kawaii-card");
+        // Day card 背景圖
+        const bgImg = el("img", "day-bg-img");
+        bgImg.src = dayBg(d.day);
+        bgImg.alt = "";
+        card.appendChild(bgImg);
+        // Content (要用 relative z-index 壓住 bg 圖)
+        const content = el("div", "relative z-[2]");
+        // === Day card header ===
+        const headerDiv = el("div", "flex items-center justify-between gap-2 flex-wrap mb-4");
+        headerDiv.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-semibold text-sumi/80" style="font-family: 'Klee One', cursive;">${esc(d.title)}</span>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span data-weather="${d.day}" class="weather-badge text-xs px-1.5 py-0.5 rounded bg-sakura-50/70 text-sumi/50 border border-sakura-200/40">⏳ 載入天氣...</span>
+            <span class="text-xs text-sumi/30">${fmtDate(d.date)} (${esc(d.weekday || "")}) · 📍 ${esc(d.location || "")}</span>
           </div>`;
+        content.appendChild(headerDiv);
 
         const list = el("div", "space-y-2");
         (d.items || []).forEach((it, idx) => {
           const row = el("div", "flex gap-3 items-start");
           const left = el("div", "w-14 shrink-0 text-right pt-0.5");
-          left.innerHTML = it.time ? `<span class="text-xs text-white/50 font-mono">${esc(it.time)}</span>` : `<span class="text-xs text-white/20">—</span>`;
+          left.innerHTML = it.time ? `<span class="text-xs text-sumi/50 font-mono">${esc(it.time)}</span>` : `<span class="text-xs text-sumi/20">—</span>`;
           const mid = el("div", "pt-1 text-base leading-none", it.icon || "•");
           const right = el("div", "flex-1");
-          const tbcCls = it.tbc ? "border-amber-500/40 bg-amber-500/5" : "border-white/5 bg-white/[0.02]";
+          const tbcCls = it.tbc ? "border-amber-300/60 bg-amber-50/80" : "border-sakura-100/40 bg-white/60";
 
           // info block（mapcode / hours / intro / photoSpot）
           let infoHtml = "";
           if (it.info) {
             const info = it.info;
             const mc = info.mapcode
-              ? `<a href="${mapcodeUrl(info.mapcode)}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 text-xs font-mono hover:bg-sky-500/25">🧭 ${esc(info.mapcode)} ↗</a>`
-              : `<span class="px-2 py-0.5 rounded bg-white/5 text-white/30 text-xs font-mono">mapcode 待填</span>`;
+              ? `<a href="${mapcodeUrl(info.mapcode)}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-ao-50/70 text-ao text-xs font-mono hover:bg-ao-100">🧭 ${esc(info.mapcode)} ↗</a>`
+              : `<span class="px-2 py-0.5 rounded bg-sumi/5 text-sumi/40 text-xs font-mono">mapcode 待填</span>`;
             infoHtml = `
               <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
                 ${mc}
-                ${info.hours ? `<span class="px-2 py-0.5 rounded bg-white/5 text-white/60">🕐 ${esc(info.hours)}</span>` : ""}
+                ${info.hours ? `<span class="px-2 py-0.5 rounded bg-kinako-50/80 text-sumi/60">🕐 ${esc(info.hours)}</span>` : ""}
               </div>
-              ${info.intro ? `<div class="text-xs text-white/55 mt-1.5 leading-relaxed">${esc(info.intro)}</div>` : ""}
-              ${info.photoSpot ? `<div class="text-xs text-emerald-300/80 mt-1">📸 拍照位：${esc(info.photoSpot)}</div>` : ""}`;
+              ${info.intro ? `<div class="text-xs text-sumi/50 mt-1.5 leading-relaxed">${esc(info.intro)}</div>` : ""}
+              ${info.photoSpot ? `<div class="text-xs text-aka/60 mt-1">📸 拍照位：${esc(info.photoSpot)}</div>` : ""}`;
           }
 
           const photoImgs = (it.info && it.info.photos && it.info.photos.length)
-            ? `<div class="mt-2 flex flex-wrap gap-2">` +
-              it.info.photos.map((p) => `<a href="${esc(p)}" target="_blank" rel="noopener"><img src="${esc(p)}" class="h-20 w-28 object-cover rounded-lg border border-white/10 hover:border-accent/50" onerror="this.style.display='none'"/></a>`).join("") +
+            ? `<div class="mt-2 photo-grid">` +
+              it.info.photos.map((p) => `<a href="${esc(p)}" target="_blank" rel="noopener"><img src="${esc(p)}" onerror="this.style.display='none'"/></a>`).join("") +
               `</div>`
             : "";
 
           right.innerHTML = `
-            <div class="rounded-lg border ${tbcCls} px-3 py-2">
-              <div class="text-sm font-medium ${it.tbc ? "text-amber-200" : "text-white/90"}">${esc(it.title)} ${it.tbc ? '<span class="text-[10px] align-middle ml-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">TBC</span>' : ""}</div>
-              ${it.desc ? `<div class="text-xs text-white/50 mt-0.5 leading-relaxed">${esc(it.desc)}</div>` : ""}
-              ${it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noopener" class="text-xs text-accent hover:underline mt-1 inline-block">🔗 連結 ↗</a>` : ""}
+            <div class="rounded-xl border ${tbcCls} px-3 py-2.5 shadow-sm backdrop-blur-sm">
+              <div class="text-sm font-medium ${it.tbc ? "text-amber-700" : "text-sumi/85"}">${esc(it.title)} ${it.tbc ? '<span class="text-[10px] align-middle ml-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-600">TBC</span>' : ""}</div>
+              ${it.desc ? `<div class="text-xs text-sumi/45 mt-0.5 leading-relaxed">${esc(it.desc)}</div>` : ""}
+              ${it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noopener" class="text-xs text-aka/70 hover:text-aka mt-1 inline-block">🔗 連結 ↗</a>` : ""}
               ${infoHtml}
               ${photoImgs}
-              <button data-addphoto class="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded bg-emerald-500/15 text-emerald-300 text-xs font-medium hover:bg-emerald-500/25 transition">📸 加相</button>
+              <button data-addphoto class="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded bg-matcha-100/60 text-matcha-400 text-xs font-medium hover:bg-matcha-200/70 transition">📸 加相</button>
             </div>`;
           row.appendChild(left);
           row.appendChild(mid);
@@ -439,11 +465,12 @@
         card.appendChild(list);
 
         if (d.hotel) {
-          const hf = el("div", "mt-3 pt-3 border-t border-white/5 flex items-center gap-2 text-xs text-white/50");
-          hf.innerHTML = `<span>🏨</span><span>${esc(d.hotel)}</span>`;
-          card.appendChild(hf);
+          const hf = el("div", "mt-4 pt-3 border-t border-sakura-100/40 flex items-center gap-2 text-xs text-sumi/40");
+          hf.innerHTML = `<span>🏨</span><span style="font-family: 'Klee One', cursive;">${esc(d.hotel)}</span>`;
+          content.appendChild(hf);
         }
 
+        card.appendChild(content);
         node.appendChild(card);
         tl.appendChild(node);
       });
@@ -452,7 +479,7 @@
       loadWeatherForTrip(trip);
     }
 
-    // ---- 旅行日誌（📔 獨立 tab）：按 Day/時間 排時間線 ----
+    // ---- 旅行日誌（📔 獨立 tab）--------------------------------------------
     (function renderJournal() {
       const j = (trip.journal || []).slice().sort((a, b) => {
         if ((a.day || 0) !== (b.day || 0)) return (a.day || 0) - (b.day || 0);
@@ -460,27 +487,28 @@
       });
       if (!j.length) {
         panes.journal.appendChild(
-          el("div", "text-center text-white/40 text-sm py-12",
-            "📔 仲未有人寫日誌～<br/>去到景點撳「📸 加相」→ 複製 code 貼落 data.js 嘅 <code class='text-accent'>journal</code> 陣列再 push 就得！")
+          el("div", "text-center text-sumi/40 text-sm py-16",
+            "🌸 仲未有人寫日誌～<br/>去到景點撳「📸 加相」→ 複製 code 貼落 data.js 嘅 <code class='text-aka/70'>journal</code> 陣列再 push 就得！")
         );
         return;
       }
-      const wrap = el("div", "relative pl-6");
-      wrap.innerHTML = `<div class="absolute left-[7px] top-2 bottom-2 w-px bg-gradient-to-b from-pink-400/50 to-white/10"></div>`;
+      const wrap = el("div", "relative pl-8");
+      wrap.innerHTML = `<div class="absolute left-[15px] top-2 bottom-2 w-[2px] bg-gradient-to-b from-aka/30 via-sakura-200 to-kinako-200"></div>`;
       j.forEach((e) => {
-        const node = el("div", "relative mb-5");
-        node.appendChild(el("div", "absolute -left-[22px] top-1.5 w-3.5 h-3.5 rounded-full bg-pink-400 ring-4 ring-pink-400/20"));
-        const card = el("div", "bg-card border border-white/5 rounded-xl p-3");
-        const head = `<div class="flex items-center gap-2 mb-2">
-            <span class="px-2 py-0.5 rounded-md bg-pink-400/15 text-pink-300 text-xs font-bold">Day ${esc(e.day || "")}</span>
-            ${e.time ? `<span class="text-xs text-white/50 font-mono">${esc(e.time)}</span>` : ""}
-            <span class="text-sm font-medium text-white/85">${esc(e.spot || "")}</span>
+        const node = el("div", "relative mb-6 animate-fadeIn");
+        const dotSpan = el("span", "absolute -left-[19px] top-1.5 w-4 h-4 rounded-full bg-gradient-to-br from-aka/80 to-sakura-200 shadow-md ring-4 ring-sakura-50");
+        node.appendChild(dotSpan);
+        const card = el("div", "bg-white/80 border border-sakura-200/30 rounded-xl p-4 shadow-wa kawaii-card");
+        const head = `<div class="flex items-center gap-2 mb-3">
+            <span class="px-2 py-0.5 rounded-md bg-sakura-100/60 text-aka/70 text-xs font-bold">Day ${esc(e.day || "")}</span>
+            ${e.time ? `<span class="text-xs text-sumi/40 font-mono">${esc(e.time)}</span>` : ""}
+            <span class="text-sm font-medium text-sumi/75" style="font-family: 'Klee One', cursive;">${esc(e.spot || "")}</span>
           </div>`;
         const photo = e.photo
-          ? `<a href="${esc(e.photo)}" target="_blank" rel="noopener"><img src="${esc(e.photo)}" class="w-full max-h-80 object-cover rounded-lg border border-white/10 hover:border-pink-400/50" onerror="this.style.display='none'"/></a>`
+          ? `<div class="mb-2 rounded-lg overflow-hidden border border-sakura-100/30"><a href="${esc(e.photo)}" target="_blank" rel="noopener"><img src="${esc(e.photo)}" class="w-full max-h-80 object-cover hover:opacity-95 transition" onerror="this.style.display='none'"/></a></div>`
           : "";
-        const cap = e.caption ? `<div class="text-sm text-white/75 mt-2 leading-relaxed">${esc(e.caption)}</div>` : "";
-        card.innerHTML = head + (photo ? `<div class="mb-1">${photo}</div>` : "") + cap;
+        const cap = e.caption ? `<div class="text-sm text-sumi/65 mt-1 leading-relaxed">${esc(e.caption)}</div>` : "";
+        card.innerHTML = head + photo + cap;
         node.appendChild(card);
         wrap.appendChild(node);
       });
@@ -489,21 +517,21 @@
 
     // ---- risks ----
     if (trip.risks && trip.risks.length) {
-      const wrap = el("div", "space-y-2");
+      const wrap = el("div", "space-y-3");
       trip.risks.forEach((r) => {
         const m = riskMeta(r.level);
-        const row = el("div", "flex gap-3 items-start bg-card border border-white/5 rounded-xl p-3");
+        const row = el("div", "flex gap-3 items-start bg-white/80 border border-sakura-200/30 rounded-xl p-4 shadow-wa kawaii-card");
         row.innerHTML = `
           <div class="flex items-center gap-2 pt-0.5">
-            <span class="w-2 h-2 rounded-full ${m.dot}"></span>
+            <span class="w-2.5 h-2.5 rounded-full ${m.dot} shadow-sm"></span>
             <span class="text-lg">${esc(r.icon || "")}</span>
           </div>
           <div class="flex-1">
             <div class="flex items-center gap-2">
-              <span class="text-sm font-medium">${esc(r.title)}</span>
+              <span class="text-sm font-medium text-sumi/80">${esc(r.title)}</span>
               <span class="text-[10px] px-1.5 py-0.5 rounded border ${m.tag}">${m.label}</span>
             </div>
-            <div class="text-xs text-white/50 mt-1 leading-relaxed">${esc(r.desc)}</div>
+            <div class="text-xs text-sumi/45 mt-1 leading-relaxed">${esc(r.desc)}</div>
           </div>`;
         wrap.appendChild(row);
       });
@@ -513,9 +541,11 @@
     // ---- tbc ----
     if (trip.tbc && trip.tbc.length) {
       const wrap = el("div", "space-y-2");
-      trip.tbc.forEach((t) => {
-        const row = el("div", "flex gap-3 items-start bg-card border border-amber-500/20 rounded-xl p-3");
-        row.innerHTML = `<span class="text-amber-400 pt-0.5">📌</span><span class="text-sm text-white/80 leading-relaxed">${esc(t)}</span>`;
+      trip.tbc.forEach((item) => {
+        const row = el("div", "flex items-start gap-3 bg-kinako-50/60 border border-kinako-200/40 rounded-xl p-4 shadow-wa");
+        row.innerHTML = `
+          <span class="text-base pt-0.5">📌</span>
+          <span class="text-sm text-sumi/70 leading-relaxed" style="font-family: 'Zen Maru Gothic', sans-serif;">${esc(item)}</span>`;
         wrap.appendChild(row);
       });
       panes.tbc.appendChild(wrap);
@@ -523,110 +553,50 @@
 
     // ---- extras ----
     if (trip.extras && trip.extras.length) {
-      const wrap = el("div", "grid grid-cols-1 md:grid-cols-2 gap-3");
-      trip.extras.forEach((x) => {
-        const card = el("div", "bg-card border border-white/5 rounded-xl p-3");
-        const info = x.info || {};
-        const mc = info.mapcode
-          ? `<a href="${mapcodeUrl(info.mapcode)}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 text-xs font-mono hover:bg-sky-500/25">🧭 ${esc(info.mapcode)} ↗</a>`
-          : "";
-        const photos = (info.photos && info.photos.length)
-          ? `<div class="mt-2 flex flex-wrap gap-2">` + info.photos.map((p) => `<a href="${esc(p)}" target="_blank" rel="noopener"><img src="${esc(p)}" class="h-20 w-28 object-cover rounded-lg border border-white/10" onerror="this.style.display='none'"/></a>`).join("") + `</div>`
-          : "";
-        card.innerHTML = `
-          <div class="text-sm font-medium text-white/90">${esc(x.title)}</div>
-          <div class="text-xs text-white/50 mt-1 leading-relaxed">${esc(x.desc || "")}</div>
-          ${mc ? `<div class="mt-2">${mc}</div>` : ""}
-          ${info.intro ? `<div class="text-xs text-white/55 mt-1.5 leading-relaxed">${esc(info.intro)}</div>` : ""}
-          ${photos}
-          ${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" class="text-xs text-accent hover:underline mt-1 inline-block">🔗 連結 ↗</a>` : ""}`;
-        wrap.appendChild(card);
+      const wrap = el("div", "grid grid-cols-1 md:grid-cols-2 gap-4");
+      trip.extras.forEach((ex) => {
+        const ext = el("div", "bg-white/80 border border-sakura-200/30 rounded-xl p-4 shadow-wa hover:shadow-sakura transition-all animate-fadeIn");
+        let infoHtml = "";
+        if (ex.info) {
+          const mc = ex.info.mapcode
+            ? `<a href="${mapcodeUrl(ex.info.mapcode)}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-ao-50/70 text-ao/70 text-xs font-mono hover:bg-ao-100">🧭 ${esc(ex.info.mapcode)} ↗</a>`
+            : "";
+          infoHtml = `
+            <div class="flex flex-wrap items-center gap-2 text-xs mt-2">
+              ${mc}
+              ${ex.info.hours ? `<span class="px-2 py-0.5 rounded bg-kinako-50/80 text-sumi/50">🕐 ${esc(ex.info.hours)}</span>` : ""}
+            </div>
+            ${ex.info.intro ? `<div class="text-xs text-sumi/45 mt-1.5 leading-relaxed">${esc(ex.info.intro)}</div>` : ""}`;
+        }
+        ext.innerHTML = `
+          <div class="text-sm font-medium text-sumi/80" style="font-family: 'Klee One', cursive;">💡 ${esc(ex.title)}</div>
+          <div class="text-xs text-sumi/45 mt-1 leading-relaxed">${esc(ex.desc)}</div>
+          ${ex.url ? `<a href="${esc(ex.url)}" target="_blank" rel="noopener" class="text-xs text-aka/60 hover:text-aka mt-1 inline-block">🔗 詳情 ↗</a>` : ""}
+          ${infoHtml}`;
+        wrap.appendChild(ext);
       });
       panes.extras.appendChild(wrap);
     }
 
-    // ---- map (Google My Maps 多 marker 互動地圖，免 API key) ----
-    if (trip.days && trip.days.length) {
-      const MYMAPS_MID = "1LuuiiWAbTEBuR2loYXmtRSgLz-vNYZE";
-      const mymapsUrl = `https://www.google.com/maps/d/embed?mid=${MYMAPS_MID}`;
-
-      const mapWrap = el("div", "");
-      const toolbar = el("div", "flex items-center gap-2 mb-3 flex-wrap");
-      const btnOverview = el("button", "px-3 py-1.5 rounded-lg bg-accent/15 text-accent text-xs font-medium hover:bg-accent/25 transition", "🗺️ 切換：路線總覽");
-      const btnMyMaps = el("button", "px-3 py-1.5 rounded-lg bg-white/5 text-white/60 text-xs font-medium hover:bg-white/10 transition", "📍 切換：My Maps 景點圖");
-      const hint = el("span", "text-xs text-white/40", "撳下方 chip → 開該景點 Google Maps 連結");
-      toolbar.appendChild(btnMyMaps);
-      toolbar.appendChild(btnOverview);
-      toolbar.appendChild(hint);
-
-      const frame = document.createElement("iframe");
-      frame.id = "gmap-frame";
-      frame.className = "w-full rounded-xl border border-white/5 bg-white/5";
-      frame.style.height = "480px";
-      frame.setAttribute("loading", "lazy");
-      frame.setAttribute("referrerpolicy", "no-referrer-when-downgrade");
-      frame.allowFullscreen = true;
-      frame.src = mymapsUrl;
-
-      btnMyMaps.addEventListener("click", () => {
-        frame.src = mymapsUrl;
-        btnMyMaps.className = "px-3 py-1.5 rounded-lg bg-accent/15 text-accent text-xs font-medium hover:bg-accent/25 transition";
-        btnOverview.className = "px-3 py-1.5 rounded-lg bg-white/5 text-white/60 text-xs font-medium hover:bg-white/10 transition";
-      });
-      btnOverview.addEventListener("click", () => {
-        frame.src = buildOverview(trip);
-        btnOverview.className = "px-3 py-1.5 rounded-lg bg-accent/15 text-accent text-xs font-medium hover:bg-accent/25 transition";
-        btnMyMaps.className = "px-3 py-1.5 rounded-lg bg-white/5 text-white/60 text-xs font-medium hover:bg-white/10 transition";
-      });
-
-      mapWrap.appendChild(toolbar);
-      mapWrap.appendChild(frame);
-
-      // 每日景點 chips（點擊 → 新分頁開該景點 Google Maps 連結）
-      const list = el("div", "mt-4 space-y-3");
-      trip.days.forEach((d) => {
-        const grp = el("div", "");
-        grp.appendChild(el("div", "text-xs font-bold text-accent/80 mb-1.5", `Day ${d.day} · ${esc(d.title)}`));
-        const sub = el("div", "flex flex-wrap gap-2");
-        (d.items || []).forEach((it) => {
-          if (!it || !it.title) return;
-          const label = (it.icon ? it.icon + " " : "") + stripEmoji(it.title).slice(0, 16);
-          const chip = el("button", "px-2.5 py-1 rounded-lg bg-white/5 hover:bg-accent/20 text-white/70 text-xs transition text-left", label);
-          chip.title = it.title;
-          if (it.url) {
-            chip.addEventListener("click", () => window.open(it.url, "_blank", "noopener"));
-          } else {
-            chip.addEventListener("click", () => {
-              const q = cleanQuery(it.title);
-              window.open(`https://maps.google.com/maps?q=${encodeURIComponent(q)}`, "_blank", "noopener");
-            });
-          }
-          sub.appendChild(chip);
-        });
-        grp.appendChild(sub);
-        list.appendChild(grp);
-      });
-      mapWrap.appendChild(list);
-      panes.map.appendChild(mapWrap);
-    }
-
-    Object.values(panes).forEach((p) => detail.appendChild(p));
-  }
-
-  function backToList() {
-    document.getElementById("view-detail").classList.add("hidden");
-    document.getElementById("view-detail").innerHTML = "";
-    document.getElementById("view-list").classList.remove("hidden");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  // ---- init ---------------------------------------------------------------
-  document.addEventListener("DOMContentLoaded", () => {
-    renderTrips(document.getElementById("trip-grid"));
-    const meta = DATA.meta;
-    if (meta && meta.updated) {
-      const u = document.getElementById("data-updated");
-      if (u) u.textContent = "資料更新：" + meta.updated;
-    }
-  });
-})();
+    // ---- map pane ----
+    (function renderMap() {
+      const mapBanner = el("div", "relative overflow-hidden rounded-2xl map-embed");
+      const url = trip.mapEmbed || buildOverview(trip);
+      mapBanner.innerHTML = `
+        <iframe
+          src="${esc(url)}"
+          width="100%"
+          height="480"
+          style="border:0; display:block;"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Journey Map"
+        ></iframe>`;
+      panes.map.appendChild(mapBanner);
+      if (trip.mapNote) {
+        const note = el("div", "text-xs text-sumi/40 mt-2 text-center");
+        note.textContent = trip.mapNote;
+        panes.map.appendChild(note);
+      }
+    })();

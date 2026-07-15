@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Travel Hub | SF-HUBS</title>
+  <title>Travel Hub ✈️ | SF-HUBS</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -11,110 +11,421 @@
       theme: {
         extend: {
           colors: {
-            dark: '#0a0a0f',
-            card: '#12121a',
-            accent: '#6366f1',
-            glow: '#818cf8',
-          }
+            sakura:  { DEFAULT: '#FCE4EC', 50: '#FFF5F7', 100: '#FCE4EC', 200: '#F8BBD0', 300: '#F48FB1', 400: '#EC407A' },
+            matcha:  { DEFAULT: '#C8E6C9', 50: '#F1F8E9', 100: '#C8E6C9', 200: '#A5D6A7', 300: '#81C784', 400: '#66BB6A' },
+            mizu:    { DEFAULT: '#B3E5FC', 50: '#E1F5FE', 100: '#B3E5FC', 200: '#81D4FA', 300: '#4FC3F7', 400: '#29B6F6' },
+            fuji:    { DEFAULT: '#D1C4E9', 50: '#EDE7F6', 100: '#D1C4E9', 200: '#B39DDB', 300: '#9575CD' },
+            kinako:  { DEFAULT: '#FFF8E1', 50: '#FFFDE7', 100: '#FFF8E1', 200: '#FFECB3', 300: '#FFE082' },
+            sumi:    { DEFAULT: '#3E2723', 50: '#EFEBE9', 100: '#D7CCC8', 200: '#BCAAA4', 300: '#8D6E63', 400: '#5D4037' },
+            aka:     { DEFAULT: '#EC407A', 50: '#FCE4EC', 100: '#F8BBD0', 200: '#F48FB1' },
+            ao:      { DEFAULT: '#42A5F5', 50: '#E3F2FD', 100: '#BBDEFB' },
+          },
+          fontFamily: {
+            sans: ['"Noto Sans JP"', '"Noto Sans SC"', '"Zen Maru Gothic"', 'Inter', 'system-ui', 'sans-serif'],
+            handwriting: ['"Klee One"', '"Zen Kurenaido"', '"Zen Maru Gothic"', 'cursive'],
+            maru: ['"Zen Maru Gothic"', '"Noto Sans JP"', 'sans-serif'],
+          },
+          backgroundImage: {
+            'washi': "url(\"data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h30v30H0z' fill='none'/%3E%3Cpath d='M5 5h20v20H5z' fill='none' stroke='%23BCAAA4' stroke-width='0.2' opacity='0.3'/%3E%3C/svg%3E\")",
+            'asanoha': "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23F48FB1' opacity='0.06'%3E%3Cpath d='M30 5L55 30L30 55L5 30Z'/%3E%3C/g%3E%3C/svg%3E\")",
+          },
+          boxShadow: {
+            'wa': '0 4px 16px rgba(62, 39, 35, 0.06)',
+            'wa-lg': '0 8px 32px rgba(62, 39, 35, 0.08)',
+            'sakura': '0 4px 20px rgba(236, 64, 122, 0.12)',
+            'matcha': '0 4px 20px rgba(129, 199, 132, 0.15)',
+          },
+          animation: {
+            'float': 'float 3s ease-in-out infinite',
+            'float-delayed': 'float 3s ease-in-out 1.5s infinite',
+            'petal': 'petal 8s linear infinite',
+            'petal2': 'petal 10s linear 2s infinite',
+            'petal3': 'petal 12s linear 4s infinite',
+            'stamp': 'stamp 0.3s ease-out',
+            'fadeIn': 'fadeIn 0.5s ease-out',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-8px)' },
+            },
+            petal: {
+              '0%': { transform: 'translateY(-10vh) rotate(0deg) translateX(0)', opacity: '0' },
+              '10%': { opacity: '0.6' },
+              '90%': { opacity: '0.6' },
+              '100%': { transform: 'translateY(110vh) rotate(720deg) translateX(100px)', opacity: '0' },
+            },
+            stamp: {
+              '0%': { transform: 'scale(0) rotate(-15deg)', opacity: '0' },
+              '60%': { transform: 'scale(1.2) rotate(5deg)', opacity: '0.8' },
+              '100%': { transform: 'scale(1) rotate(0deg)', opacity: '1' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+          },
         }
       }
     }
   </script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    .card-hover:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 0 30px rgba(99, 102, 241, 0.15);
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Klee+One&family=Inter:wght@300;400;600;700&family=Zen+Maru+Gothic:wght@300;400;500;700&display=swap');
+    body {
+      font-family: 'Noto Sans JP', 'Noto Sans SC', 'Zen Maru Gothic', 'Inter', system-ui, sans-serif;
+      background-color: #FFF5F7;
     }
-    .card-hover { transition: all 0.3s ease; }
-    /* Custom tooltip: weather badge hover */
+    /* === 可愛和風卡片 hover === */
+    .card-hover {
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .card-hover:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 12px 40px rgba(236, 64, 122, 0.10);
+    }
+
+    /* === 天氣 tooltip === */
     .weather-badge[data-tip]::after {
       content: attr(data-tip);
       position: absolute;
       bottom: calc(100% + 6px);
       left: 50%;
-      transform: translateX(-50%) scale(0.9);
-      background: #1e1e2e;
-      color: #e2e8f0;
+      transform: translateX(-50%) scale(0.85);
+      background: #5D4037;
+      color: #FFF5F7;
       font-size: 11px;
       padding: 4px 10px;
-      border-radius: 6px;
-      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 8px;
       white-space: nowrap;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.15s, transform 0.15s;
+      transition: opacity 0.2s, transform 0.2s;
       z-index: 50;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     .weather-badge[data-tip] { position: relative; display: inline-block; }
-    .weather-badge[data-tip]:hover::after,
-    .weather-badge[data-tip]:active::after,
-    .weather-badge[data-tip]:focus::after {
+    .weather-badge[data-tip]:hover::after {
       opacity: 1;
       transform: translateX(-50%) scale(1);
     }
+
+    /* === 可愛彩虹漸層標題 === */
     .gradient-text {
-      background: linear-gradient(135deg, #818cf8, #6366f1, #a78bfa);
+      background: linear-gradient(135deg, #EC407A, #AB47BC, #42A5F5, #66BB6A);
+      background-size: 300% 300%;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientShift 4s ease infinite;
     }
-    .grid-bg {
-      background-image:
-        linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
-      background-size: 60px 60px;
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    /* === 日式分隔線（櫻花 style）=== */
+    .wa-divider {
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #F48FB1, #EC407A, #F48FB1, transparent);
+      width: 100px;
+      margin: 0 auto;
+      border-radius: 3px;
+    }
+
+    /* === 和風 Scrollbar（粉系）=== */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #FCE4EC; }
+    ::-webkit-scrollbar-thumb { background: #F8BBD0; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #F48FB1; }
+
+    /* === 和風裝飾角（圓角可愛版）=== */
+    .wa-corner {
+      position: relative;
+    }
+    .wa-corner::before {
+      content: '🌸';
+      position: absolute;
+      top: -8px;
+      left: -6px;
+      font-size: 16px;
+      opacity: 0.5;
+      pointer-events: none;
+      animation: float 3s ease-in-out infinite;
+    }
+    .wa-corner::after {
+      content: '🌸';
+      position: absolute;
+      bottom: -8px;
+      right: -6px;
+      font-size: 16px;
+      opacity: 0.5;
+      pointer-events: none;
+      animation: float 3s ease-in-out 1.5s infinite;
+    }
+
+    /* === 標籤切換（可愛 underline）=== */
+    .tab-btn {
+      position: relative;
+      transition: color 0.2s;
+      border-radius: 8px;
+      padding: 6px 14px;
+    }
+    .tab-btn:hover {
+      background: #FCE4EC;
+    }
+    .tab-btn.active {
+      background: #FCE4EC;
+      color: #EC407A !important;
+    }
+    .tab-btn::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%) scaleX(0);
+      width: 60%;
+      height: 3px;
+      background: linear-gradient(90deg, #F48FB1, #EC407A);
+      border-radius: 3px;
+      transition: transform 0.25s;
+    }
+    .tab-btn.active::after {
+      transform: translateX(-50%) scaleX(1);
+    }
+
+    /* === Hero overlay === */
+    .hero-overlay {
+      background: linear-gradient(
+        180deg,
+        rgba(255, 245, 247, 0.10) 0%,
+        rgba(255, 245, 247, 0.35) 50%,
+        rgba(255, 245, 247, 0.85) 80%,
+        #FFF5F7 100%
+      );
+    }
+
+    /* === 天氣 badge === */
+    .weather-badge {
+      transition: all 0.2s;
+    }
+    .weather-badge:hover {
+      transform: scale(1.1);
+    }
+
+    /* === 浮動櫻花花瓣（背景裝飾）=== */
+    .petal {
+      position: fixed;
+      top: -20px;
+      font-size: 20px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .petal:nth-child(1) { left: 5%; animation: petal 8s linear infinite; }
+    .petal:nth-child(2) { left: 20%; animation: petal 10s linear 2s infinite; font-size: 14px; }
+    .petal:nth-child(3) { left: 35%; animation: petal 12s linear 4s infinite; }
+    .petal:nth-child(4) { left: 55%; animation: petal 9s linear 1s infinite; font-size: 16px; }
+    .petal:nth-child(5) { left: 70%; animation: petal 11s linear 3s infinite; font-size: 12px; }
+    .petal:nth-child(6) { left: 85%; animation: petal 13s linear 5s infinite; }
+    .petal:nth-child(7) { left: 45%; animation: petal 10s linear 3.5s infinite; font-size: 18px; }
+
+    /* === 郵票／印章效果 === */
+    .stamp {
+      display: inline-block;
+      border: 2px dashed #EC407A;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-family: 'Klee One', cursive;
+      color: #EC407A;
+      font-size: 11px;
+      background: rgba(236, 64, 122, 0.06);
+      animation: stamp 0.4s ease-out;
+    }
+
+    /* === 行程的 Day 徽章（圓形可愛版）=== */
+    .day-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #F48FB1, #EC407A);
+      color: white;
+      font-weight: 700;
+      font-size: 11px;
+      font-family: 'Klee One', cursive;
+      box-shadow: 0 3px 12px rgba(236, 64, 122, 0.25);
+    }
+
+    /* === Day card 背景相 fade-in === */
+    .day-bg-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.08;
+      border-radius: 12px;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+    .day-bg-img:hover {
+      opacity: 0.15;
+    }
+
+    /* === 相片 Masonry grid === */
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 6px;
+    }
+    .photo-grid img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: all 0.25s;
+    }
+    .photo-grid img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 16px rgba(236, 64, 122, 0.15);
+    }
+
+    /* === 載入動畫 === */
+    .loading-pulse {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    /* === 可愛圓角大 upgrade === */
+    .kawaii-card {
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .kawaii-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #F48FB1, #81C784, #4FC3F7, #B39DDB);
+      opacity: 0.6;
+    }
+
+    /* === 地圖總覽 embed 美化 === */
+    .map-embed {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 3px solid #FCE4EC;
+      box-shadow: 0 4px 20px rgba(236, 64, 122, 0.08);
     }
   </style>
 </head>
-<body class="bg-dark text-white min-h-screen grid-bg">
+<body class="bg-[#FFF5F7] text-sumi min-h-screen" style="background-image: url(&quot;data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23F48FB1' opacity='0.04'%3E%3Cpath d='M30 5L55 30L30 55L5 30Z'/%3E%3C/g%3E%3C/svg%3E&quot;);">
 
-  <!-- Header -->
-  <header class="border-b border-white/5 sticky top-0 z-20 bg-dark/90 backdrop-blur">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+  <!-- 浮動櫻花花瓣 -->
+  <div class="petal">🌸</div><div class="petal">🌸</div><div class="petal">🌸</div>
+  <div class="petal">🌸</div><div class="petal">🌸</div><div class="petal">🌸</div><div class="petal">🌸</div>
+
+  <!-- Header — 粉嫩透明感 -->
+  <header class="sticky top-0 z-20 bg-[#FFF5F7]/80 backdrop-blur-lg border-b border-sakura-200/50">
+    <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <a href="../../" class="flex items-center gap-3 hover:opacity-80 transition">
-          <div class="w-9 h-9 rounded-lg bg-accent flex items-center justify-center font-bold text-sm">SF</div>
-          <span class="font-bold text-lg tracking-tight">SF-HUBS</span>
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sakura-300 to-aka flex items-center justify-center font-bold text-sm text-white shadow-md" style="font-family: 'Klee One', cursive;">旅</div>
+          <span class="font-bold text-base tracking-wider text-sumi/70" style="font-family: 'Klee One', cursive;">SF-HUBS</span>
         </a>
-        <span class="text-white/20">/</span>
-        <span class="text-sm text-white/60 flex items-center gap-1">✈️ Travel</span>
+        <span class="text-sumi/20">/</span>
+        <span class="text-sm text-sumi/40 flex items-center gap-1" style="font-family: 'Klee One', cursive;">✈️ Travel</span>
       </div>
-      <span id="data-updated" class="text-white/30 text-xs"></span>
+      <div class="flex items-center gap-3">
+        <span id="data-updated" class="text-sumi/30 text-xs"></span>
+      </div>
     </div>
   </header>
 
-  <!-- List View -->
+  <!-- ============ List View ============ -->
   <main id="view-list">
-    <!-- Hero -->
-    <section class="max-w-6xl mx-auto px-6 pt-16 pb-10 text-center">
-      <h1 class="text-4xl md:text-5xl font-black tracking-tight mb-3">
-        <span class="gradient-text">Travel Hub</span>
-      </h1>
-      <p class="text-white/50 text-base md:text-lg max-w-xl mx-auto">
-        旅行資料 · 行程一覽 · 風險提示 — 輕輕一 click 睇晒成個旅程。
-      </p>
+    <!-- 🌸 Hero — 日系夢幻大圖 -->
+    <section class="relative overflow-hidden">
+      <div class="max-w-6xl mx-auto">
+        <div class="relative h-[340px] md:h-[440px] rounded-[32px] overflow-hidden mx-4 md:mx-6 shadow-sakura" style="border: 3px solid rgba(248, 187, 208, 0.3);">
+          <!-- Hero 背景圖：日本四季靚相（輪播都用一張最靚嘅） -->
+          <img
+            src="https://images.unsplash.com/photo-1528360983277-13d401cdc186?q=80&w=1400&auto=format&fit=crop"
+            alt="日本櫻花街道 — 粉嫩之旅"
+            class="w-full h-full object-cover"
+            loading="eager"
+          />
+          <!-- Overlay 粉嫩漸層 -->
+          <div class="absolute inset-0 hero-overlay"></div>
+          <!-- 內容 -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+            <span class="text-5xl md:text-7xl mb-2 animate-float drop-shadow-lg">✈️</span>
+            <h1 class="text-4xl md:text-7xl font-black tracking-wider text-sumi/85 drop-shadow-sm" style="font-family: 'Klee One', cursive;">
+              Travel Hub
+            </h1>
+            <div class="wa-divider my-4"></div>
+            <p class="text-base md:text-lg text-sumi/50 max-w-lg leading-relaxed" style="font-family: 'Zen Maru Gothic', sans-serif;">
+              旅行資料 ✦ 行程一覽 ✦ 風險提示<br class="hidden md:inline"/>🌸 輕輕一 click 睇晒成個旅程 🌸
+            </p>
+            <!-- 小小印章 -->
+            <span class="stamp mt-3">行 程 確 認</span>
+          </div>
+          <!-- 📸 Photo credit -->
+          <span class="absolute bottom-2 right-3 text-[10px] text-white/60 bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
+            📸 Unsplash · 櫻花街道
+          </span>
+        </div>
+      </div>
     </section>
 
-    <!-- Trip Cards -->
-    <section class="max-w-6xl mx-auto px-6 pb-24">
-      <div id="trip-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <!-- 行程卡片 grid -->
+    <section class="max-w-6xl mx-auto px-6 pb-24 -mt-8 relative z-10">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-lg">🌸</span>
+        <h2 class="text-base font-bold text-sumi/70 tracking-wider" style="font-family: 'Klee One', cursive;">旅程一覽</h2>
+        <span class="w-px h-4 bg-sakura-200"></span>
+        <span id="trip-count" class="text-xs text-sumi/30" style="font-family: 'Klee One', cursive;"></span>
+      </div>
+      <div id="trip-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <!-- rendered by app.js -->
       </div>
     </section>
   </main>
 
-  <!-- Detail View -->
+  <!-- ============ Detail View ============ -->
   <main id="view-detail" class="hidden max-w-5xl mx-auto px-6 py-8 pb-24">
     <!-- rendered by app.js -->
   </main>
 
-  <!-- Footer -->
-  <footer class="border-t border-white/5 py-8 text-center text-white/20 text-xs">
-    <p>Powered by <span class="text-white/40">QwenPaw</span> &amp; <span class="text-white/40">Hermes</span> · © 2026 Stephen Fan</p>
+  <!-- Footer — 粉嫩可愛 -->
+  <footer class="border-t border-sakura-200/50 py-12 text-center" style="background: linear-gradient(180deg, transparent, #FCE4EC 60%, #F8BBD0);">
+    <div class="text-lg mb-2 animate-float">🌸</div>
+    <p class="text-sumi/30 text-xs tracking-wider" style="font-family: 'Klee One', cursive;">
+      Powered by <span class="text-aka/60">QwenPaw</span> &amp; <span class="text-aka/60">Hermes</span>
+    </p>
+    <p class="text-sumi/20 text-[10px] mt-1">© 2026 Stephen Fan · Made with ✈️ ✨</p>
   </footer>
 
   <script src="data.js"></script>
   <script src="app.js"></script>
+  <script>
+    // 顯示 trip count
+    (function() {
+      if (window.TRAVEL_DATA && window.TRAVEL_DATA.trips) {
+        const el = document.getElementById('trip-count');
+        if (el) el.textContent = window.TRAVEL_DATA.trips.length + ' 個旅程';
+      }
+    })();
+  </script>
 </body>
 </html>
