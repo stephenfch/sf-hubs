@@ -47,7 +47,9 @@
       transition: opacity 0.15s, transform 0.15s;
       z-index: 50;
     }
+    .weather-badge[data-tip] { position: relative; }
     .weather-badge[data-tip]:hover::after,
+    .weather-badge[data-tip]:active::after,
     .weather-badge[data-tip]:focus::after {
       opacity: 1;
       transform: translateX(-50%) scale(1);
