@@ -509,7 +509,7 @@
     <p class="text-sumi/20 text-[10px] mt-1">© 2026 Stephen Fan · Made with ✈️ ✨</p>
   </footer>
 
-  <script src="data.js"></script>
+  <script src="data.js" charset="utf-8"></script>
   <script>// =============================================================================
 // Travel Hub — app.js (和風輕亮版)
 // 渲染 window.TRAVEL_DATA → trip 卡片 + 每日 itinerary + 景點 info + 📸加相 + 📔日誌
@@ -1282,10 +1282,19 @@
           form.append('image', selectedFile);
           const res = await fetch('https://api.imgur.com/3/image', {
             method: 'POST',
-            headers: { 'Authorization': `Client-ID ${cid}` },
+            headers: { 'Authorization': `Client-ID ${cid}`, 'Accept': 'application/json' },
             body: form
           });
-          const data = await res.json();
+          // 先讀 text，避免 XML/HTML response 令 .json() 爆
+          const bodyText = await res.text();
+          let data;
+          try {
+            data = JSON.parse(bodyText);
+          } catch (_parseErr) {
+            // 唔係 JSON — 睇返 response 狀態同 body 頭幾十字
+            const snippet = bodyText.substring(0, 120).replace(/\n/g, ' ');
+            throw new Error(`Imgur 回傳非 JSON（HTTP ${res.status}）: ${snippet}`);
+          }
           if (data.success && data.data?.link) {
             uploadedUrl = data.data.link;
             document.getElementById('imgur-result').classList.remove('hidden');
