@@ -644,9 +644,13 @@
   function buildOverview(trip) {
     const seen = new Set();
     const stops = [];
+    // 已知機場代碼（唔應該作為途經站點）
+    const AIRPORT_CODES = new Set(["KIX","NRT","HND","ITM","UKB","NGO","FSZ","CTS","FUK","OKA"]);
     (trip.days || []).forEach((d) => {
       const loc = String(d.location || "").split("→")[0].trim();
-      if (loc && !seen.has(loc)) {
+      // 🐛 Bug 2 & 4 fix: 過濾機場代碼，唔作為途經站
+      if (!loc || AIRPORT_CODES.has(loc.toUpperCase())) return;
+      if (!seen.has(loc)) {
         seen.add(loc);
         stops.push(loc);
       }
@@ -1613,16 +1617,19 @@
       const days = trip.days || [];
 
       // ─ 旅程概要 header ─
+      const AIRPORT_CODES = new Set(["KIX","NRT","HND","ITM","UKB","NGO","FSZ","CTS","FUK","OKA"]);
       const seenStops = [];
       const seenSet = new Set();
       days.forEach((d) => {
-        const loc = String(d.location || "").split(/[→,]/)[0].trim();
-        if (loc && !seenSet.has(loc)) { seenSet.add(loc); seenStops.push({ day: d.day, city: loc, weekday: d.weekday }); }
+        let loc = String(d.location || "").split(/[→,]/)[0].trim();
+        // 🐛 Bug 2 & 4 fix: 過濾機場代碼，唔顯示做途經站點
+        if (!loc || AIRPORT_CODES.has(loc.toUpperCase())) return;
+        if (!seenSet.has(loc)) { seenSet.add(loc); seenStops.push({ day: d.day, city: loc, weekday: d.weekday }); }
       });
       const firstDay = days[0];
       const lastDay = days[days.length - 1];
-      const startLoc = firstDay ? (String(firstDay.location || "").split(/[→,]/)[0].trim()) : "KIX";
-      const endLoc = lastDay ? (String(lastDay.location || "").split(/[→,]/)[0].trim()) : "KIX";
+      const startLoc = firstDay ? (String(firstDay.location || "").split(/[→,]/)[0].trim()) : "關西機場";
+      const endLoc = lastDay ? (String(lastDay.location || "").split(/[→,]/)[0].trim()) : "關西機場";
       const totalDays = days.length;
 
       const summaryHeader = el("div", "bg-white/85 border border-sakura-200/30 rounded-xl p-5 mb-6 shadow-wa kawaii-card");
@@ -1749,7 +1756,7 @@
       toggleWrap.innerHTML = `
         <button data-map-mode="directions" class="map-toggle-btn active px-3 py-1.5 text-xs font-medium rounded-xl bg-sakura-100 text-aka border border-sakura-200/50 shadow-sm">🧭 總覽路線</button>
         <button data-map-mode="mymaps" class="map-toggle-btn px-3 py-1.5 text-xs font-medium rounded-xl bg-white/70 text-sumi/50 border border-sakura-200/30 hover:bg-sakura-50">🗺️ 自訂地圖</button>
-        <button data-map-mode="daybyday" class="map-toggle-btn px-3 py-1.5 text-xs font-medium rounded-xl bg-white/70 text-sumi/50 border border-sakura-200/30 hover:bg-sakura-50">📅 每日</button>
+        <button data-map-mode="daybyday" class="map-toggle-btn px-3 py-1.5 text-xs font-medium rounded-xl bg-white/70 text-sumi/50 border border-sakura-200/30 hover:bg-sakura-50">📍 每日路線</button>
       `;
       panes.map.appendChild(toggleWrap);
 
@@ -1821,17 +1828,18 @@
       // ─ 每個 iframe 各自 loading handler ─
       Object.entries(iframes).forEach(([, f]) => {
         if (!f) return;
-        // 從 data-src 讀取 src（等於可以 lazy init）
-        if (f.dataset.src) {
-          f.src = f.dataset.src;
-          delete f.dataset.src;
-        }
+        // 先加 listener，避免 race condition（browser cache 可能 already loaded）
         f.addEventListener('load', () => {
           // 只處理當前 visible 嘅 iframe
           if (f.style.display !== 'none') {
             mapLoader.style.display = 'none';
           }
         });
+        // 然後先 set src（如果 data-src 存在）
+        if (f.dataset.src) {
+          f.src = f.dataset.src;
+          delete f.dataset.src;
+        }
       });
 
       // ─ 共用 helper：切 iframe display ─
@@ -1864,12 +1872,20 @@
         const initBtn = toggleWrap.querySelector(`[data-map-mode="${initialMode}"]`);
         if (initBtn) initBtn.click();
       }
+      // 🐛 Bug 1 fix: if initial mode is daybyday, ensure Day 1 is selected
+      if (initialMode === "daybyday") {
+        setTimeout(() => {
+          const anyActive = daySelectPanel.querySelector('.day-select-btn.bg-sakura-100');
+          const firstBtn = daySelectPanel.querySelector('.day-select-btn:not(.bg-sakura-100)');
+          if (firstBtn && !anyActive) firstBtn.click();
+        }, 50);
+      }
 
       // ─ Mode descriptions ─
       const modeDescriptions = {
         directions: "🧭 自動計算點對點駕駛路線，顯示全程行車方向",
         mymaps: "🗺️ 自訂標記地圖 — 景點分類、路線標註、備註一目瞭然",
-        daybyday: "📅 按 Day 查看每日行程路線，方便規劃當日動線",
+        daybyday: "📍 按 Day 查看每日行程路線，方便規劃當日動線",
       };
 
       // Toggle logic
@@ -1886,9 +1902,15 @@
           openMyMaps.style.display = mode === "mymaps" ? "inline-flex" : "none";
           // Show/hide ✏️ 編輯地圖 + 📱 手機開
           myMapsActions.style.display = mode === "mymaps" ? "flex" : "none";
-          // Show/hide day selector
+          // Show/hide day selector + auto-select Day 1
           if (mode === "daybyday") {
             daySelectPanel.classList.remove("hidden");
+            // 🐛 Bug 1 fix: auto-select first day if none selected yet
+            const firstBtn = daySelectPanel.querySelector('.day-select-btn:not(.bg-sakura-100)');
+            const anyActive = daySelectPanel.querySelector('.day-select-btn.bg-sakura-100');
+            if (firstBtn && !anyActive) {
+              firstBtn.click();
+            }
           } else {
             daySelectPanel.classList.add("hidden");
           }
