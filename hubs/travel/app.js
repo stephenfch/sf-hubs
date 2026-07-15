@@ -292,36 +292,55 @@
       panes.extras.appendChild(wrap);
     }
 
-    // ---- map (Google Maps, 免 API key: maps.google.com/maps?...&output=embed) ----
+    // ---- map (Google My Maps 多 marker 互動地圖，免 API key) ----
     if (trip.days && trip.days.length) {
+      const MYMAPS_MID = "1LuuiiWAbTEBuR2loYXmtRSgLz-vNYZE"; // 由 Google My Maps import mymaps-spots.csv 生成
+      const mymapsUrl = `https://www.google.com/maps/d/embed?mid=${MYMAPS_MID}`;
+
       const mapWrap = el("div", "");
 
       const toolbar = el("div", "flex items-center gap-2 mb-3 flex-wrap");
       const btnOverview = el(
         "button",
         "px-3 py-1.5 rounded-lg bg-accent/15 text-accent text-xs font-medium hover:bg-accent/25 transition",
-        "🗺️ 完整路線總覧"
+        "🗺️ 切換：路線總覧"
       );
-      const hint = el("span", "text-xs text-white/40", "點下方景點 → 地圖跳去該位置");
+      const btnMyMaps = el(
+        "button",
+        "px-3 py-1.5 rounded-lg bg-white/5 text-white/60 text-xs font-medium hover:bg-white/10 transition",
+        "📍 切換：My Maps 景點圖"
+      );
+      const hint = el("span", "text-xs text-white/40", "撳下方 chip → 開該景點 Google Maps 連結");
+      toolbar.appendChild(btnMyMaps);
       toolbar.appendChild(btnOverview);
       toolbar.appendChild(hint);
 
       const frame = document.createElement("iframe");
       frame.id = "gmap-frame";
       frame.className = "w-full rounded-xl border border-white/5 bg-white/5";
-      frame.style.height = "440px";
+      frame.style.height = "480px";
       frame.setAttribute("loading", "lazy");
       frame.setAttribute("referrerpolicy", "no-referrer-when-downgrade");
       frame.allowFullscreen = true;
 
       const overviewUrl = buildOverview(trip);
-      frame.src = overviewUrl;
-      btnOverview.addEventListener("click", () => { frame.src = overviewUrl; });
+      frame.src = mymapsUrl; // 預設顯示 My Maps 多 marker 景點圖
+
+      btnMyMaps.addEventListener("click", () => {
+        frame.src = mymapsUrl;
+        btnMyMaps.className = "px-3 py-1.5 rounded-lg bg-accent/15 text-accent text-xs font-medium hover:bg-accent/25 transition";
+        btnOverview.className = "px-3 py-1.5 rounded-lg bg-white/5 text-white/60 text-xs font-medium hover:bg-white/10 transition";
+      });
+      btnOverview.addEventListener("click", () => {
+        frame.src = overviewUrl;
+        btnOverview.className = "px-3 py-1.5 rounded-lg bg-accent/15 text-accent text-xs font-medium hover:bg-accent/25 transition";
+        btnMyMaps.className = "px-3 py-1.5 rounded-lg bg-white/5 text-white/60 text-xs font-medium hover:bg-white/10 transition";
+      });
 
       mapWrap.appendChild(toolbar);
       mapWrap.appendChild(frame);
 
-      // 每日景點 chips（點擊 → 地圖 zoom 去該位置）
+      // 每日景點 chips（點擊 → 新分頁開該景點 Google Maps 連結）
       const list = el("div", "mt-4 space-y-3");
       trip.days.forEach((d) => {
         const grp = el("div", "");
@@ -338,10 +357,14 @@
             label
           );
           chip.title = it.title;
-          chip.addEventListener("click", () => {
-            const q = cleanQuery(it.title);
-            frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=14&output=embed`;
-          });
+          if (it.url) {
+            chip.addEventListener("click", () => window.open(it.url, "_blank", "noopener"));
+          } else {
+            chip.addEventListener("click", () => {
+              const q = cleanQuery(it.title);
+              window.open(`https://maps.google.com/maps?q=${encodeURIComponent(q)}`, "_blank", "noopener");
+            });
+          }
           sub.appendChild(chip);
         });
         grp.appendChild(sub);
