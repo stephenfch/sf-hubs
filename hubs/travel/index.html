@@ -1937,89 +1937,151 @@
 
       // ─ 全景點列表（Day-grouped, mapcode + 🅿️ + 🔗） ─
       const spotsSection = el("div", "bg-white/85 border border-sakura-200/30 rounded-xl p-5 shadow-wa kawaii-card");
-      spotsSection.innerHTML = `<div class="flex items-center gap-2 mb-4">
-        <span class="text-base">📋</span>
-        <span class="text-sm font-bold text-sumi/70" style="font-family: 'Klee One', cursive;">全景點一覽（點對點車程）</span>
-        <span class="text-[10px] text-sumi/30 ml-auto">${(() => {
-          let total = 0;
-          days.forEach(d => total += (d.items || []).length);
-          return total + " 個景點";
-        })()}</span>
-      </div>`;
-      const spotsList = el("div", "space-y-2");
+
+      // ─ 🆕 分類濾波器 ─
+      // 定義 icon → 類別映射
+      const CATEGORY_MAP = {
+        "🍽️": { label: "餐廳美食", icon: "🍽️" },
+        "🍰": { label: "餐廳美食", icon: "🍽️" },
+        "🏨": { label: "住宿", icon: "🏨" },
+        "🌳": { label: "戶外景點", icon: "🌳" },
+        "🌻": { label: "戶外景點", icon: "🌳" },
+        "🏜️": { label: "戶外景點", icon: "🌳" },
+        "🎨": { label: "文藝體驗", icon: "🎨" },
+        "🎡": { label: "文藝體驗", icon: "🎨" },
+        "🛒": { label: "購物", icon: "🛒" },
+        "🧒": { label: "親子", icon: "🧒" },
+        "🚗": { label: "交通", icon: "🚗" },
+        "🛑": { label: "其他", icon: "📌" },
+        "🅰️": { label: "其他", icon: "📌" },
+        "🅱️": { label: "其他", icon: "📌" },
+        "🅲️": { label: "其他", icon: "📌" },
+      };
+      // 預設分類順序
+      const CAT_ORDER = ["🍽️","🏨","🌳","🎨","🛒","🧒","🚗","📌"];
+      function classifyItem(icon) {
+        return CATEGORY_MAP[icon] || { label: "其他", icon: "📌" };
+      }
+
+      // 收集所有景點，歸類
+      const allSpots = [];
       days.forEach((d, di) => {
-        const items = d.items || [];
-        if (!items.length) return;
-        const group = el("div", "border border-sakura-100/40 rounded-xl overflow-hidden");
-        // Day group header — collapsible
-        const headerRow = el("button", "w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gradient-to-r from-sakura-50/60 to-transparent hover:from-sakura-100/60 transition text-left cursor-pointer");
-        // 車程顯示（用 destination city）
-        let driveHtml = "";
-        if (di > 0) {
-          const prevDest = parseDestCity(days[di - 1].location);
-          const currentDest = parseDestCity(d.location);
-          const driveKey = prevDest + "→" + currentDest;
-          const driveKeyRev = currentDest + "→" + prevDest;
-          const driveTime = (trip.cityDrives && trip.cityDrives[driveKey]) || (trip.cityDrives && trip.cityDrives[driveKeyRev]) || null;
-          if (driveTime && prevDest !== currentDest) {
-            driveHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-mizu-50/80 text-[10px] text-ao-600 font-medium border border-mizu-200/40">🚗 上一站：${esc(prevDest)} → ${esc(currentDest)} ≈ ${esc(driveTime)}</span>`;
-          }
-        }
-        headerRow.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="day-badge-sm inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-sakura-300 to-aka text-white text-xs font-bold shadow-sm" style="font-family: 'Klee One', cursive;">${d.day}</span>
-            <span class="text-sm font-medium text-sumi/70" style="font-family: 'Klee One', cursive;">${esc(d.title)}</span>
-            <span class="text-[10px] text-sumi/30">${fmtDate(d.date)} (${esc(d.weekday || "")}) · 📍 ${esc(d.location || "")}</span>
-            ${driveHtml}
-          </div>
-          <span class="collapse-icon text-sumi/30 transition-transform">▼</span>
-        `;
-        const bodyWrap = el("div", "");
-        bodyWrap.innerHTML = `<div class="px-4 py-3 space-y-2">${items.map((it) => {
-          const mcHtml = (it.info && it.info.mapcode)
-            ? `<a href="${mapcodeUrl(it.info.mapcode)}" target="_blank" rel="noopener" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-ao-50/70 text-[10px] text-ao hover:bg-ao-100 font-mono">🧭 ${esc(it.info.mapcode)} ↗</a>`
-            : `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-sumi/5 text-[10px] text-sumi/30 font-mono">🧭 —</span>`;
-          const parking = it.info ? extractParking(it.info.intro) : null;
-          const parkingHtml = parking
-            ? `<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-kinako-50/80 text-[10px] text-sumi/60" title="${esc(parking)}">🅿️ ${esc(parking.replace(/🅿️/, "").substring(0, 30))}</span>`
-            : `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-sumi/5 text-[10px] text-sumi/30">🅿️ —</span>`;
-          const gmUrl2 = it.url && (it.url.startsWith("http://") || it.url.startsWith("https://"))
-            ? it.url
-            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(it.title + " " + (d.location || ""))}`;
-          const gmHtml = `<a href="${esc(gmUrl2)}" target="_blank" rel="noopener" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-matcha-50/70 text-[10px] text-matcha-400 hover:bg-matcha-100">🗺️ Google Maps ↗</a>`;
-          // 🆕 點對點車程 badge（來自 data.js item.drive field）
-          const driveHtml2 = it.drive
-            ? `<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-aka-50/70 text-[10px] text-aka font-medium" title="由上一個景點車程">🚗 ${esc(it.drive)}</span>`
-            : "";
-          // intro snippet
-          const introClean = it.info ? stripParkingFromIntro(it.info.intro) : "";
-          const introSnippet = introClean ? `<span class="text-[10px] text-sumi/40 leading-relaxed block mt-1">${esc(introClean.substring(0, 80))}${introClean.length > 80 ? "…" : ""}</span>` : "";
-          return `<div class="flex flex-wrap items-center gap-1.5 pb-2 border-b border-sakura-100/20 last:border-0">
-            <span class="text-sm text-sumi/15 w-4 shrink-0">${items.indexOf(it) + 1}.</span>
-            <span class="text-xs font-medium text-sumi/75 flex-1 min-w-0" title="${esc(it.title)}">${esc(it.title)}</span>
-            <div class="flex items-center gap-1 flex-wrap">
-              ${driveHtml2}
-              ${mcHtml}
-              ${parkingHtml}
-              ${gmHtml}
-            </div>
-            ${introSnippet ? `<div class="w-full pl-6">${introSnippet}</div>` : ""}
-          </div>`;
-        }).join("")}</div>`;
-
-        let expanded = true;
-        bodyWrap.style.display = "";
-        headerRow.addEventListener("click", () => {
-          expanded = !expanded;
-          bodyWrap.style.display = expanded ? "" : "none";
-          headerRow.querySelector(".collapse-icon").style.transform = expanded ? "rotate(0deg)" : "rotate(-90deg)";
+        (d.items || []).forEach((it, ii) => {
+          const cat = classifyItem(it.icon);
+          allSpots.push({ day: d.day, date: d.date, weekday: d.weekday, title: d.title, location: d.location, item: it, cat, index: ii });
         });
-
-        group.appendChild(headerRow);
-        group.appendChild(bodyWrap);
-        spotsList.appendChild(group);
       });
-      spotsSection.appendChild(spotsList);
+      // 分類 count
+      const catCounts = {};
+      allSpots.forEach(s => { const k = s.cat.icon; catCounts[k] = (catCounts[k] || 0) + 1; });
+
+      // 分類 tab bar
+      let activeCat = null; // null = all
+      const catBar = el("div", "flex items-center gap-1.5 mb-4 overflow-x-auto pb-1 scrollbar-thin");
+      const allBtn = el("button", "shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-sakura-100 text-aka border border-sakura-200/50 shadow-sm transition");
+      allBtn.textContent = "📋 全部 (" + allSpots.length + ")";
+      catBar.appendChild(allBtn);
+      CAT_ORDER.forEach(catIcon => {
+        const cnt = catCounts[catIcon];
+        if (!cnt) return;
+        const btn = el("button", "shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-sakura-50/70 text-sumi/60 border border-sakura-200/30 hover:bg-sakura-100 hover:text-aka transition");
+        btn.textContent = catIcon + " " + (CATEGORY_MAP[catIcon]?.label || "其他") + " (" + cnt + ")";
+        btn.dataset.cat = catIcon;
+        catBar.appendChild(btn);
+      });
+
+      function filterSpots(catIcon) {
+        activeCat = catIcon;
+        catBar.querySelectorAll("button").forEach(b => {
+          const isActive = (catIcon === null && b === allBtn) || (b.dataset.cat === catIcon);
+          b.className = isActive
+            ? "shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-sakura-100 text-aka border border-sakura-200/50 shadow-sm transition"
+            : "shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-sakura-50/70 text-sumi/60 border border-sakura-200/30 hover:bg-sakura-100 hover:text-aka transition";
+        });
+        // rebuild spots list
+        const filtered = catIcon ? allSpots.filter(s => s.cat.icon === catIcon) : allSpots;
+        rebuildSpotsList(filtered);
+      }
+
+      allBtn.addEventListener("click", () => filterSpots(null));
+      catBar.querySelectorAll("[data-cat]").forEach(btn => {
+        btn.addEventListener("click", () => filterSpots(btn.dataset.cat));
+      });
+
+      spotsSection.appendChild(catBar);
+
+      // ─ spots list container ─
+      const spotsListContainer = el("div", "space-y-2");
+      spotsSection.appendChild(spotsListContainer);
+
+      function rebuildSpotsList(filtered) {
+        spotsListContainer.innerHTML = "";
+        // Group by day
+        const dayGroups = {};
+        filtered.forEach(s => {
+          if (!dayGroups[s.day]) dayGroups[s.day] = [];
+          dayGroups[s.day].push(s);
+        });
+        const dayKeys = Object.keys(dayGroups).sort((a,b) => a - b);
+        dayKeys.forEach(dk => {
+          const d = days.find(x => x.day === parseInt(dk));
+          if (!d) return;
+          const spots = dayGroups[dk];
+          const group = el("div", "border border-sakura-100/40 rounded-xl overflow-hidden");
+          const headerRow = el("button", "w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-gradient-to-r from-sakura-50/60 to-transparent hover:from-sakura-100/60 transition text-left cursor-pointer");
+          headerRow.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="day-badge-sm inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-sakura-300 to-aka text-white text-xs font-bold shadow-sm" style="font-family: 'Klee One', cursive;">${dk}</span>
+              <span class="text-sm font-medium text-sumi/70" style="font-family: 'Klee One', cursive;">${esc(d.title)}</span>
+              <span class="text-[10px] text-sumi/30">${spots.length} 項</span>
+            </div>
+            <span class="collapse-icon text-sumi/30 transition-transform">▼</span>
+          `;
+          const bodyWrap = el("div", "px-4 py-3 space-y-2");
+          bodyWrap.innerHTML = spots.map((s, i) => {
+            const it = s.item;
+            const mcHtml = (it.info && it.info.mapcode)
+              ? `<a href="${mapcodeUrl(it.info.mapcode)}" target="_blank" rel="noopener" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-ao-50/70 text-[10px] text-ao hover:bg-ao-100 font-mono">🧭 ${esc(it.info.mapcode)} ↗</a>`
+              : `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-sumi/5 text-[10px] text-sumi/30 font-mono">🧭 —</span>`;
+            const parking = it.info ? extractParking(it.info.intro) : null;
+            const parkingHtml = parking
+              ? `<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-kinako-50/80 text-[10px] text-sumi/60" title="${esc(parking)}">🅿️ ${esc(parking.replace(/🅿️/, "").substring(0, 30))}</span>`
+              : `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-sumi/5 text-[10px] text-sumi/30">🅿️ —</span>`;
+            const gmUrl2 = it.url && (it.url.startsWith("http://") || it.url.startsWith("https://"))
+              ? it.url
+              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(it.title + " " + (d.location || ""))}`;
+            const gmHtml = `<a href="${esc(gmUrl2)}" target="_blank" rel="noopener" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-matcha-50/70 text-[10px] text-matcha-400 hover:bg-matcha-100">🗺️ Google Maps ↗</a>`;
+            const driveHtml2 = it.drive
+              ? `<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-aka-50/70 text-[10px] text-aka font-medium" title="由上一個景點車程">🚗 ${esc(it.drive)}</span>`
+              : "";
+            const introClean = it.info ? stripParkingFromIntro(it.info.intro) : "";
+            const introSnippet = introClean ? `<span class="text-[10px] text-sumi/40 leading-relaxed block mt-1">${esc(introClean.substring(0, 80))}${introClean.length > 80 ? "…" : ""}</span>` : "";
+            return `<div class="flex flex-wrap items-center gap-1.5 pb-2 border-b border-sakura-100/20 last:border-0">
+              <span class="text-sm text-sumi/15 w-4 shrink-0">${i + 1}.</span>
+              <span class="text-xs font-medium text-sumi/75 flex-1 min-w-0" title="${esc(it.title)}">${esc(s.cat.icon)} ${esc(it.title)}</span>
+              <div class="flex items-center gap-1 flex-wrap">
+                ${driveHtml2}
+                ${mcHtml}
+                ${parkingHtml}
+                ${gmHtml}
+              </div>
+              ${introSnippet ? `<div class="w-full pl-6">${introSnippet}</div>` : ""}
+            </div>`;
+          }).join("");
+          let expanded = true;
+          headerRow.addEventListener("click", () => {
+            expanded = !expanded;
+            bodyWrap.style.display = expanded ? "" : "none";
+            headerRow.querySelector(".collapse-icon").style.transform = expanded ? "rotate(0deg)" : "rotate(-90deg)";
+          });
+          group.appendChild(headerRow);
+          group.appendChild(bodyWrap);
+          spotsListContainer.appendChild(group);
+        });
+      }
+
+      // Initial: show all
+      rebuildSpotsList(allSpots);
       panes.map.appendChild(spotsSection);
 
       if (trip.mapNote) {
