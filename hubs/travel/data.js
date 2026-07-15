@@ -270,6 +270,8 @@ window.TRAVEL_DATA = {
       practicalInfo: [
         // ─ 自駕篇 ─
         { cat: "🚙 自駕", items: [
+          { icon: "🛡️", title: "取車時確認 Checklist", desc: "Times CAR RENTAL KIX 18/7 16:00 取兩部車。三大必確認：(1) 買全保（CDW + NOC 免責）(2) ETC 卡已插好可用 (3) 兩部車各一個小童增高座椅。取車單已包 ETC + 增高椅，但到櫃檯要口頭 double confirm！",
+            url: "", note: "全保可以到櫃檯即場加購，建議一早就講要「フルカバー保険（full cover insurance）」" },
           { icon: "🛣️", title: "日本高速公路 ETC", desc: "租車一般已附 ETC 卡。日本高速收費高（KIX→姬路 ~¥4,000），建議用 Google Maps / Yahoo! カーナビ 規劃路線。",
             url: "https://www.driveplaza.com/route_search/", note: "ETC 閘口行左邊「ETC/一般」lane冇問題" },
           { icon: "⛽", title: "油站（給油所）", desc: "日本油站分 セルフ（自助平啲）同 full service。租車通常入滿還車。7月油價 ~¥175/L。",
@@ -278,6 +280,8 @@ window.TRAVEL_DATA = {
             url: "https://akippa.com/", note: "Times / akippa 平面位、コインパーキング 500-800円/hr；天神祭當日要泊梅田再搭地鐵" },
           { icon: "🧭", title: "Mapion（日本地圖）", desc: "日本行車用 Mapion 比 Google Maps 更精確（特別係鄉郊 address），支援 mapcode 搜尋。",
             url: "https://www.mapion.co.jp/", note: "每個景點都有 mapcode — 直接 copy 入 Mapion 即可導航" },
+          { icon: "🖼️", title: "車頂行李架（Roof Box）", desc: "天眼睇相發現停車場有車裝咗 roof box。如果 Step WGN / Biante 行李空間唔夠，可以問 Times 有冇 roof box 租用。不過兩部 MPV 共 15 座位，7 人行李通常夠放。",
+            url: "", note: "需要 roof box 的話要提前同租車公司確認，現場未必有得加" },
         ]},
         // ─ 飲食篇 ─
         { cat: "🍽️ 飲食", items: [
@@ -339,7 +343,7 @@ window.TRAVEL_DATA = {
           { what: "護照（7 本）", checked: false },
           { what: "電子簽證 / Visit Japan Web QR", checked: false },
           { what: "機票 / 訂位確認", checked: false },
-          { what: "Times CAR RENTAL 租車確認單×2", checked: false },
+          { what: "Times CAR RENTAL 租車確認單×2（到櫃檯 check 全保+ETC+car seat）", checked: false },
           { what: "酒店訂單（全部 8 晚）", checked: false },
           { what: "國際駕駛許可證 IDP（兩位司機）", checked: false },
           { what: "Travel Insurance 保險單", checked: false },
