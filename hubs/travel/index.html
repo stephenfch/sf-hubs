@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
@@ -268,6 +268,7 @@
       opacity: 0.08;
       border-radius: 12px;
       pointer-events: none;
+      z-index: 0;
       transition: opacity 0.5s;
     }
     .day-bg-img:hover {
@@ -309,6 +310,13 @@
       position: relative;
       overflow: hidden;
     }
+    /* departure day card — 窄身啲，唔會太空洞 */
+    .departure-day .kawaii-card {
+      max-width: 560px;
+    }
+    @media (max-width: 640px) {
+      .departure-day .kawaii-card { max-width: 100%; }
+    }
     .kawaii-card::before {
       content: '';
       position: absolute;
@@ -326,6 +334,76 @@
       overflow: hidden;
       border: 3px solid #FCE4EC;
       box-shadow: 0 4px 20px rgba(236, 64, 122, 0.08);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       📱 Mobile Responsive — 手機/平板全面適配
+       ═══════════════════════════════════════════════════════════════ */
+
+    html, body {
+      overflow-x: hidden;
+    }
+
+    @media (max-width: 640px) {
+      .day-badge {
+        width: 30px;
+        height: 30px;
+        font-size: 10px;
+      }
+      /* Tab buttons → 水平 scroll */
+      .tab-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        white-space: nowrap;
+        flex-wrap: nowrap !important;
+      }
+      .tab-scroll::-webkit-scrollbar { display: none; }
+      .tab-scroll .tab-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: 6px 12px;
+        font-size: 13px;
+      }
+      .kawaii-card { border-radius: 12px; }
+      .day-item-time {
+        width: 2.5rem !important;
+        font-size: 10px;
+      }
+      .photo-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+      }
+      .photo-grid img {
+        height: 80px;
+        border-radius: 8px;
+      }
+      .flight-card { padding: 12px; }
+      .trip-card-hero { height: 5rem; }
+      /* Touch active states */
+      .card-hover:active {
+        transform: scale(0.97);
+        transition: transform 0.1s;
+      }
+      .tab-btn:active { background: #F8BBD0; }
+      button:active { opacity: 0.7; }
+    }
+
+    @media (min-width: 641px) and (max-width: 1024px) {
+      .photo-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      .card-hover:hover {
+        transform: none;
+        box-shadow: 0 4px 16px rgba(62, 39, 35, 0.06);
+      }
+      .card-hover:active {
+        transform: scale(0.97);
+        box-shadow: 0 12px 40px rgba(236, 64, 122, 0.10);
+      }
+      .tab-btn:hover { background: transparent; }
+      .tab-btn:active { background: #FCE4EC; }
     }
   </style>
 </head>
@@ -357,7 +435,7 @@
     <!-- 🌸 Hero — 日系夢幻大圖 -->
     <section class="relative overflow-hidden">
       <div class="max-w-6xl mx-auto">
-        <div class="relative h-[340px] md:h-[440px] rounded-[32px] overflow-hidden mx-4 md:mx-6 shadow-sakura" style="border: 3px solid rgba(248, 187, 208, 0.3);">
+        <div class="relative h-[260px] sm:h-[340px] md:h-[440px] rounded-[24px] sm:rounded-[32px] overflow-hidden mx-2 sm:mx-4 md:mx-6 shadow-sakura" style="border: 3px solid rgba(248, 187, 208, 0.3);">
           <!-- Hero 背景圖：日本四季靚相（輪播都用一張最靚嘅） -->
           <img
             src="https://images.unsplash.com/photo-1528360983277-13d401cdc186?q=80&w=1400&auto=format&fit=crop"
@@ -447,7 +525,7 @@
   }
   function statusMeta(s) {
     if (s === "upcoming") return { label: "Upcoming", cls: "bg-matcha/15 text-matcha border-matcha/30" };
-    if (s === "ongoing") return { label: "Ongoing", cls: "bg-ai/15 text-ai border-ai/30" };
+    if (s === "ongoing") return { label: "Ongoing", cls: "bg-ao-50/70 text-ao border-ao-100/30" };
     return { label: "Past", cls: "bg-sumi/10 text-sumi/40 border-sumi/20" };
   }
   function riskMeta(l) {
@@ -608,7 +686,7 @@
   // ---- 加相 modal（A 模式）--------------------------------------------------
   function openAddPhoto(tripId, dayNum, itemTitle, itemIndex) {
     const overlay = el("div", "fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4");
-    const box = el("div", "w-full max-w-lg bg-paper-100 border border-paper-200 rounded-2xl p-5 shadow-wa-lg");
+    const box = el("div", "w-full max-w-lg bg-white border border-sakura-200/50 rounded-2xl p-5 shadow-wa-lg");
     box.innerHTML = `
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-base font-bold text-sumi/90">📸 加相 — ${esc(itemTitle)}</h3>
@@ -616,15 +694,15 @@
       </div>
       <p class="text-xs text-sumi/50 mb-3 leading-relaxed">貼你嘅相 URL（Google Photos / Imgur / GitHub issue 附件）。呢度只係<b class="text-sumi/80">本機預覽</b>；要 publish 就 copy 底嘅 code 貼落 <code class="text-aka">data.js</code> 再 push 去 main。</p>
       <label class="block text-xs text-sumi/60 mb-1">相片 URL</label>
-      <input data-url class="w-full bg-white border border-paper-200 rounded-lg px-3 py-2 text-sm text-sumi/90 outline-none focus:border-aka/50 mb-3" placeholder="https://photos.app.goo.gl/xxxx 或 https://i.imgur.com/yyyy.jpg" />
+      <input data-url class="w-full bg-white border border-sakura-200/40 rounded-lg px-3 py-2 text-sm text-sumi/90 outline-none focus:border-aka/50 mb-3" placeholder="https://photos.app.goo.gl/xxxx 或 https://i.imgur.com/yyyy.jpg" />
       <label class="block text-xs text-sumi/60 mb-1">Caption（一句說明，可留空）</label>
-      <input data-cap class="w-full bg-white border border-paper-200 rounded-lg px-3 py-2 text-sm text-sumi/90 outline-none focus:border-aka/50 mb-3" placeholder="例如：滑沙超好玩！" />
+      <input data-cap class="w-full bg-white border border-sakura-200/40 rounded-lg px-3 py-2 text-sm text-sumi/90 outline-none focus:border-aka/50 mb-3" placeholder="例如：滑沙超好玩！" />
       <div data-preview class="mb-3 hidden"></div>
       <div class="flex gap-2 mb-3">
         <button data-prev class="flex-1 px-3 py-2 rounded-lg bg-aka/15 text-aka text-sm font-medium hover:bg-aka/25 transition">👁 本機預覽</button>
         <button data-copy class="flex-1 px-3 py-2 rounded-lg bg-matcha/15 text-matcha text-sm font-medium hover:bg-matcha/25 transition">📋 複製 code</button>
       </div>
-      <div data-snippet class="hidden text-[11px] bg-white border border-paper-200 rounded-lg p-3 text-sumi/70 font-mono whitespace-pre-wrap break-all"></div>
+      <div data-snippet class="hidden text-[11px] bg-white border border-sakura-200/40 rounded-lg p-3 text-sumi/70 font-mono whitespace-pre-wrap break-all"></div>
     `;
     overlay.appendChild(box);
     document.body.appendChild(overlay);
@@ -718,6 +796,13 @@
     });
   }
 
+  // ---- back to list (從 detail 返去 list view) --------------------------------
+  function backToList() {
+    document.getElementById("view-detail").classList.add("hidden");
+    document.getElementById("view-list").classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   // ---- render: detail view -------------------------------------------------
   function openDetail(tripId) {
     const trip = DATA.trips.find((t) => t.id === tripId);
@@ -725,7 +810,7 @@
     document.getElementById("view-list").classList.add("hidden");
     const detail = document.getElementById("view-detail");
     detail.classList.remove("hidden");
-    detail.className = "max-w-5xl mx-auto px-6 py-8 pb-24 animate-fadeIn";
+    detail.className = "max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-24 animate-fadeIn";
     detail.innerHTML = "";
 
     const st = statusMeta(trip.status);
@@ -772,7 +857,7 @@
     }
 
     // tabs
-    const tabs = el("div", "flex gap-2 mb-5 border-b border-sakura-200/40 flex-wrap");
+    const tabs = el("div", "flex gap-2 mb-5 border-b border-sakura-200/40 tab-scroll");
     const tabDefs = [
       { id: "itinerary", label: "📅 每日行程" },
       { id: "journal", label: "📔 旅行日誌" },
@@ -790,6 +875,7 @@
       panes[t.id] = el("div", i === 0 ? "" : "hidden");
     });
     detail.appendChild(tabs);
+    tabDefs.forEach(t => detail.appendChild(panes[t.id]));
 
     function switchTab(id) {
       tabs.querySelectorAll("button").forEach((b) => {
@@ -804,8 +890,9 @@
     if (trip.days && trip.days.length) {
       const tl = el("div", "relative pl-8");
       tl.innerHTML = `<div class="absolute left-[15px] top-2 bottom-2 w-[2px] bg-gradient-to-b from-aka/40 via-sakura-200 to-matcha-100"></div>`;
-      trip.days.forEach((d) => {
-        const node = el("div", "relative mb-8 animate-fadeIn");
+      trip.days.forEach((d, dayIdx) => {
+        const isLastDay = dayIdx === trip.days.length - 1;
+        const node = el("div", `relative mb-8 animate-fadeIn${isLastDay ? " departure-day" : ""}`);
         const dot = el("div", "absolute -left-[19px] top-1.5");
         dot.innerHTML = `<div class="day-badge">${esc(d.day)}</div>`;
         node.appendChild(dot);
@@ -824,16 +911,16 @@
           <div class="flex items-center gap-2">
             <span class="text-sm font-semibold text-sumi/80" style="font-family: 'Klee One', cursive;">${esc(d.title)}</span>
           </div>
-          <div class="flex items-center gap-2 flex-wrap">
+          <div class="flex items-center gap-2 flex-wrap text-[11px] sm:text-xs mt-1 sm:mt-0">
             <span data-weather="${d.day}" class="weather-badge text-xs px-1.5 py-0.5 rounded bg-sakura-50/70 text-sumi/50 border border-sakura-200/40">⏳ 載入天氣...</span>
-            <span class="text-xs text-sumi/30">${fmtDate(d.date)} (${esc(d.weekday || "")}) · 📍 ${esc(d.location || "")}</span>
+            <span class="text-sumi/30">${fmtDate(d.date)} (${esc(d.weekday || "")}) · 📍 ${esc(d.location || "")}</span>
           </div>`;
         content.appendChild(headerDiv);
 
         const list = el("div", "space-y-2");
         (d.items || []).forEach((it, idx) => {
-          const row = el("div", "flex gap-3 items-start");
-          const left = el("div", "w-14 shrink-0 text-right pt-0.5");
+          const row = el("div", "flex gap-2 sm:gap-3 items-start");
+          const left = el("div", "day-item-time w-10 sm:w-14 shrink-0 text-right pt-0.5");
           left.innerHTML = it.time ? `<span class="text-xs text-sumi/50 font-mono">${esc(it.time)}</span>` : `<span class="text-xs text-sumi/20">—</span>`;
           const mid = el("div", "pt-1 text-base leading-none", it.icon || "•");
           const right = el("div", "flex-1");
@@ -999,7 +1086,41 @@
 
     // ---- map pane ----
     (function renderMap() {
-      const mapBanner = el("div", "relative overflow-hidden rounded-2xl map-embed");
+      // ─ 旅程概要 header ─
+      const days = trip.days || [];
+      const seenStops = [];
+      const seenSet = new Set();
+      days.forEach((d) => {
+        const loc = String(d.location || "").split(/[→,]/)[0].trim();
+        if (loc && !seenSet.has(loc)) { seenSet.add(loc); seenStops.push({ day: d.day, city: loc, weekday: d.weekday }); }
+      });
+      const firstDay = days[0];
+      const lastDay = days[days.length - 1];
+      const startLoc = firstDay ? (String(firstDay.location || "").split(/[→,]/)[0].trim()) : "KIX";
+      const endLoc = lastDay ? (String(lastDay.location || "").split(/[→,]/)[0].trim()) : "KIX";
+      const totalDays = days.length;
+
+      const summaryHeader = el("div", "bg-white/85 border border-sakura-200/30 rounded-xl p-5 mb-6 shadow-wa kawaii-card");
+      summaryHeader.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <span class="text-lg">🗺️</span>
+            <span class="text-lg font-bold text-sumi/80 ml-1" style="font-family: 'Klee One', cursive;">旅程路線總覽</span>
+          </div>
+          <div class="text-sm text-sumi/60 font-medium tracking-wide" style="font-family: 'Zen Maru Gothic', sans-serif;">
+            <span class="text-aka font-bold">${esc(startLoc)}</span> ${"→ " + seenStops.slice(1).map(s => esc(s.city)).join(" → ")}
+          </div>
+        </div>
+        <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-sumi/45">
+          <span class="px-2 py-1 rounded-lg bg-sakura-50/70 border border-sakura-200/30">📅 ${totalDays}日${totalDays-1}夜</span>
+          <span class="px-2 py-1 rounded-lg bg-matcha-50/70 border border-matcha-200/30">🇯🇵 ${esc(trip.region || "關西/中國地區")}</span>
+          <span class="px-2 py-1 rounded-lg bg-mizu-50/70 border border-mizu-200/30">${esc(trip.transport || "")}</span>
+        </div>
+      `;
+      panes.map.appendChild(summaryHeader);
+
+      // ─ Google Maps iframe ─
+      const mapBanner = el("div", "relative overflow-hidden rounded-2xl map-embed mb-6");
       const url = trip.mapEmbed || buildOverview(trip);
       mapBanner.innerHTML = `
         <iframe
@@ -1012,21 +1133,76 @@
           referrerpolicy="no-referrer-when-downgrade"
           title="Journey Map"
         ></iframe>`;
+      const iframe = mapBanner.querySelector('iframe');
+      if (iframe) {
+        const updateMapHeight = function() {
+          iframe.style.height = window.innerWidth < 640 ? '300px' : '480px';
+        };
+        updateMapHeight();
+        window.addEventListener('resize', updateMapHeight);
+      }
       panes.map.appendChild(mapBanner);
+
+      // ─ 途經城市清單（clickable badges → 跳 itinerary tab） ─
+      const citySection = el("div", "bg-white/85 border border-sakura-200/30 rounded-xl p-5 shadow-wa kawaii-card");
+      citySection.innerHTML = `
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-base">📍</span>
+          <span class="text-sm font-bold text-sumi/70" style="font-family: 'Klee One', cursive;">途經站點</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2" style="font-family: 'Zen Maru Gothic', sans-serif;">
+          ${(() => {
+            // Build badge chain: 🏁 KIX → ① 姬路 → ...
+            let html = `<span class="text-xs text-sumi/50 font-bold">🏁 ${esc(startLoc)}</span>`;
+            seenStops.forEach((s, i) => {
+              if (i === 0 && s.city === startLoc) return; // skip duplicate start
+              html += `<span class="text-sumi/30">→</span><button data-goto-day="${s.day}" class="px-3 py-1.5 rounded-lg bg-sakura-50/70 text-sumi/65 text-sm font-medium border border-sakura-200/40 hover:bg-sakura-100 hover:text-aka transition shadow-sm" style="font-family: 'Klee One', cursive;">${esc(s.city)} <span class="text-[10px] text-sumi/30 ml-0.5">D${s.day}</span></button>`;
+            });
+            html += `<span class="text-sumi/30">→</span><span class="text-xs text-sumi/50 font-bold">🏁 ${esc(endLoc)}</span>`;
+            return html;
+          })()}
+        </div>
+        <div class="mt-3 flex flex-wrap gap-2 text-[10px] text-sumi/30">
+          ${seenStops.map((s) => `<span class="px-2 py-0.5 rounded bg-sumi/5">Day ${s.day} · ${esc(s.city)}</span>`).join("")}
+        </div>
+      `;
+      // 綁 click → switch to itinerary tab + scroll to day
+      citySection.querySelectorAll("[data-goto-day]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const targetDay = parseInt(btn.dataset.gotoDay, 10);
+          // switch to itinerary tab
+          tabs.querySelectorAll("button").forEach((b) => {
+            const on = b.dataset.tab === "itinerary";
+            b.className = `tab-btn px-4 py-2 text-sm font-medium ${on ? "active text-aka" : "text-sumi/40 hover:text-sumi/70"}`;
+          });
+          Object.keys(panes).forEach((k) => panes[k].classList.toggle("hidden", k !== "itinerary"));
+          // scroll to that day
+          const dayDots = panes.itinerary.querySelectorAll(".day-badge");
+          dayDots.forEach((dot) => {
+            if (parseInt(dot.textContent.trim(), 10) === targetDay) {
+              dot.closest(".relative.mb-8")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          });
+        });
+      });
+      panes.map.appendChild(citySection);
+
       if (trip.mapNote) {
         const note = el("div", "text-xs text-sumi/40 mt-2 text-center");
         note.textContent = trip.mapNote;
         panes.map.appendChild(note);
       }
-    })();</script>
-  <script>
-    // 顯示 trip count
-    (function() {
-      if (window.TRAVEL_DATA && window.TRAVEL_DATA.trips) {
-        const el = document.getElementById('trip-count');
-        if (el) el.textContent = window.TRAVEL_DATA.trips.length + ' 個旅程';
-      }
     })();
-  </script>
+
+    } // END: openDetail(tripId)
+
+    // ✨ 啟動：render trip cards
+    console.log("[TravelHub] booting, trips=" + DATA.trips.length);
+    renderTrips(document.getElementById("trip-grid"));
+
+    // 顯示 trip count
+    const tc = document.getElementById('trip-count');
+    if (tc) tc.textContent = DATA.trips.length + ' 個旅程';
+  })();</script>
 </body>
 </html>
