@@ -520,6 +520,73 @@
 
   const DATA = window.TRAVEL_DATA || { trips: [] };
 
+  // ---- Cloudflare Worker / KV config (方案 C) ------------------------------
+  const JOURNAL_API = "https://travel-journal.stephenfch.workers.dev"; // ← CF Worker base URL
+
+  /**
+   * Fetch live journal entries from CF Worker KV, merge with static trip.journal.
+   * Returns merged array sorted by day/time.
+   */
+  async function fetchLiveJournal(tripId, staticJournal) {
+    try {
+      const resp = await fetch(`${JOURNAL_API}/journal/${encodeURIComponent(tripId)}`);
+      if (!resp.ok) return staticJournal.slice(); // fallback to static only
+      const data = await resp.json();
+      if (!data.entries || !Array.isArray(data.entries)) return staticJournal.slice();
+
+      // Merge: dedup by (day + time + spot + caption + photo), prefer live
+      const seen = new Set();
+      const merged = [];
+      // Live entries first (higher priority)
+      data.entries.forEach((e) => {
+        const sig = `${e.day}|${e.time}|${e.spot}|${e.caption}|${e.photo}`;
+        if (!seen.has(sig)) { seen.add(sig); merged.push(e); }
+      });
+      // Static entries (lower priority — only if not already in live)
+      staticJournal.forEach((e) => {
+        const sig = `${e.day}|${e.time}|${e.spot}|${e.caption}|${e.photo}`;
+        if (!seen.has(sig)) { seen.add(sig); merged.push(e); }
+      });
+
+      return merged.sort((a, b) => {
+        if ((a.day || 0) !== (b.day || 0)) return (a.day || 0) - (b.day || 0);
+        return String(a.time || "").localeCompare(String(b.time || ""));
+      });
+    } catch (err) {
+      console.warn("[Journal] Worker fetch failed, using static only:", err.message);
+      return staticJournal.slice();
+    }
+  }
+
+  /**
+   * POST a new journal entry to CF Worker KV.
+   * Returns { ok, entry } on success, null on failure.
+   */
+  async function postJournalEntry(tripId, entry) {
+    try {
+      const resp = await fetch(`${JOURNAL_API}/journal/${encodeURIComponent(tripId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          day: entry.day,
+          time: entry.time,
+          spot: entry.spot,
+          caption: entry.caption || "",
+          photo: entry.photo || "",
+        }),
+      });
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        console.warn("[Journal] POST failed:", resp.status, errData);
+        return null;
+      }
+      return await resp.json();
+    } catch (err) {
+      console.warn("[Journal] POST error:", err.message);
+      return null;
+    }
+  }
+
   // ---- helpers -------------------------------------------------------------
   function el(tag, cls, html) {
     const e = document.createElement(tag);
@@ -880,6 +947,7 @@
       { id: "risks", label: "⚠️ 風險提示" },
       { id: "tbc", label: "📌 待決事項" },
       { id: "extras", label: "💡 加推 / 備選" },
+      { id: "practical", label: "📱 實用資訊" },
     ];
     const panes = {};
     tabDefs.forEach((t, i) => {
@@ -1001,18 +1069,29 @@
     }
 
     // ---- 旅行日誌（📔 獨立 tab）--------------------------------------------
-    (function renderJournal() {
-      const j = (trip.journal || []).slice().sort((a, b) => {
-        if ((a.day || 0) !== (b.day || 0)) return (a.day || 0) - (b.day || 0);
-        return String(a.time || "").localeCompare(String(b.time || ""));
-      });
+    // ═══════════════════════════════════════════════════════════════════════
+    // renderJournal() — now async: fetch live KV → merge → render
+    // ═══════════════════════════════════════════════════════════════════════
+    (async function renderJournal() {
+      // Fetch live entries from Worker KV, then merge with static data.js
+      const staticJournal = (trip.journal || []).slice();
+      const mergedJournal = await fetchLiveJournal(trip.id, staticJournal);
+      const j = mergedJournal;
+      const syncCount = mergedJournal.length - staticJournal.length;
+      // ═══════════════════════════════════════════════════════════════════════
 
       // ─ 頂部：📸 加相 button ─
       const addPhotoRow = el("div", "flex flex-wrap items-center gap-2 mb-4");
+      // Sync badge (hidden if 0 cloud entries)
+      const syncBadge = syncCount > 0
+        ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-matcha-100/60 text-matcha-400 border border-matcha-200/40">☁️ +${syncCount} 雲端</span>`
+        : `<span class="text-[10px] px-2 py-0.5 rounded-full bg-sumi/5 text-sumi/30 border border-sumi/10">☁️ 未同步</span>`;
       addPhotoRow.innerHTML = `
         <button id="btn-add-journal-photo" class="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-aka/90 to-sakura-400 text-white shadow-md hover:shadow-lg transition-all active:scale-95">
           <span>📸</span> 加相
         </button>
+        ${syncBadge}
+        <button id="btn-refresh-journal" class="text-[10px] px-2 py-1 rounded border border-sakura-200/30 text-sumi/40 hover:text-sumi/70 hover:bg-sakura-50 transition" title="從雲端重新載入">🔄 刷新</button>
         <span class="text-[10px] text-sumi/35">手機自動開相機 · desktop 揀檔案</span>
       `;
       panes.journal.appendChild(addPhotoRow);
@@ -1098,6 +1177,13 @@
       // ─ Event: 開 file picker ─
       document.getElementById('btn-add-journal-photo').addEventListener('click', () => {
         fileInput.click();
+      });
+      // ─ Event: 刷新 (re-render journal from Worker) ─
+      document.getElementById('btn-refresh-journal').addEventListener('click', () => {
+        const jPane = panes.journal;
+        jPane.innerHTML = `<div class="text-center text-sumi/30 py-8"><span class="loading-pulse">⏳ 載入中...</span></div>`;
+        // Re-run renderJournal by clearing + calling openDetail again
+        setTimeout(() => openDetail(trip.id), 100);
       });
 
       // ─ Event: 揀相 ─
@@ -1195,6 +1281,20 @@
             uploadedUrl = data.data.link;
             document.getElementById('imgur-result').classList.remove('hidden');
             document.getElementById('imgur-result').textContent = `✅ 已上載 → ${uploadedUrl}`;
+            // ── 自動同步到 Cloudflare Worker KV ──
+            const day = parseInt(document.getElementById('j-day').value, 10);
+            const spot = document.getElementById('j-spot').value.trim();
+            const caption = document.getElementById('j-caption').value.trim();
+            const now = new Date();
+            const time = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            const entry = { day, time, spot: spot || "(未填)", caption: caption || "", photo: uploadedUrl };
+            postJournalEntry(trip.id, entry).then((res) => {
+              if (res && res.ok) {
+                document.getElementById('imgur-result').textContent = `✅ 已同步 ☁️ → 共 ${res.total} 筆`;
+                document.getElementById('btn-copy-journal').disabled = false;
+              }
+            }).catch(() => {});
+            // ── /Worker KV sync ──
           } else {
             throw new Error(data.data?.error || 'Upload failed');
           }
@@ -1253,7 +1353,7 @@
       if (!j.length) {
         panes.journal.appendChild(
           el("div", "text-center text-sumi/40 text-sm py-16",
-            "🌸 仲未有人寫日誌～<br/>撳上面「📸 加相」影相記錄！")
+            "🌸 仲未有人寫日誌～<br/>撳上面「📸 加相」影相，<br class='hidden sm:inline'/>上載 Imgur 後自動同步 ☁️ 雲端！")
         );
         return;
       }
@@ -1342,6 +1442,34 @@
       });
       panes.extras.appendChild(wrap);
     }
+
+    // ---- 實用資訊（📱 獨立 tab）-------------------------------------------
+    (function renderPractical() {
+      const pi = trip.practicalInfo || [];
+      if (!pi.length) {
+        panes.practical.appendChild(
+          el("div", "text-center text-sumi/40 text-sm py-16",
+            "📍 暫時冇實用資訊～<br/>喺 data.js 嘅 <code class='text-aka/70'>practicalInfo</code> 陣列加嘢就得！")
+        );
+        return;
+      }
+      const wrap = el("div", "grid grid-cols-1 md:grid-cols-2 gap-4");
+      pi.forEach((item) => {
+        const card = el("div", "bg-white/80 border border-sakura-200/30 rounded-xl p-4 shadow-wa hover:shadow-sakura transition-all animate-fadeIn");
+        card.innerHTML = `
+          <div class="flex items-start gap-3">
+            <span class="text-2xl shrink-0">${esc(item.icon || "🔗")}</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold text-sumi/80" style="font-family: 'Klee One', cursive;">${esc(item.title)}</div>
+               ${item.desc ? `<div class="text-xs text-sumi/45 mt-1 leading-relaxed">${esc(item.desc)}</div>` : ""}
+               ${item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener" class="inline-block mt-2 px-3 py-1 rounded-lg bg-aka/10 text-aka/70 text-xs font-medium hover:bg-aka/20 transition">🔗 前往 ↗</a>` : ""}
+               ${item.note ? `<div class="mt-2 px-2 py-1 rounded bg-kinako-50/80 text-sumi/50 text-[10px] leading-relaxed">💡 ${esc(item.note)}</div>` : ""}
+            </div>
+          </div>`;
+        wrap.appendChild(card);
+      });
+      panes.practical.appendChild(wrap);
+    })();
 
     // ---- map pane: directions ↔ map toggle + all spots list ----
     (function renderMap() {

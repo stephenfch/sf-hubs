@@ -262,6 +262,24 @@ window.TRAVEL_DATA = {
         "關西單車體育中心「24/12 close」需 confirm 7月開放",
       ],
 
+      // 實用資訊（網站／工具／App）
+      practicalInfo: [
+        {
+          icon: "🍽️",
+          title: "Tabelog (食べログ)",
+          desc: "日本最大級餐廳搜尋/評分平台，類似 OpenRice 但日本用。搵餐廳、睇評分、Menu、使費，必裝 App！",
+          url: "https://tabelog.com/",
+          note: "支援地圖搜尋、菜式篩選、預算範圍，日文為主但漢字+圖片夠用",
+        },
+        {
+          icon: "📞",
+          title: "AutoReserve",
+          desc: "日本餐廳網上訂位平台，支援多語言，唔使打電話。熱門餐廳建議早幾日 book。",
+          url: "https://autoreserve.com/",
+          note: "免費登記，可即時查看空位並確認 booking，部份餐廳支援取消免罰",
+        },
+      ],
+
       // 加推景點 / 備選
       extras: [
         { title: "砂の美術館", desc: "砂丘旁室內冷氣（已加落 Day 4）", url: "" },

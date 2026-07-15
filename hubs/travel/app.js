@@ -361,6 +361,7 @@
       { id: "risks", label: "⚠️ 風險提示" },
       { id: "tbc", label: "📌 待決事項" },
       { id: "extras", label: "💡 加推 / 備選" },
+      { id: "practical", label: "📱 實用資訊" },
     ];
     const panes = {};
     tabDefs.forEach((t, i) => {
@@ -577,6 +578,34 @@
       });
       panes.extras.appendChild(wrap);
     }
+
+    // ---- 實用資訊（📱 獨立 tab）-------------------------------------------
+    (function renderPractical() {
+      const pi = trip.practicalInfo || [];
+      if (!pi.length) {
+        panes.practical.appendChild(
+          el("div", "text-center text-sumi/40 text-sm py-16",
+            "📍 暫時冇實用資訊～<br/>喺 data.js 嘅 <code class='text-aka/70'>practicalInfo</code> 陣列加嘢就得！")
+        );
+        return;
+      }
+      const wrap = el("div", "grid grid-cols-1 md:grid-cols-2 gap-4");
+      pi.forEach((item, idx) => {
+        const card = el("div", "bg-white/80 border border-sakura-200/30 rounded-xl p-4 shadow-wa hover:shadow-sakura transition-all animate-fadeIn");
+        card.innerHTML = `
+          <div class="flex items-start gap-3">
+            <span class="text-2xl shrink-0">${esc(item.icon || "🔗")}</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold text-sumi/80" style="font-family: 'Klee One', cursive;">${esc(item.title)}</div>
+               ${item.desc ? `<div class="text-xs text-sumi/45 mt-1 leading-relaxed">${esc(item.desc)}</div>` : ""}
+               ${item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener" class="inline-block mt-2 px-3 py-1 rounded-lg bg-aka/10 text-aka/70 text-xs font-medium hover:bg-aka/20 transition">🔗 前往 ↗</a>` : ""}
+               ${item.note ? `<div class="mt-2 px-2 py-1 rounded bg-kinako-50/80 text-sumi/50 text-[10px] leading-relaxed">💡 ${esc(item.note)}</div>` : ""}
+            </div>
+          </div>`;
+        wrap.appendChild(card);
+      });
+      panes.practical.appendChild(wrap);
+    })();
 
     // ---- map pane ----
     (function renderMap() {
