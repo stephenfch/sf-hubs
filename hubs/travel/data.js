@@ -8,9 +8,9 @@
 // =============================================================================
 window.TRAVEL_DATA = {
   meta: {
-    version: "2.1.0",
+    version: "2.2.0",
     updated: "2026-07-15",
-    note: "Osaka 2026 關西/鳥取自駕遊 9日8夜 · 已補齊景點收費/電話/預約 deadline/泊車（來源：Osaka2026_itinerary.md）",
+    note: "Osaka 2026 關西/鳥取自駕遊 9日8夜 · v2.2.0：加 Times CAR RENTAL 第二部車（Mazda Biante + Honda Step WGN），更新風險狀態",
   },
 
   trips: [
@@ -25,7 +25,7 @@ window.TRAVEL_DATA = {
       endDate: "2026-07-26",
       status: "upcoming", // upcoming | ongoing | past
       party: "6大4小（共 10 人）",
-      transport: "全程自駕 · Mazda Biante 8座 MPV",
+      transport: "全程自駕 · 🚙 ① Honda Step WGN + 🚙 ② Mazda Biante 8座 MPV（Times CAR RENTAL × 2）",
       summary:
         "姬路 → 鳥取（3晚）→ 真庭 → 岡山摘桃 → 姬路 → 大阪天神祭，9日8夜親子自駕。",
 
@@ -226,9 +226,9 @@ window.TRAVEL_DATA = {
 
       // 風險 / 注意事項（level: red | orange | yellow）
       risks: [
-        { level: "red", icon: "⛔", title: "租車超載：8座車 vs 10人", desc: "6-8歲細仔要獨立學童安全帶，8座最多載8人（包司機）。超載違法 + 保險失效 → 改租 10座 或朋友家庭各自租車。" },
-        { level: "red", icon: "⛔", title: "取車時間/地點太趕", desc: "15:10 到 KIX，出閘最快 16:00，原定 16:00 @ 大阪市區根本趕唔切 → 改 KIX 空港取車。" },
-        { level: "orange", icon: "⚠️", title: "MPV 車高 vs 大阪泊車場", desc: "Biante 車高約 1.85m，大阪機械式泊車場限高 155-175cm 入唔到 → 揀平面位/ハイルーフ對應，或用 akippa 預約。" },
+        { level: "green", icon: "✅", title: "租車超載：已解決", desc: "已改：⓵ Honda Step WGN + ⓶ Mazda Biante 8座（Times CAR RENTAL），兩部車共 15 座位，10 人冇問題。取車 18/7 16:00 @ KIX，還車 26/7 16:00 @ KIX。" },
+        { level: "green", icon: "✅", title: "取車時間：已解決", desc: "航班 15:10 到 KIX，取車單寫 16:00 可取，時間 fit ✅。員工會分兩組：一組去 Times counter 取兩部車，一組睇行李+細路。" },
+        { level: "orange", icon: "⚠️", title: "兩部車車高 vs 大阪泊車場", desc: "Biante 約 1.85m、Step WGN 約 1.85m，大阪機械式泊車場限高 155-175cm 入唔到 → 兩部都要揀平面位/ハイルーフ對應，或 akippa 預約。" },
         { level: "orange", icon: "🎆", title: "天神祭管制 + 泊車", desc: "7/25 本宮約 130 萬人，13:00-23:00 通行禁止 → 泊梅田/北區，搭地鐵入會場。" },
         { level: "orange", icon: "🌡️", title: "7月酷暑 35°C+", desc: "室內 backup（砂の美術館、わらべ館）、補水、早出晚歸。" },
         { level: "orange", icon: "🌊", title: "南海海槽地震", desc: "30年內 7-8 級 70-80% → 帶地震應急包、記避難路線。" },
