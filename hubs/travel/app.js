@@ -166,8 +166,8 @@
       const r = results[i];
       if (r.status === "fulfilled" && r.value) {
         badge.textContent = `${r.value.icon} ${r.value.high}°/${r.value.low}°`;
-        badge.title = `${r.value.label} · 最高 ${r.value.high}°C · 最低 ${r.value.low}°C`;
-        badge.className = "weather-badge text-xs px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/20";
+        badge.setAttribute("data-tip", `${r.value.label} · 最高 ${r.value.high}°C · 最低 ${r.value.low}°C`);
+        badge.className = "weather-badge text-xs px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/20 cursor-default relative";
       } else {
         badge.textContent = "🌡️ N/A";
         badge.className = "weather-badge text-xs px-1.5 py-0.5 rounded bg-white/5 text-white/40";
