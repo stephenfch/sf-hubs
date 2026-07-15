@@ -771,6 +771,10 @@
         badge.className = "weather-badge text-xs px-1.5 py-0.5 rounded bg-sumi/5 text-sumi/40";
       }
     });
+    // 🆕 天氣 load 完後自動 populate tiles
+    if (window._populateWeatherTiles) {
+      setTimeout(() => window._populateWeatherTiles(), 200);
+    }
   }
 
   // ---- 加相 modal（A 模式）--------------------------------------------------
@@ -981,6 +985,73 @@
     // ---- itinerary timeline ----
     if (trip.days && trip.days.length) {
       const tl = el("div", "relative pl-6");
+
+      // ─ 🆕 天氣總覽 tile（響 timeline 之前） ─
+      (function weatherOverview() {
+        const weatherCard = el("div", "relative ml-[-8px] mb-8 animate-fadeIn");
+        const card = el("div", "bg-white/85 border border-sakura-200/30 rounded-xl p-5 shadow-wa kawaii-card");
+        card.innerHTML = `
+          <div class="flex items-center gap-2 mb-4">
+            <span class="text-base">🌤️</span>
+            <span class="text-sm font-bold text-sumi/70" style="font-family: 'Klee One', cursive;">天氣預報總覽</span>
+            <span class="text-[10px] text-sumi/30 ml-auto">Open-Meteo · 7日預報</span>
+          </div>
+          <div id="weather-tile-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"></div>`;
+        weatherCard.appendChild(card);
+        // 插入 timeline 最前
+        const timelineParent = tl.parentElement;
+        timelineParent.insertBefore(weatherCard, tl);
+
+        // 等天氣 load 完之後 populate tiles
+        // 用 MutationObserver 或者直接修改 loadWeatherForTrip
+        // 改裝 loadWeatherForTrip 同時 populates tiles
+        const origLoad = window._origLoadWeather;
+        if (!origLoad) {
+          window._origLoadWeather = window.loadWeatherData || null;
+        }
+        // 加 tile populate function
+        window._populateWeatherTiles = async function() {
+          const grid = document.getElementById("weather-tile-grid");
+          if (!grid) return;
+          // 逐日 check weather badge
+          let html = "";
+          trip.days.forEach((d) => {
+            const badge = document.querySelector(`[data-weather="${d.day}"]`);
+            const weatherText = badge ? badge.textContent : "⏳";
+            const tip = badge ? (badge.getAttribute("data-tip") || "") : "";
+            const wClass = badge ? badge.className : "bg-sumi/5 text-sumi/40";
+            // 提取 icon
+            const iconMatch = weatherText.match(/^([\u{1F300}-\u{1F9FF}]|[\u2600-\u27BF])/);
+            const weatherIcon = iconMatch ? iconMatch[1] : "🌡️";
+            const tempStr = weatherText.replace(/^[^\d]+/, "");
+            const isLoaded = !weatherText.includes("⏳") && !weatherText.includes("N/A");
+            const bgGrad = isLoaded && weatherIcon.includes("☀️") ? "from-amber-50 to-amber-100/60" :
+                          isLoaded && weatherIcon.includes("🌦") ? "from-mizu-50 to-mizu-100/60" :
+                          isLoaded && weatherIcon.includes("🌧") ? "from-ao-50 to-ao-100/60" :
+                          isLoaded && weatherIcon.includes("⛈") ? "from-aka-50 to-aka-100/50" :
+                          isLoaded && weatherIcon.includes("🌤") ? "from-kinako-50 to-kinako-100/60" :
+                          isLoaded && weatherIcon.includes("☁️") ? "from-sumi/5 to-sumi/10" :
+                          isLoaded && weatherIcon.includes("🌨") ? "from-mizu-50 to-mizu-100/50" :
+                          isLoaded && weatherIcon.includes("❄️") ? "from-mizu-30 to-mizu-60/50" :
+                          "from-sakura-50 to-sakura-100/40";
+            const dayName = d.weekday || "";
+            const cityName = (d.location || "").split("→")[0].trim();
+            html += `<div class="bg-gradient-to-br ${bgGrad} rounded-xl p-3 border border-white/60 shadow-sm hover:shadow-md transition-all">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-bold text-sumi/60" style="font-family: 'Klee One', cursive;">D${d.day}</span>
+                <span class="text-[9px] text-sumi/35">${esc(dayName)}</span>
+              </div>
+              <div class="text-2xl text-center my-1">${weatherIcon}</div>
+              <div class="text-center text-xs font-semibold text-sumi/70">${isLoaded ? esc(tempStr) : "⏳"}</div>
+              <div class="text-center text-[9px] text-sumi/40 mt-1 truncate" title="${esc(cityName)}">${esc(cityName)}</div>
+            </div>`;
+          });
+          grid.innerHTML = html;
+        };
+        // 首次 load 完之後 call
+        setTimeout(() => window._populateWeatherTiles(), 2000);
+      })();
+
       tl.innerHTML = `<div class="absolute left-[15px] top-2 bottom-2 w-[2px] bg-gradient-to-b from-aka/40 via-sakura-200 to-matcha-100"></div>`;
       trip.days.forEach((d, dayIdx) => {
         const isLastDay = dayIdx === trip.days.length - 1;
