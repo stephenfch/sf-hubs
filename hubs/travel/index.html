@@ -616,6 +616,44 @@
     const dt = new Date(d + "T00:00:00");
     return dt.toLocaleDateString("zh-HK", { month: "short", day: "numeric" });
   }
+  // ── 出發倒數 ──
+  function countdownText(dateStr) {
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    const dep = new Date(dateStr + "T00:00:00");
+    const diff = Math.ceil((dep - now) / (1000*60*60*24));
+    if (diff < 0) return { text: "🎉 旅程進行中！", cls: "bg-ao-50/70 text-ao border-ao-100/30" };
+    if (diff === 0) return { text: "🔥 今日出發！！", cls: "bg-aka/15 text-aka border-aka/30 animate-pulse" };
+    if (diff <= 3) return { text: `🔥 仲有 ${diff} 日出發！`, cls: "bg-aka/10 text-aka border-aka/20" };
+    return { text: `📅 仲有 ${diff} 日出發`, cls: "bg-matcha-100/50 text-matcha-400 border-matcha-200/40" };
+  }
+  // ── 匯率 cache（JPY→HKD，每日 refresh）──
+  let _rateCache = { rate: null, date: "" };
+  async function fetchJPYRate() {
+    const today = new Date().toISOString().slice(0,10);
+    if (_rateCache.date === today && _rateCache.rate) return _rateCache.rate;
+    try {
+      // free.currencyapi.com (free tier: 300 req/mo) — fallback to exchangerate.host if needed
+      const resp = await fetch("https://open.er-api.com/v6/latest/JPY");
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      if (data && data.rates && data.rates.HKD) {
+        const rate = Number(data.rates.HKD).toFixed(4);
+        _rateCache = { rate, date: today };
+        return rate;
+      }
+      return null;
+    } catch (e) {
+      console.warn("[Rate] fetch fail", e);
+      return null;
+    }
+  }
+  async function renderRateBadge(target) {
+    const rate = await fetchJPYRate();
+    if (!rate) { target.textContent = "💱 匯率 N/A"; return; }
+    target.textContent = `💱 ¥1 = HK$${rate}`;
+    target.setAttribute("data-tip", `JPY→HKD 匯率 (${new Date().toISOString().slice(0,10)})`);
+  }
   function statusMeta(s) {
     if (s === "upcoming") return { label: "Upcoming", cls: "bg-matcha/15 text-matcha border-matcha/30" };
     if (s === "ongoing") return { label: "Ongoing", cls: "bg-ao-50/70 text-ao border-ao-100/30" };
@@ -874,11 +912,13 @@
       card.appendChild(hero);
 
       const body = el("div", "p-4");
+      const cd = countdownText(trip.startDate);
       body.innerHTML = `
         <h3 class="font-semibold text-lg text-sumi/80 group-hover:text-aka transition" style="font-family: 'Klee One', cursive;">${esc(trip.title)}</h3>
         <p class="text-sumi/30 text-xs mt-0.5">${esc(trip.region || "")}</p>
         <p class="text-sumi/50 text-sm mt-1.5 leading-relaxed">${esc(trip.summary || "")}</p>
-        <div class="mt-3 flex flex-wrap gap-1.5 text-xs">
+        <div class="mt-1"><span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] border ${cd.cls}">${cd.text}</span></div>
+        <div class="mt-2 flex flex-wrap gap-1.5 text-xs">
           <span class="px-2 py-1 rounded-lg bg-sakura-50/60 text-sumi/50 border border-sakura-200/30">📅 ${fmtDate(trip.startDate)} – ${fmtDate(trip.endDate)}</span>
           <span class="px-2 py-1 rounded-lg bg-sakura-50/60 text-sumi/50 border border-sakura-200/30">👥 ${esc(trip.party || "")}</span>
           <span class="px-2 py-1 rounded-lg bg-sakura-50/60 text-sumi/50 border border-sakura-200/30">${esc(trip.transport || "")}</span>
@@ -917,6 +957,7 @@
     detail.appendChild(back);
 
     // header
+    const cd = countdownText(trip.startDate);
     const header = el("div", "mb-8");
     header.innerHTML = `
       <div class="flex items-start justify-between gap-4 flex-wrap">
@@ -927,7 +968,11 @@
           </div>
           <p class="text-sumi/30 text-sm" style="font-family: 'Zen Maru Gothic', sans-serif;">${esc(trip.region || "")} · ${esc(trip.summary || "")}</p>
         </div>
-        <span class="stamp mt-1">${st.label}</span>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="stamp">${st.label}</span>
+          <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] border ${cd.cls}">${cd.text}</span>
+          <span id="rate-badge" class="inline-block px-2 py-0.5 rounded-full text-[10px] bg-sumi/5 text-sumi/40 border border-sumi/10">💱 載入匯率...</span>
+        </div>
       </div>
       <div class="mt-4 flex flex-wrap gap-2 text-xs">
         <span class="px-3 py-1.5 rounded-xl bg-sakura-50/70 text-sumi/60 border border-sakura-200/30">📅 ${fmtDate(trip.startDate)} – ${fmtDate(trip.endDate)}</span>
@@ -935,6 +980,9 @@
         <span class="px-3 py-1.5 rounded-xl bg-sakura-50/70 text-sumi/60 border border-sakura-200/30">${esc(trip.transport || "")}</span>
       </div>`;
     detail.appendChild(header);
+    // 非同步載入匯率 badge
+    const rateBadge = detail.querySelector("#rate-badge");
+    if (rateBadge) renderRateBadge(rateBadge);
 
     // flights strip — compact inline
     if (trip.flights && trip.flights.length) {
