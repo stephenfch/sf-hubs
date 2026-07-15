@@ -8,9 +8,9 @@
 // =============================================================================
 window.TRAVEL_DATA = {
   meta: {
-    version: "2.2.0",
-    updated: "2026-07-15",
-    note: "Osaka 2026 關西/鳥取自駕遊 9日8夜 · v2.2.0：加 Times CAR RENTAL 第二部車（Mazda Biante + Honda Step WGN），更新風險狀態",
+    version: "2.3.0",
+    updated: "2026-07-16",
+    note: "Osaka 2026 關西/鳥取自駕遊 9日8夜 · v2.3.0：Day6住姬路確定 ✅、Day7改A→B順序＋C備用 ✅、TBC更新",
   },
 
   trips: [
@@ -190,22 +190,21 @@ window.TRAVEL_DATA = {
               info: { hours: "受付 9:00–11:00 / 13:00–16:00", mapcode: "", intro: "岡山白桃名物，夏季桃狩り放題。TOMOMIEN 要網上/電話預約，農地冇 navi 搜唔到，跟官網 Google Map", photoSpot: "拎住桃影得意相", photos: [] } },
             { time: "", icon: "🛑", title: "中途休息站：Seria / 超市", desc: "", url: "", drive: "30min",
               info: { hours: "", mapcode: "", intro: "100 円店 Seria 補給小物", photoSpot: "", photos: [] } },
-            { time: "", icon: "🏨", title: "住：姬路大和 ROYNET 酒店", desc: "⚠️ 同日晚活動在岡山/真庭，夜晚住姬路定岡山待定（影響 24/7 摘桃）", url: "", tbc: true, drive: "1.5hr" },
+            { time: "", icon: "🏨", title: "住：姬路大和 ROYNET 酒店", desc: "✅ 已確定住姬路", url: "", drive: "1.5hr" },
           ],
         },
         {
           day: 7,
           date: "2026-07-24",
           weekday: "五",
-          title: "彈性日（A / B / C 三選一）",
-          location: "姬路/岡山→大阪",
-          hotel: "大阪北濱布萊頓酒店",
+          title: "A→B 彈性日（C備用）",
+          location: "姬路→大阪",
           items: [
-            { time: "", icon: "🅰️", title: "選項 A：姬路中央公園 姫路セントラルパーク", desc: "可揸自己車入園睇動物（Biante MPV OK；開篷/車斗車唔入得）", url: "https://www.central-park.co.jp/",
+            { time: "上午", icon: "🅰️", title: "姫路中央公園（自駕入園Safari）", desc: "揸自己車入園睇動物，朝早冇咁熱", url: "https://www.central-park.co.jp/",
               info: { hours: "9:30–17:00（季節變動）", mapcode: "24 436 128*13", intro: "西日本最大級 Safari + 遊園地，揸自己車入 Safari 區睇動物，Biante MPV 入得", photoSpot: "車入 Safari 影長頸鹿探頭", photos: [] } },
-            { time: "", icon: "🅱️", title: "選項 B：Cycle Monorail サイクルモノレール", desc: "吹田/北大阪", url: "https://maps.app.goo.gl/UMtjBTqck7JcHsY99", drive: "1hr",
+            { time: "下午", icon: "🅱️", title: "Cycle Monorail サイクルモノレール", desc: "騎單車玩高空單軌車，新奇體驗", url: "https://maps.app.goo.gl/UMtjBTqck7JcHsY99", drive: "1hr",
               info: { hours: "營業時間随季節", mapcode: "", intro: "生駒山上遊園地嘅空中自轉單軌，踩單車 360° 睇大阪平野絕景", photoSpot: "車廂內影大阪全景", photos: [] } },
-            { time: "", icon: "🅲️", title: "選項 C：向日葵公園", desc: "需 23/7 住岡山先可以咁排", url: "https://maps.app.goo.gl/2wizmnHLECd81YsH8", tbc: true, drive: "30min",
+            { time: "備用", icon: "🅲️", title: "向日葵公園（備用）", desc: "時間鬆動先去", url: "https://maps.app.goo.gl/2wizmnHLECd81YsH8", drive: "30min",
               info: { hours: "", mapcode: "", intro: "岡山向日葵公園（ひまわりの丘公園等），7-8 月花季", photoSpot: "花海打卡", photos: [] } },
             { time: "", icon: "🏨", title: "住：大阪北濱布萊頓酒店 (Hotel Brighton City Osaka Kitahama)", desc: "Check-in 15:00 · 🅿️ 北濱站附近平面泊車場（Biante 1.85m 入到）", url: "https://www.trip.com/w/HkHrHLP6XV2", drive: "1hr",
               info: { hours: "Check-in 15:00 / Check-out 11:00", intro: "🏨 大阪北濱布萊頓酒店 ⭐ 9.2/10（Trip.com）📍 北長狭通1丁目1 — 北濱站5號口步行1分鐘 🚇 🏪 樓下7-11 🅿️ Biante(1.85m)要揀平面位／akippa 🛁 有浴缸 🧺 洗衣機+微波爐 🚰 大堂免費瓶裝水 🍳 早餐自助06:30–10:00（成人¥2,200/6歲以下免費/7-12歲¥1,350）" } },
@@ -261,8 +260,8 @@ window.TRAVEL_DATA = {
       // 待決事項 (TBC)
       tbc: [
         "19/7 向日葵開花 timing（漆野本村 19/7 未開 → 改東徳久 or skip）",
-        "23/7 夜晚住邊：姬路 OR 岡山？（影響 24/7 摘桃）",
-        "24/7 選邊個：A 姫路中央公園 / B Cycle Monorail / C 向日葵公園",
+        "✅ Day6 住姬路（已確定）",
+        "✅ Day7 先A姬路中央公園→再B Cycle Monorail，C備用（已確定）",
         "22/7 Dinner @ 未定",
         "關西單車體育中心「24/12 close」需 confirm 7月開放",
       ],
