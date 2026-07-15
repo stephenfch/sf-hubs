@@ -310,12 +310,9 @@
       position: relative;
       overflow: hidden;
     }
-    /* departure day card — 窄身啲，唔會太空洞 */
+    /* departure day card — 灰調透明感 */
     .departure-day .kawaii-card {
-      max-width: 560px;
-    }
-    @media (max-width: 640px) {
-      .departure-day .kawaii-card { max-width: 100%; }
+      background: rgba(239, 235, 233, 0.50);
     }
     .kawaii-card::before {
       content: '';
@@ -888,7 +885,7 @@
 
     // ---- itinerary timeline ----
     if (trip.days && trip.days.length) {
-      const tl = el("div", "relative pl-8");
+      const tl = el("div", "relative pl-6");
       tl.innerHTML = `<div class="absolute left-[15px] top-2 bottom-2 w-[2px] bg-gradient-to-b from-aka/40 via-sakura-200 to-matcha-100"></div>`;
       trip.days.forEach((d, dayIdx) => {
         const isLastDay = dayIdx === trip.days.length - 1;
@@ -998,7 +995,7 @@
         );
         return;
       }
-      const wrap = el("div", "relative pl-8");
+      const wrap = el("div", "relative pl-6");
       wrap.innerHTML = `<div class="absolute left-[15px] top-2 bottom-2 w-[2px] bg-gradient-to-b from-aka/30 via-sakura-200 to-kinako-200"></div>`;
       j.forEach((e) => {
         const node = el("div", "relative mb-6 animate-fadeIn");
