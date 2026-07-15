@@ -251,7 +251,6 @@ window.TRAVEL_DATA = {
         { level: "orange", icon: "⚠️", title: "兩部車車高 vs 大阪泊車場", desc: "Biante 約 1.85m、Step WGN 約 1.85m，大阪機械式泊車場限高 155-175cm 入唔到 → 兩部都要揀平面位/ハイルーフ對應，或 akippa 預約。" },
         { level: "orange", icon: "🎆", title: "天神祭管制 + 泊車", desc: "7/25 本宮約 130 萬人，13:00-23:00 通行禁止 → 泊梅田/北區，搭地鐵入會場。" },
         { level: "orange", icon: "🌡️", title: "7月酷暑 35°C+", desc: "室內 backup（砂の美術館、わらべ館）、補水、早出晚歸。" },
-        { level: "orange", icon: "🌊", title: "南海海槽地震", desc: "30年內 7-8 級 70-80% → 帶地震應急包、記避難路線。" },
         { level: "yellow", icon: "🐻", title: "兵庫熊出沒（宍粟/小野 7月）", desc: "山區拍高聲、唔近叢林。" },
       ],
 
