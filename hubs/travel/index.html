@@ -1523,12 +1523,14 @@
       panes.map.appendChild(summaryHeader);
 
       // ─ Google Maps embed with mode toggle ─
-      const mapBanner = el("div", "relative overflow-hidden rounded-2xl map-embed mb-6");
+      const mapBanner = el("div", "relative overflow-hidden rounded-2xl map-embed mb-4");
 
       // Build mode URLs
       const directionsUrl = trip.mapEmbed || buildOverview(trip);
       // My Maps embed: Google My Maps（自訂 marker / 圖層 / 路線）
-      const mymapsUrl = `https://www.google.com/maps/d/u/0/embed?mid=1LuuiiWAbTEBuR2loYXmtRSgLz-vNYZE&ehbc=2E312F`;
+      const mymapsEmbed = trip.myMapsEmbed || `https://www.google.com/maps/d/u/0/embed?mid=1LuuiiWAbTEBuR2loYXmtRSgLz-vNYZE&ehbc=2E312F`;
+      const mymapsViewer = trip.myMapsViewer || `https://www.google.com/maps/d/u/0/viewer?mid=1LuuiiWAbTEBuR2loYXmtRSgLz-vNYZE`;
+      const mymapsUrl = mymapsEmbed + `&hl=zh-Hant`;
 
       // ─ Map mode: Day-by-day 路線建立 ─
       function parseDestCity(loc) {
@@ -1587,6 +1589,22 @@
         return `https://maps.google.com/maps?saddr=${saddr}&daddr=${daddr}&output=embed`;
       }
 
+      // ─ Mode description row ─
+      const modeDesc = el("div", "text-[10px] text-sumi/40 mb-2 leading-relaxed", "");
+      modeDesc.id = "map-mode-desc";
+      panes.map.appendChild(modeDesc);
+
+      // ─ "在 Google Maps 開啟全螢幕" link ─
+      const openMyMaps = el("a",
+        "inline-flex items-center gap-1 text-xs text-ao hover:text-ao-dark underline mb-2",
+        "🔗 在 Google Maps 開啟全螢幕地圖 ↗");
+      openMyMaps.id = "open-mymaps-link";
+      openMyMaps.href = mymapsViewer;
+      openMyMaps.target = "_blank";
+      openMyMaps.rel = "noopener";
+      openMyMaps.style.display = "none";
+      panes.map.appendChild(openMyMaps);
+
       // Toggle buttons
       const toggleWrap = el("div", "flex gap-1 mb-2");
       toggleWrap.innerHTML = `
@@ -1605,14 +1623,20 @@
         `).join("");
       panes.map.appendChild(daySelectPanel);
 
+      // ─ Loading spinner ─
+      const mapLoader = el("div", "flex items-center justify-center rounded-2xl bg-sakura-50/50", "");
+      mapLoader.id = "map-loader";
+      mapLoader.innerHTML = `<div class="animate-pulse text-sakura-400 text-sm">🗺️ 載入中...</div>`;
+      mapLoader.style.height = window.innerWidth < 640 ? "300px" : "min(65vh, 600px)";
+      panes.map.appendChild(mapLoader);
+
       const iframeWrap = el("div", "w-full");
       iframeWrap.innerHTML = `<iframe id="map-iframe"
-        src="${esc(directionsUrl)}"
         width="100%"
-        height="480"
-        style="border:0; display:block;"
+        height="${window.innerWidth < 640 ? 300 : Math.min(window.innerHeight * 0.65, 600)}"
+        style="border:0; display:none;"
         allowfullscreen=""
-        loading="lazy"
+        loading="eager"
         referrerpolicy="no-referrer-when-downgrade"
         title="Journey Map"
       ></iframe>`;
@@ -1621,11 +1645,29 @@
       const iframeRaw = iframeWrap.querySelector('iframe');
       if (iframeRaw) {
         const updateMapHeight = function() {
-          iframeRaw.style.height = window.innerWidth < 640 ? '300px' : '480px';
+          const h = window.innerWidth < 640 ? 300 : Math.min(window.innerHeight * 0.65, 600);
+          iframeRaw.style.height = h + "px";
+          mapLoader.style.height = h + "px";
         };
         updateMapHeight();
         window.addEventListener('resize', updateMapHeight);
+
+        // Show iframe on load, hide loader
+        iframeRaw.addEventListener('load', () => {
+          mapLoader.style.display = 'none';
+          iframeRaw.style.display = 'block';
+        });
+
+        // Initial load
+        iframeRaw.src = directionsUrl;
       }
+
+      // ─ Mode descriptions ─
+      const modeDescriptions = {
+        directions: "🧭 自動計算點對點駕駛路線，顯示全程行車方向",
+        mymaps: "🗺️ 自訂標記地圖 — 景點分類、路線標註、備註一目瞭然",
+        daybyday: "📅 按 Day 查看每日行程路線，方便規劃當日動線",
+      };
 
       // Toggle logic
       toggleWrap.querySelectorAll(".map-toggle-btn").forEach((btn) => {
@@ -1635,12 +1677,19 @@
             const active = b.dataset.mapMode === mode;
             b.className = `map-toggle-btn px-3 py-1.5 text-xs font-medium rounded-xl ${active ? "bg-sakura-100 text-aka border border-sakura-200/50 shadow-sm" : "bg-white/70 text-sumi/50 border border-sakura-200/30 hover:bg-sakura-50"}`;
           });
+          // Update mode description
+          modeDesc.textContent = modeDescriptions[mode] || "";
+          // Show/hide "開啟全螢幕" link
+          openMyMaps.style.display = mode === "mymaps" ? "inline-flex" : "none";
           // Show/hide day selector
           if (mode === "daybyday") {
             daySelectPanel.classList.remove("hidden");
           } else {
             daySelectPanel.classList.add("hidden");
           }
+          // Show loader, hide iframe
+          mapLoader.style.display = "flex";
+          iframeRaw.style.display = "none";
           if (mode === "directions") iframeRaw.src = directionsUrl;
           else if (mode === "mymaps") iframeRaw.src = mymapsUrl;
           // daybyday: iframe stays as-is until a day is selected

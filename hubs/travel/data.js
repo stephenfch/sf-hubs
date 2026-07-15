@@ -28,6 +28,8 @@ window.TRAVEL_DATA = {
       transport: "全程自駕 · 🚙 ① Honda Step WGN + 🚙 ② Mazda Biante 8座 MPV（Times CAR RENTAL × 2）",
       summary:
         "姬路 → 鳥取（3晚）→ 真庭 → 岡山摘桃 → 姬路 → 大阪天神祭，9日8夜親子自駕。",
+      myMapsEmbed: "https://www.google.com/maps/d/u/0/embed?mid=1LuuiiWAbTEBuR2loYXmtRSgLz-vNYZE&ehbc=2E312F",
+      myMapsViewer: "https://www.google.com/maps/d/u/0/viewer?mid=1LuuiiWAbTEBuR2loYXmtRSgLz-vNYZE",
 
       // 天氣查詢用經緯度 mapping（自動 match location → Open-Meteo API）
       weatherCoords: {
