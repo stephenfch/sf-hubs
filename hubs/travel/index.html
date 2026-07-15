@@ -952,6 +952,7 @@
       { id: "itinerary", label: "📅 每日行程" },
       { id: "journal", label: "📔 旅行日誌" },
       { id: "map", label: "🗺️ 地圖總覽" },
+      { id: "packing", label: "🎒 行李清單" },
       { id: "risks", label: "⚠️ 風險提示" },
       { id: "tbc", label: "📌 待決事項" },
       { id: "extras", label: "💡 加推 / 備選" },
@@ -1387,6 +1388,73 @@
       });
       panes.journal.appendChild(wrap);
     })();
+
+    // ---- packing: 行李清單 ----
+    if (trip.packing && trip.packing.length) {
+      const wrap = el("div", "space-y-4");
+      trip.packing.forEach((cat) => {
+        if (!cat.items || !cat.items.length) return;
+        const section = el("div", "bg-white/80 border border-sakura-200/30 rounded-xl p-4 shadow-wa");
+        let headerText = esc(cat.cat || "");
+        let iconMatch = headerText.match(/^([\u{1F000}-\u{1FFFF}]|[\u2600-\u27BF]|[\u2700-\u27BF]|[\u{1F000}-\u{1FFFF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{1F300}-\u{1F5FF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}])\s*/u);
+        const icon = iconMatch ? iconMatch[1] : "🎒";
+        const title = headerText.replace(iconMatch?.[0] || "", "").trim();
+
+        let html = `<div class="flex items-center gap-2 mb-3">
+          <span class="text-base">${icon}</span>
+          <span class="text-sm font-bold text-sumi/70" style="font-family: 'Klee One', cursive;">${esc(title)}</span>
+          <span class="text-[10px] text-sumi/30 ml-auto"><span class="packing-count-${cat.cat.replace(/\s+/g,'-')}">0</span>/<span class="packing-total-${cat.cat.replace(/\s+/g,'-')}">${cat.items.length}</span></span>
+        </div>
+        <div class="space-y-1">`;
+        cat.items.forEach((item, idx) => {
+          const id = "pck-" + cat.cat.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g,'') + "-" + idx;
+          html += `<label for="${esc(id)}" class="flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-sakura-50/50 transition cursor-pointer group">
+            <input type="checkbox" id="${esc(id)}" class="packing-cb w-4 h-4 rounded border-sakura-300 text-aka focus:ring-aka/30 cursor-pointer"
+              data-cat="${esc(cat.cat)}">
+            <span class="text-xs text-sumi/75 leading-relaxed group-has-[:checked]:line-through group-has-[:checked]:text-sumi/30 transition-all">${esc(item.what)}</span>
+          </label>`;
+        });
+        html += `</div>`;
+        section.innerHTML = html;
+        wrap.appendChild(section);
+      });
+
+      // ─ 計數 update ─
+      wrap.addEventListener('change', (e) => {
+        if (!e.target.classList.contains('packing-cb')) return;
+        const catName = e.target.dataset.cat;
+        const catEl = e.target.closest('.rounded-xl');
+        if (!catEl) return;
+        const cbs = catEl.querySelectorAll('.packing-cb');
+        const checked = catEl.querySelectorAll('.packing-cb:checked').length;
+        const countSpan = wrap.querySelector('.packing-count-' + catName.replace(/\s+/g,'-'));
+        if (countSpan) countSpan.textContent = checked;
+      });
+
+      // ─ 全選/清除 buttons ─
+      const actions = el("div", "flex gap-2 mb-4");
+      actions.innerHTML = `
+        <button id="packing-check-all" class="px-3 py-1.5 text-xs font-medium rounded-xl bg-sakura-100 text-aka border border-sakura-200/50 hover:bg-sakura-200 shadow-sm">✅ 全部 check</button>
+        <button id="packing-uncheck-all" class="px-3 py-1.5 text-xs font-medium rounded-xl bg-white/70 text-sumi/50 border border-sakura-200/30 hover:bg-sakura-50">↩️ 全部 uncheck</button>
+      `;
+      wrap.insertBefore(actions, wrap.firstChild);
+
+      // ─ 全部 check/uncheck ─
+      setTimeout(() => {
+        const checkAll = document.getElementById('packing-check-all');
+        const uncheckAll = document.getElementById('packing-uncheck-all');
+        if (checkAll) checkAll.addEventListener('click', () => {
+          wrap.querySelectorAll('.packing-cb').forEach(cb => { cb.checked = true; });
+          wrap.dispatchEvent(new Event('change'));
+        });
+        if (uncheckAll) uncheckAll.addEventListener('click', () => {
+          wrap.querySelectorAll('.packing-cb').forEach(cb => { cb.checked = false; });
+          wrap.dispatchEvent(new Event('change'));
+        });
+      }, 0);
+
+      panes.packing.appendChild(wrap);
+    }
 
     // ---- risks ----
     if (trip.risks && trip.risks.length) {

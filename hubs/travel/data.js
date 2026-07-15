@@ -281,6 +281,86 @@ window.TRAVEL_DATA = {
         },
       ],
 
+      // =====================================================================
+      // 🎒 行李清單 — 7月日本關西親子自駕
+      // 分類：證件/電子/衣物/洗漱/醫藥/兒童/自駕/其他
+      // checked: true = 已經打包
+      // =====================================================================
+      packing: [
+        // ─ 證件類 ─
+        { cat: "📄 證件", items: [
+          { what: "護照（7 本）", checked: false },
+          { what: "電子簽證 / Visit Japan Web QR", checked: false },
+          { what: "機票 / 訂位確認", checked: false },
+          { what: "Times CAR RENTAL 租車確認單×2", checked: false },
+          { what: "酒店訂單（全部 8 晚）", checked: false },
+          { what: "國際駕駛許可證 IDP（兩位司機）", checked: false },
+          { what: "Travel Insurance 保險單", checked: false },
+        ]},
+        // ─ 電子類 ─
+        { cat: "📱 電子", items: [
+          { what: "手機 + 充電線×7", checked: false },
+          { what: "日本上網 SIM / eSIM", checked: false },
+          { what: "行動電源 ×2", checked: false },
+          { what: "車充（USB-C ×2）", checked: false },
+          { what: "相機 / GoPro + 記憶卡", checked: false },
+          { what: "自拍棍", checked: false },
+        ]},
+        // ─ 衣物類（7月酷暑）─
+        { cat: "👕 衣物（35°C+ 酷暑）", items: [
+          { what: "薄衫/短褲 / 連衣裙（每人每日一套）", checked: false },
+          { what: "泳衣 / 沙灘褲（酒店溫泉 + 沙丘）", checked: false },
+          { what: "輕薄防曬外套 / UV 帽", checked: false },
+          { what: "太陽眼鏡", checked: false },
+          { what: "運動鞋 / 涼鞋", checked: false },
+          { what: "睡衣", checked: false },
+          { what: "內衣襪（足夠 9 日）", checked: false },
+        ]},
+        // ─ 洗漱類 ─
+        { cat: "🧴 洗漱", items: [
+          { what: "牙刷牙膏（7 套）", checked: false },
+          { what: "洗面乳 / 護膚品", checked: false },
+          { what: "防曬（超高 SPF，必帶）", checked: false },
+          { what: "驅蚊噴霧 / 止痕膏", checked: false },
+          { what: "濕紙巾 / 紙巾（大量）", checked: false },
+          { what: "口罩（備用）", checked: false },
+        ]},
+        // ─ 醫藥類 ─
+        { cat: "💊 醫藥", items: [
+          { what: "退燒藥 / 止痛藥", checked: false },
+          { what: "腸胃藥 / 止瀉藥", checked: false },
+          { what: "蚊蟲止癢 / 抗敏藥", checked: false },
+          { what: "膠布 / 消毒藥水", checked: false },
+          { what: "體溫計", checked: false },
+          { what: "大人細路各人常用藥", checked: false },
+        ]},
+        // ─ 兒童類 ─
+        { cat: "🧒 兒童（3 個細路）", items: [
+          { what: "兒童座椅×3（租車附？要確認）", checked: false },
+          { what: "尿片 / 學習褲（夠 9 日）", checked: false },
+          { what: "濕紙巾 + 垃圾袋", checked: false },
+          { what: "零食 / 餅乾 / 果汁（車上）", checked: false },
+          { what: "玩具書 / iPad 落 apps 睇片", checked: false },
+          { what: "細路用防曬 + 驅蚊", checked: false },
+          { what: "小童水壺", checked: false },
+        ]},
+        // ─ 自駕類 ─
+        { cat: "🚙 自駕", items: [
+          { what: "導航手機座×2", checked: false },
+          { what: "ETC 卡（租車時確認有）", checked: false },
+          { what: "停車地圖 / akippa 預約", checked: false },
+          { what: "車用遮陽擋", checked: false },
+        ]},
+        // ─ 其他 ─
+        { cat: "🎒 其他", items: [
+          { what: "環保購物袋（超市用）", checked: false },
+          { what: "摺疊傘 / 雨衣（7月雨季尾）", checked: false },
+          { what: "密封袋（分開濕衫/垃圾）", checked: false },
+          { what: "垃圾桶（車用細袋）", checked: false },
+          { what: "便攜餐具（細路用）", checked: false },
+        ]},
+      ],
+
       // 加推景點 / 備選
       extras: [
         { title: "砂の美術館", desc: "砂丘旁室內冷氣（已加落 Day 4）", url: "" },
