@@ -184,7 +184,7 @@
         <h3 class="text-base font-bold text-white/90">📸 加相 — ${esc(itemTitle)}</h3>
         <button class="text-white/40 hover:text-white text-xl leading-none" data-close>✕</button>
       </div>
-      <p class="text-xs text-white/50 mb-3 leading-relaxed">貼你嘅相 URL（Google Photos / Imgur / GitHub issue 附件）。呢度只係<b class="text-white/70">本機預覽</b>；要 publish 就 copy 底嘅 code 貼落 <code class="text-accent">data.js</code> 再 push 去 master。</p>
+      <p class="text-xs text-white/50 mb-3 leading-relaxed">貼你嘅相 URL（Google Photos / Imgur / GitHub issue 附件）。呢度只係<b class="text-white/70">本機預覽</b>；要 publish 就 copy 底嘅 code 貼落 <code class="text-accent">data.js</code> 再 push 去 main。</p>
       <label class="block text-xs text-white/60 mb-1">相片 URL</label>
       <input data-url class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90 outline-none focus:border-accent mb-3" placeholder="https://photos.app.goo.gl/xxxx 或 https://i.imgur.com/yyyy.jpg" />
       <label class="block text-xs text-white/60 mb-1">Caption（一句說明，可留空）</label>
