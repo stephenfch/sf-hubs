@@ -1453,7 +1453,37 @@
           ? `<div class="mb-2 rounded-lg overflow-hidden border border-sakura-100/30"><a href="${esc(e.photo)}" target="_blank" rel="noopener"><img src="${esc(e.photo)}" class="w-full max-h-80 object-cover hover:opacity-95 transition" onerror="this.style.display='none'"/></a></div>`
           : "";
         const cap = e.caption ? `<div class="text-sm text-sumi/65 mt-1 leading-relaxed">${esc(e.caption)}</div>` : "";
-        card.innerHTML = head + photo + cap;
+        // 🆕 互動 footer（like + comment 提示）
+        const eid = "j-" + (e.id || Math.random().toString(36).substr(2, 6));
+        const likeCount = e.likes || Math.floor(Math.random() * 3); // placeholder count
+        const interactFooter = `
+          <div class="flex items-center gap-3 mt-3 pt-2 border-t border-sakura-100/30 text-[11px] text-sumi/40">
+            <button class="inline-flex items-center gap-1 hover:text-aka transition" title"俾Like" data-like data-entry="${esc(eid)}">
+              ❤️ <span data-like-count>${e.likes !== undefined ? e.likes : "0"}</span>
+            </button>
+            <span class="inline-flex items-center gap-1" title="留言功能開發中">
+              💬 <span>0</span>
+            </span>
+            <span class="ml-auto text-[10px] text-sumi/25 opacity-60">
+              ⚡ 互動提示：雙擊 heart 可以 like（演示用）<span class="hidden sm:inline">· 留言功能開發中</span>
+            </span>
+          </div>`;
+        card.innerHTML = head + photo + cap + interactFooter;
+        node.appendChild(card);
+        // 🆕 Like 點擊
+        card.querySelector("[data-like]")?.addEventListener("click", (ev) => {
+          const btn = ev.currentTarget;
+          const countSpan = btn.querySelector("[data-like-count]");
+          let c = parseInt(countSpan.textContent, 10) || 0;
+          if (btn.classList.contains("liked")) {
+            c--;
+            btn.classList.remove("liked");
+          } else {
+            c++;
+            btn.classList.add("liked");
+          }
+          countSpan.textContent = c;
+        });
         node.appendChild(card);
         wrap.appendChild(node);
       });
