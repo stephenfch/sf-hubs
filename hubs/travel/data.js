@@ -265,20 +265,64 @@ window.TRAVEL_DATA = {
 
       // 實用資訊（網站／工具／App）
       practicalInfo: [
-        {
-          icon: "🍽️",
-          title: "Tabelog (食べログ)",
-          desc: "日本最大級餐廳搜尋/評分平台，類似 OpenRice 但日本用。搵餐廳、睇評分、Menu、使費，必裝 App！",
-          url: "https://tabelog.com/",
-          note: "支援地圖搜尋、菜式篩選、預算範圍，日文為主但漢字+圖片夠用",
-        },
-        {
-          icon: "📞",
-          title: "AutoReserve",
-          desc: "日本餐廳網上訂位平台，支援多語言，唔使打電話。熱門餐廳建議早幾日 book。",
-          url: "https://autoreserve.com/",
-          note: "免費登記，可即時查看空位並確認 booking，部份餐廳支援取消免罰",
-        },
+        // ─ 自駕篇 ─
+        { cat: "🚙 自駕", items: [
+          { icon: "🛣️", title: "日本高速公路 ETC", desc: "租車一般已附 ETC 卡。日本高速收費高（KIX→姬路 ~¥4,000），建議用 Google Maps / Yahoo! カーナビ 規劃路線。",
+            url: "https://www.driveplaza.com/route_search/", note: "ETC 閘口行左邊「ETC/一般」lane冇問題" },
+          { icon: "⛽", title: "油站（給油所）", desc: "日本油站分 セルフ（自助平啲）同 full service。租車通常入滿還車。7月油價 ~¥175/L。",
+            url: "https://gogo.gs/", note: "Google Maps 直接搜「ガソリンスタンド」就搵到" },
+          { icon: "🅿️", title: "駐車場（泊車）", desc: "大阪機械式停車場限高 155-175cm — Biante(1.85m)/Step WGN(1.85m) 入唔到！要揀平面/ハイルーフ。推薦 akippa 預約。",
+            url: "https://akippa.com/", note: "Times / akippa 平面位、コインパーキング 500-800円/hr；天神祭當日要泊梅田再搭地鐵" },
+          { icon: "🧭", title: "Mapion（日本地圖）", desc: "日本行車用 Mapion 比 Google Maps 更精確（特別係鄉郊 address），支援 mapcode 搜尋。",
+            url: "https://www.mapion.co.jp/", note: "每個景點都有 mapcode — 直接 copy 入 Mapion 即可導航" },
+        ]},
+        // ─ 飲食篇 ─
+        { cat: "🍽️ 飲食", items: [
+          { icon: "🍜", title: "Tabelog 食べログ", desc: "日本最大級餐廳搜尋/評分平台，類似 OpenRice。搵餐廳、睇評分、Menu、使費，必裝 App！",
+            url: "https://tabelog.com/", note: "支援地圖搜尋、菜式篩選、預算範圍，日文為主但漢字+圖片夠用" },
+          { icon: "📞", title: "AutoReserve 訂位", desc: "日本餐廳網上訂位平台，支援多語言，唔使打電話。熱門餐廳建議早幾日 book。",
+            url: "https://autoreserve.com/", note: "免費登記，可即時查看空位並確認 booking" },
+          { icon: "☕", title: "日本便利店攻略", desc: "7-11 / Lawson / FamilyMart 係自駕恩物！ATM 提款（支援海外卡）、列印、廁所、熱食、咖啡。",
+            url: "", note: "7-11 嘅 ATM 支援中文介面；Lawson 嘅炸雞 L（からあげクン）係細路至愛" },
+        ]},
+        // ─ 網絡篇 ─
+        { cat: "📶 網絡", items: [
+          { icon: "📱", title: "日本上網 SIM / eSIM", desc: "推薦 Ubigi / Airalo eSIM（15日 10GB ~$5-10 USD），或預先買日本上網 SIM（Bic Camera / Yodobashi）。",
+            url: "https://www.ubigi.com/", note: "7人同行建議主要大人買 eSIM share hotspot，細路用 WiFi 蛋" },
+          { icon: "📡", title: "免費 Wi-Fi", desc: "7-11 / Starbucks / 麥當勞 / 大型車站 有免費 Wi-Fi。偏遠地區（鳥取大山）可能冇訊號，事前 download 離線 Google Map。",
+            url: "", note: "出發前喺 Google Maps download「関西」「鳥取」離線地圖" },
+        ]},
+        // ─ 文化篇 ─
+        { cat: "🗾 旅行常識", items: [
+          { icon: "🔌", title: "插頭・電壓", desc: "日本用 A 型 2腳扁插（同美國/台灣一樣），100V / 50-60Hz。香港三腳插要帶轉換頭。手機/相機充電器一般 100-240V 寬電壓。",
+            url: "", note: "建議帶一個 4-port USB 充電器 + 2-3 個轉換插" },
+          { icon: "💰", title: "貨幣・匯率", desc: "日本主要用現金（尤其鄉郊），但大城市大多支援 IC 卡（Suica/PASMO）同信用卡。7月約 ¥100 ≈ HK$5.2。",
+            url: "https://www.xe.com/currencyconverter/convert/?From=JPY&To=HKD", note: "建議帶 ¥30-50 萬現金（自駕/鄉郊/祭典攤位需現金），其餘用信用卡" },
+          { icon: "🎌", title: "小費文化", desc: "日本冇小費文化！唔好比 tips。酒店/餐廳/的士都唔使。反而要識講「ありがとうございます」（多謝）。",
+            url: "", note: "唯一例外：旅館嘅「仲居さん」（服務員）可以喺信封入 ¥1,000-3,000 表示感謝，但非必要" },
+          { icon: "🚻", title: "洗手間文化", desc: "日本公廁好乾淨，但偏遠地區（山區/沙丘）可能冇廁所。車上備垃圾袋 + 濕紙巾。",
+            url: "", note: "便利店、大型休息站（道の駅）一定有位，而且間間有免治馬桶" },
+        ]},
+        // ─ 緊急篇 ─
+        { cat: "🆘 緊急", items: [
+          { icon: "🚓", title: "緊急電話一覽", desc: "警察 110（事故・盜竊）／消防救護 119（火災・急病）／海上保安庁 118（海上事故）。",
+            url: "", note: "119 都有英文/中文支援。講「Help」或「Chinese お願いします」即可" },
+          { icon: "🏥", title: "旅遊保險・醫療", desc: "出發前確認旅遊保險 cover COVID / 自駕意外。日本醫療費貴（門診 ~¥10,000-20,000），保險好重要。",
+            url: "", note: "AMDA 医療通訳（03-5285-8080）提供免費醫療翻譯" },
+          { icon: "🇭🇰", title: "中國駐日使領館", desc: "大阪總領事館：06-6445-9481（緊急求助）。護照遺失 / 重大事故用。",
+            url: "https://www.china-consulate.or.jp/", note: "地址：大阪市西区靭本町3-9-2；辦公時間平日 9:00-12:00 / 13:30-16:30" },
+          { icon: "🆘", title: "災害用傳言板", desc: "地震/颱風時，NTT 災害用傳言板（web171）可以留言報平安。家人喺香港都可以 Check。",
+            url: "https://www.web171.jp/", note: "使用方法：撥 171 → 按 1 → 輸入電話號碼 → 錄音留言" },
+        ]},
+        // ─ 購物篇 ─
+        { cat: "🛍️ 購物", items: [
+          { icon: "🏪", title: "ドン・キホーテ（驚安の殿堂）", desc: "24小時綜合折扣店，藥妝 / 電器 / 食品 / 日用品 / 手信一條街搞掂。機場店有免稅。",
+            url: "https://www.donki.com/", note: "天神祭附近嘅道頓堀店營業到凌晨，但人超多" },
+          { icon: "💊", title: "日本藥妝（マツモトキヨシ / スギ薬局）", desc: "防曬 / 驅蚊 / 止痛藥 / 腸胃藥 / 膠布 — 直接喺日本買平過香港！",
+            url: "", note: "松本清（マツモトキヨシ）同 Sugi 藥局遍布各城市，退稅滿 ¥5,000" },
+          { icon: "🧧", title: "免稅（Tax Free）", desc: "一般商品 + 消耗品合計 ¥5,000 以上免稅。passport 要隨身，買完店員會釘單入境時海關收。",
+            url: "", note: "藥妝食品飲料分類都係消耗品 — 會用透明袋封好，日本境內唔用得" },
+        ]},
       ],
 
       // =====================================================================

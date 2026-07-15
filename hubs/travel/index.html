@@ -1522,28 +1522,58 @@
     // ---- 實用資訊（📱 獨立 tab）-------------------------------------------
     (function renderPractical() {
       const pi = trip.practicalInfo || [];
-      if (!pi.length) {
-        panes.practical.appendChild(
+      const wrap = el("div", "space-y-4");
+
+      // 先將 flat array 轉 cat-based grouping
+      const groups = {};
+      pi.forEach(item => {
+        const cat = item.cat || "其他";
+        if (!groups[cat]) groups[cat] = { cat, items: [] };
+        if (item.items) {
+          // 已經係 group
+          if (!groups[cat]) groups[cat] = { cat, items: [] };
+          item.items.forEach(sub => groups[cat].items.push(sub));
+        } else {
+          groups[cat].items.push(item);
+        }
+      });
+
+      Object.values(groups).forEach(g => {
+        if (!g.items.length) return;
+        const section = el("div", "bg-white/80 border border-sakura-200/30 rounded-xl p-4 shadow-wa");
+        let headerText = g.cat || "";
+        const iconMatch = headerText.match(/^([\u{1F000}-\u{1FFFF}]|[\u2600-\u27BF]|[\u2700-\u27BF]|[\u{1F300}-\u{1F5FF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}])\s*/u);
+        const icon = iconMatch ? iconMatch[1] : "📱";
+        const title = headerText.replace(iconMatch?.[0] || "", "").trim();
+        let html = `<div class="flex items-center gap-2 mb-3">
+          <span class="text-base">${icon}</span>
+          <span class="text-sm font-bold text-sumi/70" style="font-family: 'Klee One', cursive;">${esc(title)}</span>
+          <span class="text-[10px] text-sumi/30 ml-auto">${g.items.length} 項</span>
+        </div><div class="space-y-2">`;
+        g.items.forEach(item => {
+          html += `<div class="flex gap-3 p-3 rounded-xl hover:bg-sakura-50/40 transition">
+            <span class="text-xl shrink-0 pt-0.5">${esc(item.icon || "🔗")}</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold text-sumi/80" style="font-family: 'Klee One', cursive;">${esc(item.title)}</div>
+              ${item.desc ? `<div class="text-xs text-sumi/45 mt-0.5 leading-relaxed">${esc(item.desc)}</div>` : ""}
+              <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                ${item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener" class="px-2.5 py-0.5 rounded-lg bg-aka/10 text-aka/70 text-[10px] font-medium hover:bg-aka/20 transition">🔗 前往 ↗</a>` : ""}
+                ${item.note ? `<span class="text-[10px] text-sumi/40 leading-relaxed">💡 ${esc(item.note)}</span>` : ""}
+              </div>
+            </div>
+          </div>`;
+        });
+        html += `</div>`;
+        section.innerHTML = html;
+        wrap.appendChild(section);
+      });
+
+      if (Object.keys(groups).length === 0) {
+        wrap.appendChild(
           el("div", "text-center text-sumi/40 text-sm py-16",
             "📍 暫時冇實用資訊～<br/>喺 data.js 嘅 <code class='text-aka/70'>practicalInfo</code> 陣列加嘢就得！")
         );
-        return;
       }
-      const wrap = el("div", "grid grid-cols-1 md:grid-cols-2 gap-4");
-      pi.forEach((item) => {
-        const card = el("div", "bg-white/80 border border-sakura-200/30 rounded-xl p-4 shadow-wa hover:shadow-sakura transition-all animate-fadeIn");
-        card.innerHTML = `
-          <div class="flex items-start gap-3">
-            <span class="text-2xl shrink-0">${esc(item.icon || "🔗")}</span>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold text-sumi/80" style="font-family: 'Klee One', cursive;">${esc(item.title)}</div>
-               ${item.desc ? `<div class="text-xs text-sumi/45 mt-1 leading-relaxed">${esc(item.desc)}</div>` : ""}
-               ${item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener" class="inline-block mt-2 px-3 py-1 rounded-lg bg-aka/10 text-aka/70 text-xs font-medium hover:bg-aka/20 transition">🔗 前往 ↗</a>` : ""}
-               ${item.note ? `<div class="mt-2 px-2 py-1 rounded bg-kinako-50/80 text-sumi/50 text-[10px] leading-relaxed">💡 ${esc(item.note)}</div>` : ""}
-            </div>
-          </div>`;
-        wrap.appendChild(card);
-      });
       panes.practical.appendChild(wrap);
     })();
 
