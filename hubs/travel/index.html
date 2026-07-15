@@ -350,6 +350,9 @@
       border: 3px solid #FCE4EC;
       box-shadow: 0 4px 20px rgba(236, 64, 122, 0.08);
     }
+    #map-loader {
+      display: none;
+    }
 
     /* ═══════════════════════════════════════════════════════════════
        📱 Mobile Responsive — 手機/平板全面適配
@@ -1770,7 +1773,7 @@
       panes.map.appendChild(daySelectPanel);
 
       // ─ Loading spinner ─
-      const mapLoader = el("div", "flex items-center justify-center rounded-2xl bg-sakura-50/50", "");
+      const mapLoader = el("div", "flex items-center justify-center rounded-2xl map-embed mb-4", "");
       mapLoader.id = "map-loader";
       mapLoader.innerHTML = `<div class="animate-pulse text-sakura-400 text-sm">🗺️ 載入中...</div>`;
       mapLoader.style.height = window.innerWidth < 640 ? "300px" : "min(65vh, 600px)";
@@ -1830,15 +1833,13 @@
       // ─ 每個 iframe 各自 loading handler ─
       Object.entries(iframes).forEach(([name, f]) => {
         if (!f) return;
-        // 先加 listener，避免 race condition（browser cache 可能 already loaded）
         f.addEventListener('load', () => {
           iframeLoaded[name] = true;
-          // 只處理當前 visible 嘅 iframe
+          // 如果呢個 iframe 係當前可見嘅，hide loader
           if (f.style.display !== 'none') {
             mapLoader.style.display = 'none';
           }
         });
-        // 然後先 set src（如果 data-src 存在）
         if (f.dataset.src) {
           f.src = f.dataset.src;
           delete f.dataset.src;
@@ -1851,20 +1852,17 @@
           if (!f) return;
           f.style.display = m === mode ? 'block' : 'none';
         });
-        // 如果呢個 iframe 已經 load 過，直接 hide loader
         if (iframeLoaded[mode]) {
           mapLoader.style.display = 'none';
         } else {
           mapLoader.style.display = 'flex';
-        }
-        const activeIframe = iframes[mode];
-        if (activeIframe && activeIframe.contentWindow && !iframeLoaded[mode]) {
-          // 如果已 load 過（contentDocument），即刻 hide loader
-          try {
-            if (activeIframe.contentDocument && activeIframe.contentDocument.body) {
+          // Safety fallback: 2秒後無論如何 hide loader（冇可能等咁耐）
+          setTimeout(() => {
+            if (mapLoader.style.display !== 'none') {
+              iframeLoaded[mode] = true;
               mapLoader.style.display = 'none';
             }
-          } catch(e) { /* cross-origin, wait for load event */ }
+          }, 2000);
         }
       }
 
