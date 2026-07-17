@@ -408,7 +408,12 @@
         const resp = await fetch(`${API}/api/photos/${encodeURIComponent(tripId)}`);
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const photos = await resp.json();
-        currentPhotos = photos;
+        // Normalize: API returns relative paths, prepend API base for cross-origin
+        currentPhotos = photos.map(p => ({
+          ...p,
+          url: p.url.startsWith("http") ? p.url : `${API}${p.url}`,
+          thumb_url: p.thumb_url ? (p.thumb_url.startsWith("http") ? p.thumb_url : `${API}${p.thumb_url}`) : null,
+        }));
         $("#photo-count").textContent = `${photos.length} 張相`;
 
         if (photos.length === 0) {
