@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Album Hub 🖼️ | SF-HUBS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖼️</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: '#0a0a0f', card: '#12121a', accent: '#6366f1', glow: '#818cf8',
+            surf: '#1a1a24'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .card-hover { transition: all 0.25s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.12); }
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    /* ── Photo grid — masonry-ish ── */
+    .photo-grid {
+      columns: 4 200px;
+      column-gap: 10px;
+    }
+    .photo-grid > div {
+      break-inside: avoid;
+      margin-bottom: 10px;
+    }
+    .photo-grid img {
+      width: 100%;
+      border-radius: 10px;
+      display: block;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .photo-grid img:hover {
+      transform: scale(1.03);
+      box-shadow: 0 4px 20px rgba(99,102,241,0.25);
+    }
+    /* ── Lightbox ── */
+    .lightbox {
+      position: fixed; inset: 0; z-index: 60;
+      background: rgba(0,0,0,0.92);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .lightbox img {
+      max-width: 92vw; max-height: 90vh;
+      border-radius: 12px;
+      object-fit: contain;
+    }
+    .lightbox .close { position: absolute; top: 20px; right: 28px; font-size: 32px; color: white; opacity: 0.6; cursor: pointer; z-index: 1; }
+    .lightbox .close:hover { opacity: 1; }
+    .lightbox .caption { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.8); font-size: 14px; text-align: center; max-width: 80vw; }
+    .lightbox .nav { position: absolute; top: 50%; transform: translateY(-50%); font-size: 42px; color: rgba(255,255,255,0.5); cursor: pointer; padding: 12px; user-select: none; z-index: 1; }
+    .lightbox .nav:hover { color: white; }
+    .lightbox .nav.prev { left: 8px; }
+    .lightbox .nav.next { right: 8px; }
+    /* ── Upload zone ── */
+    .upload-zone {
+      border: 2px dashed rgba(99,102,241,0.3);
+      border-radius: 14px;
+      padding: 28px;
+      text-align: center;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: #818cf8;
+      background: rgba(99,102,241,0.06);
+    }
+    /* ── Skeleton loading ── */
+    .skeleton { animation: pulse 1.5s ease-in-out infinite; background: #1e1e2a; border-radius: 10px; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 70;
+      background: #1e1e2a; color: #e2e8f0; padding: 12px 20px;
+      border-radius: 10px; font-size: 13px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      animation: slideUp 0.3s ease-out;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    /* ── Delete button ── */
+    .photo-card { position: relative; }
+    .photo-card .del-btn {
+      position: absolute; top: 6px; right: 6px;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: rgba(0,0,0,0.55); color: rgba(255,255,255,0.7);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; opacity: 0; transition: opacity 0.2s;
+      cursor: pointer; border: none; z-index: 2;
+    }
+    .photo-card:hover .del-btn { opacity: 1; }
+    .photo-card .del-btn:hover { background: rgba(220,38,38,0.8); color: white; }
+  </style>
+</head>
+<body class="bg-dark text-white min-h-screen">
+
+  <!-- ═══ Nav ═══ -->
+  <nav class="border-b border-white/5 px-6 py-4 flex items-center gap-2 sticky top-0 bg-dark/85 backdrop-blur z-20">
+    <a href="../../" class="text-white/40 hover:text-white transition text-sm">← SF-HUBS</a>
+    <span class="text-white/20">/</span>
+    <span class="text-sm font-semibold flex items-center gap-1.5">🖼️ Album Hub</span>
+    <span class="ml-auto text-white/20 text-xs" id="status">載入中…</span>
+  </nav>
+
+  <!-- ═══ Main ═══ -->
+  <main class="max-w-6xl mx-auto px-6 py-8 pb-24">
+
+    <!-- ── Trip Selector ── -->
+    <section id="section-select" class="mb-8 fade-in">
+      <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+        <span>📂</span> 選擇旅程
+      </h2>
+      <div id="trip-list" class="flex flex-wrap gap-3">
+        <!-- rendered by JS -->
+      </div>
+      <div id="no-trips" class="hidden text-white/30 text-sm mt-4">
+        <p>📭 暫無相簿 — 上載第一張相就會自動建立 trip folder</p>
+      </div>
+    </section>
+
+    <!-- ── Upload Bar ── -->
+    <section id="section-upload" class="hidden mb-8 fade-in">
+      <div class="flex items-center gap-4 flex-wrap">
+        <button id="btn-upload" class="px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-medium hover:bg-glow transition flex items-center gap-2 shadow-lg shadow-accent/20">
+          📤 上載相片
+        </button>
+        <span class="text-white/30 text-xs">
+          支援 JPG/PNG/WebP/HEIC · 拖放或點擊上載
+        </span>
+        <span id="photo-count" class="text-white/20 text-xs ml-auto"></span>
+      </div>
+      <!-- Upload modal area -->
+      <div id="upload-panel" class="hidden mt-4 p-4 bg-card border border-white/5 rounded-2xl fade-in">
+        <div class="upload-zone" id="drop-zone">
+          <p class="text-white/50 text-sm mb-1">📁 拖放相片到此處，或點擊選擇檔案</p>
+          <p class="text-white/20 text-xs">一次可揀多張 · 每張最大 50MB</p>
+          <input type="file" id="file-input" multiple accept="image/*" class="hidden">
+        </div>
+        <!-- Upload form fields -->
+        <div class="mt-3 flex flex-wrap gap-3">
+          <div class="flex-1 min-w-[120px]">
+            <label class="text-xs text-white/40">Day # (optional)</label>
+            <input id="upload-day" type="number" min="1" max="30" placeholder="e.g. 1" class="w-full mt-1 bg-surf border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-accent/50">
+          </div>
+          <div class="flex-1 min-w-[120px]">
+            <label class="text-xs text-white/40">景點 (optional)</label>
+            <input id="upload-spot" type="text" placeholder="e.g. 神戶牛" class="w-full mt-1 bg-surf border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-accent/50">
+          </div>
+          <div class="flex-[2] min-w-[200px]">
+            <label class="text-xs text-white/40">Caption (optional)</label>
+            <input id="upload-caption" type="text" placeholder="一句話描述…" class="w-full mt-1 bg-surf border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-accent/50">
+          </div>
+        </div>
+        <div class="mt-3 flex items-center gap-3">
+          <button id="btn-do-upload" class="px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-glow transition disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+            ⬆️ 上載所選檔案
+          </button>
+          <span id="upload-progress" class="text-white/30 text-xs hidden"></span>
+          <span id="file-count" class="text-white/20 text-xs">未選擇檔案</span>
+        </div>
+        <!-- Thumbnail preview of selected files -->
+        <div id="preview-row" class="flex flex-wrap gap-2 mt-3"></div>
+      </div>
+    </section>
+
+    <!-- ── Photo Grid ── -->
+    <section id="section-photos" class="hidden fade-in">
+      <div id="photo-grid" class="photo-grid">
+        <!-- rendered by JS -->
+      </div>
+      <div id="photo-empty" class="hidden text-center py-16 text-white/20">
+        <p class="text-4xl mb-3">📸</p>
+        <p class="text-sm">呢個 trip 暫時未有相</p>
+        <p class="text-xs mt-1">click 上面「上載相片」開始！</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══ Lightbox (hidden) ═══ -->
+  <div id="lightbox" class="lightbox hidden" style="display:none;">
+    <span class="close" id="lb-close">&times;</span>
+    <span class="nav prev" id="lb-prev">‹</span>
+    <img id="lb-img" src="" alt="">
+    <span class="nav next" id="lb-next">›</span>
+    <div class="caption" id="lb-caption"></div>
+  </div>
+
+  <!-- ═══ Footer ═══ -->
+  <footer class="border-t border-white/5 py-8 text-center text-white/15 text-xs">
+    <p>Powered by <span class="text-white/30">SF-HUBS</span> · © 2026 Stephen Fan</p>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       App Logic — Vanilla JS
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <script>
+  (function () {
+    "use strict";
+
+    // ── Config ──
+    // Auto-detect API base: if served from sf-hubs.dev, use album.sf-hubs.dev
+    // otherwise fall back to localhost:5300 for dev
+    const API = (() => {
+      if (location.hostname === "sf-hubs.dev" || location.hostname.endsWith(".pages.dev")) {
+        return "https://album.sf-hubs.dev";
+      }
+      return "http://127.0.0.1:5300";
+    })();
+
+    // ── State ──
+    let currentTrip = null;
+    let currentPhotos = [];
+    let selectedFiles = [];     // File objects for pending upload
+    let lightboxIdx = -1;
+
+    // ── DOM refs ──
+    const $ = (s) => document.querySelector(s);
+    const $$ = (s) => document.querySelectorAll(s);
+
+    // ── Init ──
+    async function init() {
+      // Check for ?trip= query param
+      const params = new URLSearchParams(location.search);
+      const tripParam = params.get("trip");
+
+      await loadTrips();
+      if (tripParam) {
+        selectTrip(tripParam);
+      }
+
+      $("#status").textContent = `API: ${API}`;
+    }
+
+    // ── Load trips ──
+    async function loadTrips() {
+      const list = $("#trip-list");
+      const noTrips = $("#no-trips");
+      try {
+        const resp = await fetch(`${API}/api/trips`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const trips = await resp.json();
+        list.innerHTML = "";
+        if (trips.length === 0) {
+          noTrips.classList.remove("hidden");
+          return;
+        }
+        noTrips.classList.add("hidden");
+        trips.forEach((t) => {
+          const btn = document.createElement("button");
+          btn.className = `px-4 py-3 rounded-xl border text-sm text-left transition-all ${
+            currentTrip === t.id
+              ? "bg-accent/15 border-accent/40 text-white"
+              : "bg-card border-white/5 text-white/60 hover:text-white hover:border-white/15"
+          }`;
+          btn.innerHTML = `
+            <div class="font-medium">${esc(t.label)}</div>
+            <div class="text-xs text-white/30 mt-0.5">${t.photo_count} 張相 · ${fmtDate(t.updated)}</div>`;
+          btn.addEventListener("click", () => selectTrip(t.id));
+          list.appendChild(btn);
+        });
+      } catch (err) {
+        console.error("loadTrips:", err);
+        list.innerHTML = `<p class="text-red-400/60 text-sm">⚠️ 無法連接 API：${esc(err.message)}</p>`;
+      }
+    }
+
+    // ── Select trip ──
+    function selectTrip(tripId) {
+      currentTrip = tripId;
+      // Update URL without reload
+      const url = new URL(location);
+      url.searchParams.set("trip", tripId);
+      history.replaceState(null, "", url);
+      // Show upload + photo sections
+      $("#section-upload").classList.remove("hidden");
+      $("#section-photos").classList.remove("hidden");
+      // Refresh trip list styling
+      loadTrips();
+      // Load photos
+      loadPhotos(tripId);
+    }
+
+    // ── Load photos ──
+    async function loadPhotos(tripId) {
+      const grid = $("#photo-grid");
+      const empty = $("#photo-empty");
+      grid.innerHTML = "";
+      try {
+        const resp = await fetch(`${API}/api/photos/${encodeURIComponent(tripId)}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const photos = await resp.json();
+        currentPhotos = photos;
+        $("#photo-count").textContent = `${photos.length} 張相`;
+
+        if (photos.length === 0) {
+          empty.classList.remove("hidden");
+          grid.classList.add("hidden");
+          return;
+        }
+        empty.classList.add("hidden");
+        grid.classList.remove("hidden");
+
+        photos.forEach((p, idx) => {
+          const card = document.createElement("div");
+          card.className = "photo-card fade-in";
+          card.style.animationDelay = `${idx * 0.03}s`;
+          card.innerHTML = `
+            <button class="del-btn" title="刪除" data-key="${esc(p.key)}">✕</button>
+            <img src="${esc(p.thumb_url)}" alt="${esc(p.caption)}" loading="lazy" data-idx="${idx}">
+            ${p.caption ? `<p class="text-xs text-white/40 mt-1 px-1 truncate">${esc(p.caption)}</p>` : ""}`;
+          // Click photo → lightbox
+          card.querySelector("img").addEventListener("click", () => openLightbox(idx));
+          // Delete button
+          card.querySelector(".del-btn").addEventListener("click", (e) => {
+            e.stopPropagation();
+            deletePhoto(p.key);
+          });
+          grid.appendChild(card);
+        });
+        $("#status").textContent = `${tripId} · ${photos.length} 張相`;
+      } catch (err) {
+        console.error("loadPhotos:", err);
+        grid.innerHTML = `<p class="text-red-400/60 text-sm col-span-full">⚠️ 載入失敗：${esc(err.message)}</p>`;
+      }
+    }
+
+    // ── Delete photo ──
+    async function deletePhoto(key) {
+      if (!confirm("確定刪除呢張相？")) return;
+      try {
+        const resp = await fetch(`${API}/api/photo/${encodeURIComponent(currentTrip)}/${encodeURIComponent(key)}`, {
+          method: "DELETE",
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        const remaining = data.remaining || 0;
+
+        // Show undo toast with 30s timeout
+        const dismissToast = toastHTML(
+          `<span>已刪除 1 張相</span>
+           <button id="undo-btn" class="ml-3 px-3 py-1 rounded-lg bg-accent/30 hover:bg-accent text-white text-xs font-medium transition">
+             ↩️ Undo
+           </button>`,
+          30000  // 30s auto-dismiss
+        );
+
+        // Quick refresh grid
+        loadPhotos(currentTrip);
+        loadTrips();
+
+        // Attach undo handler (after DOM update)
+        setTimeout(() => {
+          const undoBtn = document.getElementById("undo-btn");
+          if (undoBtn) {
+            undoBtn.addEventListener("click", async () => {
+              // Dismiss the toast
+              if (dismissToast) dismissToast();
+              try {
+                const restoreResp = await fetch(
+                  `${API}/api/photo/${encodeURIComponent(currentTrip)}/${encodeURIComponent(key)}/restore`,
+                  { method: "POST" }
+                );
+                if (!restoreResp.ok) throw new Error(`HTTP ${restoreResp.status}`);
+                toast("✅ 已還原");
+                loadPhotos(currentTrip);
+                loadTrips();
+              } catch (err) {
+                toast(`❌ 還原失敗：${err.message}`);
+              }
+            });
+          }
+
+          // If not undone within 30s → permanent delete
+          const toastEl = document.getElementById("undo-toast");
+          if (toastEl) {
+            const fadeTimer = setTimeout(async () => {
+              try {
+                await fetch(
+                  `${API}/api/trash/${encodeURIComponent(currentTrip)}/${encodeURIComponent(key)}`,
+                  { method: "DELETE" }
+                );
+              } catch {
+                // Silently fail if already restored or network issue
+              }
+            }, 30000);
+
+            // Cancel permanent delete if undo clicked
+            const checkUndo = setInterval(() => {
+              if (!document.getElementById("undo-toast")) {
+                clearTimeout(fadeTimer);
+                clearInterval(checkUndo);
+              }
+            }, 500);
+          }
+        }, 50);
+      } catch (err) {
+        toast(`❌ 刪除失敗：${err.message}`);
+      }
+    }
+
+    // ── Lightbox ──
+    function openLightbox(idx) {
+      lightboxIdx = idx;
+      showLightboxImage();
+      $("#lightbox").style.display = "flex";
+      $("#lightbox").classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+    function closeLightbox() {
+      $("#lightbox").style.display = "none";
+      $("#lightbox").classList.add("hidden");
+      document.body.style.overflow = "";
+      lightboxIdx = -1;
+    }
+    function showLightboxImage() {
+      const p = currentPhotos[lightboxIdx];
+      if (!p) return;
+      $("#lb-img").src = p.url;
+      $("#lb-caption").textContent = p.caption || "";
+    }
+    function lightboxPrev(e) { e.stopPropagation(); if (lightboxIdx > 0) { lightboxIdx--; showLightboxImage(); } }
+    function lightboxNext(e) { e.stopPropagation(); if (lightboxIdx < currentPhotos.length - 1) { lightboxIdx++; showLightboxImage(); } }
+
+    $("#lb-close").addEventListener("click", closeLightbox);
+    $("#lightbox").addEventListener("click", (e) => {
+      if (e.target === $("#lightbox") || e.target === $("#lb-img")) closeLightbox();
+    });
+    $("#lb-prev").addEventListener("click", lightboxPrev);
+    $("#lb-next").addEventListener("click", lightboxNext);
+    document.addEventListener("keydown", (e) => {
+      if (lightboxIdx < 0) return;
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") lightboxPrev(e);
+      if (e.key === "ArrowRight") lightboxNext(e);
+    });
+
+    // ── Upload ──
+    const btnUpload = $("#btn-upload");
+    const uploadPanel = $("#upload-panel");
+    const dropZone = $("#drop-zone");
+    const fileInput = $("#file-input");
+    const previewRow = $("#preview-row");
+    const btnDoUpload = $("#btn-do-upload");
+    const uploadProgress = $("#upload-progress");
+    const fileCount = $("#file-count");
+
+    btnUpload.addEventListener("click", () => {
+      const hidden = uploadPanel.classList.toggle("hidden");
+      if (!hidden) {
+        uploadPanel.scrollIntoView({ behavior: "smooth" });
+      }
+    });
+
+    dropZone.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", () => handleFiles(fileInput.files));
+
+    // Drag & drop
+    dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("drag-over");
+      handleFiles(e.dataTransfer.files);
+    });
+
+    function handleFiles(files) {
+      selectedFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+      if (selectedFiles.length === 0) {
+        fileCount.textContent = "⚠️ 請選擇圖片檔案";
+        return;
+      }
+      fileCount.textContent = `已選 ${selectedFiles.length} 個檔案`;
+      btnDoUpload.disabled = false;
+
+      // Show previews
+      previewRow.innerHTML = "";
+      selectedFiles.forEach((f) => {
+        const url = URL.createObjectURL(f);
+        const thumb = document.createElement("img");
+        thumb.src = url;
+        thumb.className = "w-16 h-16 object-cover rounded-lg border border-white/10";
+        thumb.title = f.name;
+        previewRow.appendChild(thumb);
+      });
+    }
+
+    btnDoUpload.addEventListener("click", async () => {
+      if (selectedFiles.length === 0 || !currentTrip) return;
+      btnDoUpload.disabled = true;
+      uploadProgress.classList.remove("hidden");
+
+      let done = 0;
+      let failed = 0;
+
+      for (const file of selectedFiles) {
+        uploadProgress.textContent = `⬆️ 上載中… ${done + 1}/${selectedFiles.length}`;
+        try {
+          const form = new FormData();
+          form.append("file", file);
+          form.append("caption", $("#upload-caption").value.trim());
+          form.append("day", $("#upload-day").value || "0");
+          form.append("spot", $("#upload-spot").value.trim());
+
+          const resp = await fetch(`${API}/api/upload/${encodeURIComponent(currentTrip)}`, {
+            method: "POST",
+            body: form,
+          });
+          if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({}));
+            throw new Error(errData.detail || `HTTP ${resp.status}`);
+          }
+          done++;
+        } catch (err) {
+          failed++;
+          console.error("Upload failed:", file.name, err);
+        }
+      }
+
+      uploadProgress.classList.add("hidden");
+      btnDoUpload.disabled = false;
+      selectedFiles = [];
+      fileCount.textContent = "未選擇檔案";
+      previewRow.innerHTML = "";
+
+      if (done > 0) {
+        toast(`✅ 成功上載 ${done} 張相` + (failed > 0 ? ` · ${failed} 張失敗` : ""));
+      } else {
+        toast(`❌ 上載失敗`);
+      }
+
+      // Refresh
+      loadPhotos(currentTrip);
+      loadTrips();
+    });
+
+    // ── Toast ──
+    function toast(msg) {
+      const t = document.createElement("div");
+      t.className = "toast";
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity 0.3s"; }, 2500);
+      setTimeout(() => t.remove(), 2900);
+    }
+
+    // toastHTML — supports inner HTML (for undo button) + returns dismiss function
+    function toastHTML(html, durationMs) {
+      // Remove any existing undo toast
+      const old = document.getElementById("undo-toast");
+      if (old) old.remove();
+
+      const t = document.createElement("div");
+      t.className = "toast";
+      t.id = "undo-toast";
+      t.style.display = "flex";
+      t.style.alignItems = "center";
+      t.innerHTML = html;
+      document.body.appendChild(t);
+
+      let dismissed = false;
+      const dismiss = () => {
+        if (dismissed) return;
+        dismissed = true;
+        t.style.opacity = "0";
+        t.style.transition = "opacity 0.3s";
+        setTimeout(() => t.remove(), 300);
+      };
+
+      setTimeout(dismiss, durationMs);
+      return dismiss;
+    }
+
+    // ── Helpers ──
+    function esc(s) {
+      if (!s) return "";
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+    function fmtDate(d) {
+      if (!d) return "";
+      try {
+        return new Date(d).toLocaleDateString("zh-HK", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
+      } catch { return d.slice(0,10); }
+    }
+
+    // ── Go ──
+    init();
+  })();
+  </script>
+</body>
+</html>

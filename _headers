@@ -12,6 +12,10 @@
 /hubs/travel/*
   Cache-Control: public, max-age=0, must-revalidate
 
+# ── Album Hub — always fresh ──
+/hubs/album/*
+  Cache-Control: public, max-age=0, must-revalidate
+
 # ── Stock God — 道理同上，inline JS 一體式 ──
 /hubs/stock-god/*
   Cache-Control: public, max-age=0, must-revalidate
