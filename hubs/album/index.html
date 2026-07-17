@@ -424,7 +424,7 @@
         empty.classList.add("hidden");
         grid.classList.remove("hidden");
 
-        photos.forEach((p, idx) => {
+        currentPhotos.forEach((p, idx) => {
           const card = document.createElement("div");
           card.className = "photo-card fade-in";
           card.style.animationDelay = `${idx * 0.03}s`;

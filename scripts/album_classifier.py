@@ -296,7 +296,8 @@ def classify_photo(
             result["confidence"] = 0.4
 
     # 4. LLM classification (if available)
-    if llm_call and (candidate_days or nearby):
+    # Always try LLM — even without EXIF, use blind prompt with full itinerary context
+    if llm_call:
         try:
             prompt = build_classification_prompt(exif, candidate_days, nearby, itinerary)
             llm_response = llm_call(prompt)
@@ -307,7 +308,7 @@ def classify_photo(
             if parsed.get("spot"):
                 result["spot"] = parsed["spot"]
             result["confidence"] = parsed.get("confidence", result["confidence"])
-            result["method"] = "exif+llm"
+            result["method"] = "exif+llm" if (candidate_days or nearby) else "llm-only"
         except Exception as e:
             result["llm_raw"] = f"LLM error: {e}"
 

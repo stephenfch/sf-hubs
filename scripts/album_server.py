@@ -311,18 +311,22 @@ async def upload_photo(
     }
 
 
-@app.get("/api/photo/{trip_id}/{key}")
+@app.get("/api/photo/{trip_id}/{key:path}")
 def get_photo(trip_id: str, key: str):
-    """Serve a photo file (original or thumbnail)."""
+    """Serve a photo file (original or thumbnail). Anti-traversal: resolve + containment check."""
     trip_dir = PHOTO_ROOT / _safe_filename(trip_id)
-    # Support thumbs/ subfolder
     safe_key = _safe_filename(key)
     if key.startswith("thumbs/"):
-        file_path = trip_dir / "thumbs" / safe_key.replace("thumbs/", "", 1)
+        file_path = (trip_dir / "thumbs" / safe_key.replace("thumbs/", "", 1)).resolve()
     else:
-        file_path = trip_dir / safe_key
+        file_path = (trip_dir / safe_key).resolve()
 
-    if not file_path.exists():
+    # Anti-path-traversal: ensure resolved path stays within PHOTO_ROOT
+    photo_root_resolved = PHOTO_ROOT.resolve()
+    if not str(file_path).startswith(str(photo_root_resolved)):
+        raise HTTPException(403, "Access denied")
+
+    if not file_path.is_file():
         raise HTTPException(404, "Photo not found")
     return FileResponse(file_path)
 
@@ -363,11 +367,7 @@ def soft_delete_photo(trip_id: str, key: str):
     meta["updated"] = datetime.now().isoformat()
     _save_meta(trip_dir, meta)
 
-    # Count remaining
     remaining = [f for f in trip_dir.glob("*") if f.suffix.lower() in ALLOWED_EXTENSIONS]
-    # Auto-classify in background
-    filepath = str(trip_dir / key)
-    threading.Thread(target=_classify_async, args=(filepath, trip_id_safe, key), daemon=True).start()
 
     return {
         "ok": True,
@@ -411,9 +411,10 @@ def restore_photo(trip_id: str, key: str):
     _save_meta(trip_dir, meta)
 
     remaining = [f for f in trip_dir.glob("*") if f.suffix.lower() in ALLOWED_EXTENSIONS]
-    # Auto-classify in background
-    filepath = str(trip_dir / key)
-    threading.Thread(target=_classify_async, args=(filepath, trip_id_safe, key), daemon=True).start()
+    # Auto-classify in background (photo restored, so classify it)
+    trip_id_safe = _safe_filename(trip_id)
+    filepath = str(trip_dir / safe_key)
+    threading.Thread(target=_classify_async, args=(filepath, trip_id_safe, safe_key), daemon=True).start()
 
     return {"ok": True, "key": safe_key, "remaining": len(remaining)}
 
@@ -474,10 +475,6 @@ def permanent_delete_photo(trip_id: str, key: str):
         del meta[trash_key]
     meta["updated"] = datetime.now().isoformat()
     _save_meta(trip_dir, meta)
-
-    # Auto-classify in background
-    filepath = str(trip_dir / key)
-    threading.Thread(target=_classify_async, args=(filepath, trip_id_safe, key), daemon=True).start()
 
     return {"ok": True, "permanently_deleted": deleted, "key": safe_key}
 
