@@ -181,22 +181,57 @@ def health():
 
 @app.get("/api/trips")
 def list_trips():
-    """List all trips that have photo directories."""
-    if not PHOTO_ROOT.exists():
-        return []
-    trips = []
-    for d in sorted(PHOTO_ROOT.iterdir(), key=lambda x: x.name, reverse=True):
-        if d.is_dir() and not d.name.startswith("."):
-            photo_count = len([f for f in d.glob("*") if f.suffix.lower() in ALLOWED_EXTENSIONS])
-            if photo_count > 0:
+    """List all trips: merge Travel Hub data + sf-hubs-photos/ photo counts."""
+    trips = []   # {id: {label, photo_count, updated, startDate, endDate, region}}
+    trips_by_id = {}
+
+    # 1. Load Travel Hub itinerary data (always show, even 0 photos)
+    if ITINERARY_PATH.exists():
+        try:
+            itin = json.loads(ITINERARY_PATH.read_text(encoding="utf-8"))
+            tid = itin["trip_id"]
+            trips_by_id[tid] = {
+                "id": tid,
+                "label": itin.get("title", tid),
+                "photo_count": 0,
+                "updated": "",
+                "startDate": itin.get("startDate", ""),
+                "endDate": itin.get("endDate", ""),
+                "region": itin.get("title", ""),
+            }
+        except Exception as e:
+            print(f"[Trips] Failed to load itinerary: {e}")
+
+    # 2. Merge photo counts from sf-hubs-photos/
+    if PHOTO_ROOT.exists():
+        for d in PHOTO_ROOT.iterdir():
+            if d.is_dir() and not d.name.startswith("."):
+                photo_count = len([f for f in d.glob("*") if f.suffix.lower() in ALLOWED_EXTENSIONS])
                 meta = _load_meta(d)
-                trips.append({
-                    "id": d.name,
-                    "label": meta.get("trip_label", d.name),
-                    "photo_count": photo_count,
-                    "updated": meta.get("updated", ""),
-                })
-    return trips
+                tid = d.name
+                if tid in trips_by_id:
+                    trips_by_id[tid]["photo_count"] = photo_count
+                    if meta.get("updated"):
+                        trips_by_id[tid]["updated"] = meta["updated"]
+                elif photo_count > 0:
+                    # Legacy: trip with photos but not in itinerary
+                    trips_by_id[tid] = {
+                        "id": tid,
+                        "label": meta.get("trip_label", tid),
+                        "photo_count": photo_count,
+                        "updated": meta.get("updated", ""),
+                        "startDate": "",
+                        "endDate": "",
+                        "region": "",
+                    }
+
+    # 3. Sort: upcoming first, then by startDate desc
+    today = datetime.now().strftime("%Y-%m-%d")
+    def sort_key(t):
+        dd = t.get("startDate", "0000-00-00")
+        return (0 if dd >= today else 1, dd)
+
+    return sorted(trips_by_id.values(), key=sort_key, reverse=True)
 
 
 @app.get("/api/photos/{trip_id}")
