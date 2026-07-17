@@ -20,96 +20,197 @@
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    .card-hover { transition: all 0.25s ease; }
-    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.12); }
-    .fade-in { animation: fadeIn 0.4s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    /* ── Photo grid — masonry-ish ── */
+    /* ── Global ── */
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(160deg, #0a0a0f 0%, #0f0f1a 30%, #0d0d18 60%, #080812 100%);
+      background-attachment: fixed;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 75%, rgba(139,92,246,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 10% 90%, rgba(59,130,246,0.04) 0%, transparent 40%);
+    }
+    /* ── Animations ── */
+    .fade-in { animation: fadeIn 0.45s cubic-bezier(0.16,1,0.3,1); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+    @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes toastBounce {
+      0% { transform: translateY(30px) scale(0.9); opacity: 0; }
+      50% { transform: translateY(-4px) scale(1.02); }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    @keyframes progressPulse { 0%,100% { opacity: 0.8; } 50% { opacity: 1; } }
+    /* ── Card hover ── */
+    .card-hover { transition: all 0.3s cubic-bezier(0.16,1,0.3,1); }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(99,102,241,0.15); }
+    /* ── Photo Grid ── */
     .photo-grid {
       columns: 4 200px;
-      column-gap: 10px;
+      column-gap: 12px;
     }
     .photo-grid > div {
       break-inside: avoid;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .photo-grid img {
       width: 100%;
-      border-radius: 10px;
+      border-radius: 12px;
       display: block;
-      transition: all 0.2s;
+      transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
       cursor: pointer;
+      filter: brightness(0.95);
     }
     .photo-grid img:hover {
-      transform: scale(1.03);
-      box-shadow: 0 4px 20px rgba(99,102,241,0.25);
+      transform: scale(1.04);
+      filter: brightness(1.05);
+      box-shadow: 0 8px 30px rgba(99,102,241,0.3);
     }
+    /* ── Delete button ── */
+    .photo-card { position: relative; }
+    .photo-card .del-btn {
+      position: absolute; top: 8px; right: 8px;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; opacity: 0; transform: scale(0.8);
+      transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+      cursor: pointer; border: none; z-index: 2;
+      backdrop-filter: blur(4px);
+    }
+    .photo-card:hover .del-btn, .photo-card .del-btn.show-mobile { opacity: 1; transform: scale(1); }
+    .photo-card .del-btn:hover { background: rgba(239,68,68,0.85); color: white; transform: scale(1.1); }
     /* ── Lightbox ── */
     .lightbox {
       position: fixed; inset: 0; z-index: 60;
-      background: rgba(0,0,0,0.92);
+      background: rgba(0,0,0,0.94);
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
+      animation: fadeIn 0.2s ease-out;
     }
     .lightbox img {
       max-width: 92vw; max-height: 90vh;
       border-radius: 12px;
       object-fit: contain;
+      user-select: none;
+      -webkit-user-drag: none;
+      transition: transform 0.15s ease-out;
     }
-    .lightbox .close { position: absolute; top: 20px; right: 28px; font-size: 32px; color: white; opacity: 0.6; cursor: pointer; z-index: 1; }
+    .lightbox .close { position: absolute; top: 16px; right: 20px; font-size: 36px; color: white; opacity: 0.5; cursor: pointer; z-index: 1; transition: opacity 0.2s; line-height: 1; }
     .lightbox .close:hover { opacity: 1; }
-    .lightbox .caption { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.8); font-size: 14px; text-align: center; max-width: 80vw; }
-    .lightbox .nav { position: absolute; top: 50%; transform: translateY(-50%); font-size: 42px; color: rgba(255,255,255,0.5); cursor: pointer; padding: 12px; user-select: none; z-index: 1; }
+    .lightbox .caption { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.85); font-size: 14px; text-align: center; max-width: 80vw; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+    .lightbox .nav {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      font-size: 44px; color: rgba(255,255,255,0.4);
+      cursor: pointer; padding: 16px 8px; user-select: none; z-index: 1;
+      transition: color 0.2s;
+    }
     .lightbox .nav:hover { color: white; }
-    .lightbox .nav.prev { left: 8px; }
-    .lightbox .nav.next { right: 8px; }
+    .lightbox .nav.prev { left: 4px; }
+    .lightbox .nav.next { right: 4px; }
+    .lightbox .dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 1; }
+    .lightbox .dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3); transition: all 0.2s; }
+    .lightbox .dots span.active { background: white; transform: scale(1.3); }
     /* ── Upload zone ── */
     .upload-zone {
       border: 2px dashed rgba(99,102,241,0.3);
-      border-radius: 14px;
-      padding: 28px;
+      border-radius: 16px;
+      padding: 32px 20px;
       text-align: center;
-      transition: all 0.2s;
+      transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
       cursor: pointer;
+      background: rgba(99,102,241,0.02);
     }
     .upload-zone:hover, .upload-zone.drag-over {
       border-color: #818cf8;
-      background: rgba(99,102,241,0.06);
+      background: rgba(99,102,241,0.08);
+      transform: scale(1.01);
     }
-    /* ── Skeleton loading ── */
-    .skeleton { animation: pulse 1.5s ease-in-out infinite; background: #1e1e2a; border-radius: 10px; }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .upload-zone.drag-over { border-style: solid; box-shadow: 0 0 30px rgba(99,102,241,0.15); }
+    /* ── Progress bar ── */
+    .progress-bar {
+      height: 4px; border-radius: 2px;
+      background: linear-gradient(90deg, #6366f1, #818cf8, #6366f1);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s linear infinite, progressPulse 1s ease-in-out infinite;
+      transition: width 0.3s ease-out;
+    }
+    /* ── Skeleton ── */
+    .skeleton {
+      animation: pulse 1.5s ease-in-out infinite;
+      background: linear-gradient(135deg, #1a1a28 25%, #1e1e30 50%, #1a1a28 75%);
+      background-size: 200% 100%;
+      border-radius: 12px;
+    }
+    /* ── Spinner ── */
+    .spinner {
+      width: 22px; height: 22px; border: 2.5px solid rgba(255,255,255,0.15);
+      border-top-color: #818cf8; border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     /* ── Toast ── */
     .toast {
       position: fixed; bottom: 24px; right: 24px; z-index: 70;
-      background: #1e1e2a; color: #e2e8f0; padding: 12px 20px;
-      border-radius: 10px; font-size: 13px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      animation: slideUp 0.3s ease-out;
+      background: rgba(30,30,42,0.95); color: #e2e8f0;
+      padding: 14px 22px; border-radius: 12px; font-size: 13.5px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.2);
+      backdrop-filter: blur(12px);
+      animation: toastBounce 0.4s cubic-bezier(0.16,1,0.3,1);
+      border: 1px solid rgba(255,255,255,0.06);
     }
-    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    /* ── Delete button ── */
-    .photo-card { position: relative; }
-    .photo-card .del-btn {
-      position: absolute; top: 6px; right: 6px;
-      width: 26px; height: 26px; border-radius: 50%;
-      background: rgba(0,0,0,0.55); color: rgba(255,255,255,0.7);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; opacity: 0; transition: opacity 0.2s;
-      cursor: pointer; border: none; z-index: 2;
+    #undo-toast {
+      background: rgba(30,30,45,0.97);
+      border: 1px solid rgba(99,102,241,0.25);
     }
-    .photo-card:hover .del-btn { opacity: 1; }
-    .photo-card .del-btn:hover { background: rgba(220,38,38,0.8); color: white; }
+    /* ── Nav hamburger ── */
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .hamburger { display: none; background: none; border: none; color: white; font-size: 22px; cursor: pointer; padding: 4px; }
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      .photo-grid { columns: 2 160px; column-gap: 8px; }
+      .photo-grid > div { margin-bottom: 8px; }
+      .photo-grid img { border-radius: 10px; }
+      .photo-card .del-btn { opacity: 0.7; width: 28px; height: 28px; font-size: 12px; }
+      .upload-zone { padding: 24px 14px; border-radius: 14px; }
+      .upload-zone p { font-size: 13px; }
+      .toast { left: 16px; right: 16px; bottom: 16px; font-size: 12.5px; text-align: center; }
+      #undo-toast { flex-direction: column; gap: 8px; }
+      .lightbox .nav { font-size: 36px; padding: 12px 4px; }
+      .lightbox .close { top: 12px; right: 14px; font-size: 28px; }
+      .lightbox .caption { bottom: 40px; font-size: 12px; }
+      .hamburger { display: block; }
+      .nav-links { display: none; }
+      .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: rgba(10,10,15,0.97); backdrop-filter: blur(12px); padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 8px; }
+      main { padding-left: 12px; padding-right: 12px; }
+      #btn-upload { padding: 12px 20px; font-size: 14px; min-height: 46px; border-radius: 14px; }
+      #btn-do-upload { padding: 10px 18px; font-size: 13px; min-height: 42px; }
+    }
+    @media (max-width: 480px) {
+      .photo-grid { columns: 1; column-gap: 0; }
+      .photo-grid > div { margin-bottom: 12px; }
+      main { padding: 12px 8px 80px; }
+      .upload-zone { padding: 20px 10px; }
+      .lightbox .nav { font-size: 28px; padding: 10px 2px; }
+    }
   </style>
 </head>
 <body class="bg-dark text-white min-h-screen">
 
   <!-- ═══ Nav ═══ -->
-  <nav class="border-b border-white/5 px-6 py-4 flex items-center gap-2 sticky top-0 bg-dark/85 backdrop-blur z-20">
-    <a href="../../" class="text-white/40 hover:text-white transition text-sm">← SF-HUBS</a>
-    <span class="text-white/20">/</span>
-    <span class="text-sm font-semibold flex items-center gap-1.5">🖼️ Album Hub</span>
+  <nav class="border-b border-white/5 px-6 py-4 flex items-center gap-2 sticky top-0 bg-dark/85 backdrop-blur z-20 relative">
+    <button class="hamburger" id="hamburger" title="Menu">☰</button>
+    <div class="nav-links" id="nav-links">
+      <a href="../../" class="text-white/40 hover:text-white transition text-sm">← SF-HUBS</a>
+      <span class="text-white/20">/</span>
+      <span class="text-sm font-semibold flex items-center gap-1.5">🖼️ Album Hub</span>
+    </div>
     <span class="ml-auto text-white/20 text-xs" id="status">載入中…</span>
   </nav>
 
@@ -166,7 +267,13 @@
           <button id="btn-do-upload" class="px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-glow transition disabled:opacity-40 disabled:cursor-not-allowed" disabled>
             ⬆️ 上載所選檔案
           </button>
-          <span id="upload-progress" class="text-white/30 text-xs hidden"></span>
+          <div id="upload-progress-wrap" class="hidden flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="spinner"></div>
+              <span id="upload-progress" class="text-white/50 text-xs"></span>
+            </div>
+            <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+          </div>
           <span id="file-count" class="text-white/20 text-xs">未選擇檔案</span>
         </div>
         <!-- Thumbnail preview of selected files -->
@@ -194,6 +301,7 @@
     <span class="nav prev" id="lb-prev">‹</span>
     <img id="lb-img" src="" alt="">
     <span class="nav next" id="lb-next">›</span>
+    <div class="dots" id="lb-dots"></div>
     <div class="caption" id="lb-caption"></div>
   </div>
 
@@ -414,6 +522,7 @@
     function openLightbox(idx) {
       lightboxIdx = idx;
       showLightboxImage();
+      updateDots();
       $("#lightbox").style.display = "flex";
       $("#lightbox").classList.remove("hidden");
       document.body.style.overflow = "hidden";
@@ -427,23 +536,54 @@
     function showLightboxImage() {
       const p = currentPhotos[lightboxIdx];
       if (!p) return;
-      $("#lb-img").src = p.url;
+      const img = $("#lb-img");
+      img.style.transform = "scale(0.95)";
+      img.src = p.url;
+      img.onload = () => { img.style.transform = "scale(1)"; };
       $("#lb-caption").textContent = p.caption || "";
+      updateDots();
     }
-    function lightboxPrev(e) { e.stopPropagation(); if (lightboxIdx > 0) { lightboxIdx--; showLightboxImage(); } }
-    function lightboxNext(e) { e.stopPropagation(); if (lightboxIdx < currentPhotos.length - 1) { lightboxIdx++; showLightboxImage(); } }
+    function updateDots() {
+      const dots = $("#lb-dots");
+      dots.innerHTML = "";
+      currentPhotos.forEach((_, i) => {
+        const span = document.createElement("span");
+        if (i === lightboxIdx) span.className = "active";
+        dots.appendChild(span);
+      });
+    }
+    function lightboxPrev(e) { e?.stopPropagation(); if (lightboxIdx > 0) { lightboxIdx--; showLightboxImage(); } }
+    function lightboxNext(e) { e?.stopPropagation(); if (lightboxIdx < currentPhotos.length - 1) { lightboxIdx++; showLightboxImage(); } }
 
     $("#lb-close").addEventListener("click", closeLightbox);
     $("#lightbox").addEventListener("click", (e) => {
-      if (e.target === $("#lightbox") || e.target === $("#lb-img")) closeLightbox();
+      if (e.target === $("#lightbox")) closeLightbox();
     });
     $("#lb-prev").addEventListener("click", lightboxPrev);
     $("#lb-next").addEventListener("click", lightboxNext);
+
+    // ── Lightbox swipe (mobile) ──
+    let touchStartX = 0;
+    $("#lightbox").addEventListener("touchstart", (e) => { touchStartX = e.touches[0].clientX; }, {passive: true});
+    $("#lightbox").addEventListener("touchend", (e) => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 60) {
+        if (dx < 0) lightboxNext();
+        else lightboxPrev();
+      }
+    });
+
+    // ── Keyboard nav ──
     document.addEventListener("keydown", (e) => {
       if (lightboxIdx < 0) return;
       if (e.key === "Escape") closeLightbox();
       if (e.key === "ArrowLeft") lightboxPrev(e);
       if (e.key === "ArrowRight") lightboxNext(e);
+    });
+
+    // ── Mobile hamburger ──
+    $("#hamburger").addEventListener("click", () => {
+      $("#nav-links").classList.toggle("open");
     });
 
     // ── Upload ──
@@ -499,13 +639,20 @@
     btnDoUpload.addEventListener("click", async () => {
       if (selectedFiles.length === 0 || !currentTrip) return;
       btnDoUpload.disabled = true;
-      uploadProgress.classList.remove("hidden");
+      const progWrap = $("#upload-progress-wrap");
+      const progText = $("#upload-progress");
+      const progBar = $("#progress-bar");
+      progWrap.classList.remove("hidden");
+      progBar.style.width = "0%";
 
       let done = 0;
       let failed = 0;
+      const uploadedPhotos = [];  // { url, thumb_url, caption, key }
 
       for (const file of selectedFiles) {
-        uploadProgress.textContent = `⬆️ 上載中… ${done + 1}/${selectedFiles.length}`;
+        const pct = Math.round((done / selectedFiles.length) * 100);
+        progText.textContent = `⬆️ 上載中… ${done + 1}/${selectedFiles.length}`;
+        progBar.style.width = `${pct}%`;
         try {
           const form = new FormData();
           form.append("file", file);
@@ -521,14 +668,22 @@
             const errData = await resp.json().catch(() => ({}));
             throw new Error(errData.detail || `HTTP ${resp.status}`);
           }
+          const uploadData = await resp.json();
+          uploadedPhotos.push({
+            url: `${API}${uploadData.url}`,
+            thumb_url: uploadData.thumb_url ? `${API}${uploadData.thumb_url}` : `${API}${uploadData.url}`,
+            caption: $("#upload-caption").value.trim(),
+            key: uploadData.key,
+          });
           done++;
+          progBar.style.width = `${Math.round((done / selectedFiles.length) * 100)}%`;
         } catch (err) {
           failed++;
           console.error("Upload failed:", file.name, err);
         }
       }
 
-      uploadProgress.classList.add("hidden");
+      progWrap.classList.add("hidden");
       btnDoUpload.disabled = false;
       selectedFiles = [];
       fileCount.textContent = "未選擇檔案";
@@ -536,6 +691,8 @@
 
       if (done > 0) {
         toast(`✅ 成功上載 ${done} 張相` + (failed > 0 ? ` · ${failed} 張失敗` : ""));
+        // Show upload preview lightbox
+        showUploadPreview(uploadedPhotos);
       } else {
         toast(`❌ 上載失敗`);
       }
@@ -544,6 +701,111 @@
       loadPhotos(currentTrip);
       loadTrips();
     });
+
+    // ── Upload Preview Lightbox ──
+    function showUploadPreview(photos) {
+      if (photos.length === 0) return;
+
+      // Build preview modal
+      const overlay = document.createElement("div");
+      overlay.className = "lightbox";
+      overlay.style.display = "flex";
+      overlay.style.flexDirection = "column";
+      overlay.style.gap = "16px";
+      overlay.id = "upload-preview";
+
+      const closeBtn = document.createElement("span");
+      closeBtn.className = "close";
+      closeBtn.textContent = "×";
+      closeBtn.style.position = "absolute";
+      closeBtn.style.top = "16px";
+      closeBtn.style.right = "20px";
+      closeBtn.style.fontSize = "36px";
+      closeBtn.style.color = "white";
+      closeBtn.style.opacity = "0.5";
+      closeBtn.style.cursor = "pointer";
+      closeBtn.style.zIndex = "1";
+      closeBtn.addEventListener("click", () => closeUploadPreview());
+
+      const title = document.createElement("p");
+      title.textContent = `✅ 成功上載 ${photos.length} 張相`;
+      title.style.color = "rgba(255,255,255,0.9)";
+      title.style.fontSize = "16px";
+      title.style.fontWeight = "500";
+
+      const grid = document.createElement("div");
+      grid.style.display = "flex";
+      grid.style.flexWrap = "wrap";
+      grid.style.gap = "12px";
+      grid.style.justifyContent = "center";
+      grid.style.maxWidth = "90vw";
+      grid.style.maxHeight = "70vh";
+      grid.style.overflowY = "auto";
+
+      photos.forEach((p, i) => {
+        const wrapper = document.createElement("div");
+        wrapper.style.display = "flex";
+        wrapper.style.flexDirection = "column";
+        wrapper.style.alignItems = "center";
+        wrapper.style.gap = "4px";
+        wrapper.style.cursor = "pointer";
+        wrapper.addEventListener("click", () => {
+          // Open in main lightbox
+          closeUploadPreview();
+          setTimeout(() => {
+            // Find this photo in currentPhotos to get correct idx
+            const idx = currentPhotos.findIndex(ph => ph.key === p.key);
+            if (idx >= 0) openLightbox(idx);
+          }, 300);
+        });
+
+        const img = document.createElement("img");
+        img.src = p.thumb_url;
+        img.style.width = "160px";
+        img.style.height = "120px";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "10px";
+        img.style.border = "1px solid rgba(255,255,255,0.1)";
+        img.style.transition = "transform 0.2s";
+        img.addEventListener("mouseenter", () => { img.style.transform = "scale(1.05)"; });
+        img.addEventListener("mouseleave", () => { img.style.transform = "scale(1)"; });
+
+        const label = document.createElement("span");
+        label.textContent = p.caption || `📷 #${i + 1}`;
+        label.style.color = "rgba(255,255,255,0.5)";
+        label.style.fontSize = "11px";
+        label.style.maxWidth = "160px";
+        label.style.textAlign = "center";
+        label.style.overflow = "hidden";
+        label.style.textOverflow = "ellipsis";
+        label.style.whiteSpace = "nowrap";
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(label);
+        grid.appendChild(wrapper);
+      });
+
+      const dimmedBg = document.createElement("div");
+      dimmedBg.id = "upload-preview-bg";
+      dimmedBg.style.position = "fixed";
+      dimmedBg.style.inset = "0";
+      dimmedBg.style.zIndex = "59";
+      dimmedBg.style.background = "rgba(0,0,0,0.7)";
+      dimmedBg.addEventListener("click", () => closeUploadPreview());
+
+      overlay.appendChild(closeBtn);
+      overlay.appendChild(title);
+      overlay.appendChild(grid);
+      document.body.appendChild(dimmedBg);
+      document.body.appendChild(overlay);
+      document.body.style.overflow = "hidden";
+
+      function closeUploadPreview() {
+        overlay.remove();
+        dimmedBg.remove();
+        document.body.style.overflow = "";
+      }
+    }
 
     // ── Toast ──
     function toast(msg) {

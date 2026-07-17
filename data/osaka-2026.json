@@ -1,0 +1,171 @@
+{
+  "trip_id": "osaka-2026",
+  "title": "Osaka 2026 關西自駕遊",
+  "startDate": "2026-07-18",
+  "endDate": "2026-07-26",
+  "weatherCoords": {
+    "姬路": {
+      "lat": 34.8167,
+      "lon": 134.6833
+    },
+    "鳥取": {
+      "lat": 35.5039,
+      "lon": 134.2378
+    },
+    "真庭": {
+      "lat": 35.0833,
+      "lon": 133.75
+    },
+    "岡山": {
+      "lat": 34.6618,
+      "lon": 133.935
+    },
+    "大阪": {
+      "lat": 34.6937,
+      "lon": 135.5023
+    },
+    "關西機場": {
+      "lat": 34.432,
+      "lon": 135.2304
+    },
+    "KIX": {
+      "lat": 34.432,
+      "lon": 135.2304
+    },
+    "吹田": {
+      "lat": 34.7667,
+      "lon": 135.5167
+    },
+    "堺": {
+      "lat": 34.5833,
+      "lon": 135.4667
+    }
+  },
+  "days": [
+    {
+      "day": 1,
+      "date": "2026-07-18",
+      "weekday": "六",
+      "title": "抵達關西 + 八坐和神戶牛",
+      "location": "KIX→姬路",
+      "hotel": "姬路大和 ROYNET 酒店",
+      "spots": [
+        "CX506 起飛",
+        "到達 KIX 關西機場",
+        "八坐和 (Yazawa) 阪急三宮店",
+        "住：姬路大和 ROYNET 酒店"
+      ]
+    },
+    {
+      "day": 2,
+      "date": "2026-07-19",
+      "weekday": "日",
+      "title": "公園 + 甜品 + 向日葵 + Daiso",
+      "location": "姬路 → 鳥取",
+      "hotel": "鳥取 Green Rich Hotel Tottori Ekimae",
+      "spots": [
+        "Sasagaoka Park 笹ヶ丘公園",
+        "Tea / Dessert",
+        "向日葵（2選1，may skip）",
+        "Daiso / 超市",
+        "住：鳥取 Green Rich Hotel"
+      ]
+    },
+    {
+      "day": 3,
+      "date": "2026-07-20",
+      "weekday": "一",
+      "title": "鳥取沙丘兒童之國",
+      "location": "鳥取",
+      "hotel": "鳥取 Green Rich Hotel Tottori Ekimae",
+      "spots": [
+        "鳥取沙丘兒童之國",
+        "住：鳥取 Green Rich Hotel"
+      ]
+    },
+    {
+      "day": 4,
+      "date": "2026-07-21",
+      "weekday": "二",
+      "title": "鳥取沙丘",
+      "location": "鳥取",
+      "hotel": "鳥取 Green Rich Hotel Tottori Ekimae",
+      "spots": [
+        "鳥取沙丘",
+        "砂の美術館（加推）",
+        "住：鳥取 Green Rich Hotel"
+      ]
+    },
+    {
+      "day": 5,
+      "date": "2026-07-22",
+      "weekday": "三",
+      "title": "鳥取花回廊",
+      "location": "鳥取→大山",
+      "hotel": "鳥取大山美居溫泉度假酒店",
+      "spots": [
+        "中途休息站：西松屋 / 超市",
+        "鳥取花回廊 とっとり花回廊",
+        "Dinner @",
+        "住：鳥取大山美居溫泉度假酒店"
+      ]
+    },
+    {
+      "day": 6,
+      "date": "2026-07-23",
+      "weekday": "四",
+      "title": "真庭 → 岡山摘桃",
+      "location": "真庭 → 岡山 → 姬路",
+      "hotel": "姬路大和 ROYNET 酒店",
+      "spots": [
+        "Hotel breakfast（最遲 9am）",
+        "Agri-garden 真庭あぐりガーデン",
+        "岡山摘水果",
+        "中途休息站：Seria / 超市",
+        "住：姬路大和 ROYNET 酒店"
+      ]
+    },
+    {
+      "day": 7,
+      "date": "2026-07-24",
+      "weekday": "五",
+      "title": "A→B 彈性日（C備用）",
+      "location": "姬路→大阪",
+      "hotel": "",
+      "spots": [
+        "姫路中央公園（自駕入園Safari）",
+        "Cycle Monorail サイクルモノレール",
+        "向日葵公園（備用）",
+        "住：大阪北濱布萊頓酒店 (Hotel Brighton City Osaka Kitahama)"
+      ]
+    },
+    {
+      "day": 8,
+      "date": "2026-07-25",
+      "weekday": "六",
+      "title": "Big Bang 兒童館 + 天神祭",
+      "location": "堺→大阪",
+      "hotel": "大阪北濱布萊頓酒店",
+      "spots": [
+        "堺市立ビッグバン (Big Bang)",
+        "Big Bang → 天神祭會場",
+        "天神祭 本宮",
+        "天神祭奉納花火（B会場指定席）",
+        "住：大阪北濱布萊頓酒店 (Hotel Brighton City Osaka Kitahama)"
+      ]
+    },
+    {
+      "day": 9,
+      "date": "2026-07-26",
+      "weekday": "日",
+      "title": "返港",
+      "location": "大阪 → KIX → HKG",
+      "hotel": "✈️ 返港",
+      "spots": [
+        "Eiraku Yumenomori Park 永旺夢美園公園",
+        "還車 + To Airport",
+        "CX595 起飛 KIX → HKG"
+      ]
+    }
+  ]
+}
