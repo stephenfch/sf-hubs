@@ -88,6 +88,23 @@
     }
     .photo-card:hover .del-btn, .photo-card .del-btn.show-mobile { opacity: 1; transform: scale(1); }
     .photo-card .del-btn:hover { background: rgba(229,62,62,0.9); color: white; transform: scale(1.1); }
+    /* ── Badge overlay ── */
+    .badge-row {
+      position: absolute; top: 8px; left: 8px; z-index: 3;
+      display: flex; gap: 4px; flex-wrap: wrap; pointer-events: none;
+    }
+    .badge-day {
+      background: rgba(236,64,122,0.88); color: white;
+      font-size: 10px; font-weight: 600; padding: 2px 8px;
+      border-radius: 999px; backdrop-filter: blur(4px);
+      letter-spacing: 0.3px;
+    }
+    .badge-spot {
+      background: rgba(255,179,0,0.85); color: white;
+      font-size: 10px; padding: 2px 8px;
+      border-radius: 999px; backdrop-filter: blur(4px);
+      max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     /* ── Lightbox ── */
     .lightbox {
       position: fixed; inset: 0; z-index: 60;
@@ -428,8 +445,14 @@
           const card = document.createElement("div");
           card.className = "photo-card fade-in";
           card.style.animationDelay = `${idx * 0.03}s`;
+          const dayBadge = p.day > 0 ? `<span class="badge-day">D${esc(p.day)}</span>` : "";
+          const spotBadge = p.spot ? `<span class="badge-spot">${esc(p.spot)}</span>` : "";
+          const badges = (dayBadge || spotBadge)
+            ? `<div class="badge-row">${dayBadge}${spotBadge}</div>`
+            : "";
           card.innerHTML = `
             <button class="del-btn" title="刪除" data-key="${esc(p.key)}">✕</button>
+            ${badges}
             <img src="${esc(p.thumb_url)}" alt="${esc(p.caption)}" loading="lazy" data-idx="${idx}">
             ${p.caption ? `<p class="text-xs text-gray-400 mt-1 px-1 truncate">${esc(p.caption)}</p>` : ""}`;
           // Click photo → lightbox
