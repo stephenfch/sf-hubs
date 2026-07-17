@@ -168,10 +168,6 @@ def _generate_thumb(trip_dir: Path, key: str) -> str | None:
 
 @app.get("/api/health")
 def health():
-    # Auto-classify in background
-    filepath = str(trip_dir / key)
-    threading.Thread(target=_classify_async, args=(filepath, trip_id_safe, key), daemon=True).start()
-
     return {"ok": True, "photo_root": str(PHOTO_ROOT), "ts": datetime.now().isoformat()}
 
 
