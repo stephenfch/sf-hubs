@@ -20,28 +20,29 @@
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    /* ── Global ── */
+    /* ── Global (Light Theme) ── */
     * { box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(160deg, #0a0a0f 0%, #0f0f1a 30%, #0d0d18 60%, #080812 100%);
+      background: linear-gradient(170deg, #faf8f5 0%, #f0ece6 30%, #f7f3ec 60%, #fcf9f5 100%);
       background-attachment: fixed;
+      color: #3d3929;
       -webkit-tap-highlight-color: transparent;
     }
     body::before {
       content: '';
       position: fixed; inset: 0; z-index: -1; pointer-events: none;
       background:
-        radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.07) 0%, transparent 55%),
-        radial-gradient(ellipse at 85% 75%, rgba(139,92,246,0.05) 0%, transparent 50%),
-        radial-gradient(ellipse at 10% 90%, rgba(59,130,246,0.04) 0%, transparent 40%);
+        radial-gradient(ellipse at 50% 0%, rgba(236, 64, 122, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 75%, rgba(66, 165, 245, 0.05) 0%, transparent 45%),
+        radial-gradient(ellipse at 10% 90%, rgba(129, 199, 132, 0.04) 0%, transparent 40%);
     }
     /* ── Animations ── */
     .fade-in { animation: fadeIn 0.45s cubic-bezier(0.16,1,0.3,1); }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-    @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes toastBounce {
       0% { transform: translateY(30px) scale(0.9); opacity: 0; }
       50% { transform: translateY(-4px) scale(1.02); }
@@ -50,7 +51,7 @@
     @keyframes progressPulse { 0%,100% { opacity: 0.8; } 50% { opacity: 1; } }
     /* ── Card hover ── */
     .card-hover { transition: all 0.3s cubic-bezier(0.16,1,0.3,1); }
-    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(99,102,241,0.15); }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(236,64,122,0.12); }
     /* ── Photo Grid ── */
     .photo-grid {
       columns: 4 200px;
@@ -66,27 +67,27 @@
       display: block;
       transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
       cursor: pointer;
-      filter: brightness(0.95);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
     }
     .photo-grid img:hover {
       transform: scale(1.04);
-      filter: brightness(1.05);
-      box-shadow: 0 8px 30px rgba(99,102,241,0.3);
+      box-shadow: 0 8px 30px rgba(236,64,122,0.2);
     }
     /* ── Delete button ── */
     .photo-card { position: relative; }
     .photo-card .del-btn {
       position: absolute; top: 8px; right: 8px;
       width: 30px; height: 30px; border-radius: 50%;
-      background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.85); color: #e53e3e;
       display: flex; align-items: center; justify-content: center;
       font-size: 14px; opacity: 0; transform: scale(0.8);
       transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
       cursor: pointer; border: none; z-index: 2;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     .photo-card:hover .del-btn, .photo-card .del-btn.show-mobile { opacity: 1; transform: scale(1); }
-    .photo-card .del-btn:hover { background: rgba(239,68,68,0.85); color: white; transform: scale(1.1); }
+    .photo-card .del-btn:hover { background: rgba(229,62,62,0.9); color: white; transform: scale(1.1); }
     /* ── Lightbox ── */
     .lightbox {
       position: fixed; inset: 0; z-index: 60;
@@ -119,24 +120,24 @@
     .lightbox .dots span.active { background: white; transform: scale(1.3); }
     /* ── Upload zone ── */
     .upload-zone {
-      border: 2px dashed rgba(99,102,241,0.3);
+      border: 2px dashed rgba(236,64,122,0.25);
       border-radius: 16px;
       padding: 32px 20px;
       text-align: center;
       transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
       cursor: pointer;
-      background: rgba(99,102,241,0.02);
+      background: rgba(236,64,122,0.02);
     }
     .upload-zone:hover, .upload-zone.drag-over {
-      border-color: #818cf8;
-      background: rgba(99,102,241,0.08);
+      border-color: #ec407a;
+      background: rgba(236,64,122,0.06);
       transform: scale(1.01);
     }
-    .upload-zone.drag-over { border-style: solid; box-shadow: 0 0 30px rgba(99,102,241,0.15); }
+    .upload-zone.drag-over { border-style: solid; box-shadow: 0 0 30px rgba(236,64,122,0.1); }
     /* ── Progress bar ── */
     .progress-bar {
       height: 4px; border-radius: 2px;
-      background: linear-gradient(90deg, #6366f1, #818cf8, #6366f1);
+      background: linear-gradient(90deg, #ec407a, #f48fb1, #ec407a);
       background-size: 200% 100%;
       animation: shimmer 1.5s linear infinite, progressPulse 1s ease-in-out infinite;
       transition: width 0.3s ease-out;
@@ -144,34 +145,32 @@
     /* ── Skeleton ── */
     .skeleton {
       animation: pulse 1.5s ease-in-out infinite;
-      background: linear-gradient(135deg, #1a1a28 25%, #1e1e30 50%, #1a1a28 75%);
+      background: linear-gradient(135deg, #f0ede6 25%, #e8e2d8 50%, #f0ede6 75%);
       background-size: 200% 100%;
       border-radius: 12px;
     }
     /* ── Spinner ── */
     .spinner {
-      width: 22px; height: 22px; border: 2.5px solid rgba(255,255,255,0.15);
-      border-top-color: #818cf8; border-radius: 50%;
+      width: 22px; height: 22px; border: 2.5px solid rgba(0,0,0,0.08);
+      border-top-color: #ec407a; border-radius: 50%;
       animation: spin 0.7s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
     /* ── Toast ── */
     .toast {
       position: fixed; bottom: 24px; right: 24px; z-index: 70;
-      background: rgba(30,30,42,0.95); color: #e2e8f0;
+      background: rgba(255,255,255,0.97); color: #3d3929;
       padding: 14px 22px; border-radius: 12px; font-size: 13.5px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.2);
-      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 0 1px rgba(236,64,122,0.15);
+      backdrop-filter: blur(16px);
       animation: toastBounce 0.4s cubic-bezier(0.16,1,0.3,1);
-      border: 1px solid rgba(255,255,255,0.06);
     }
     #undo-toast {
-      background: rgba(30,30,45,0.97);
-      border: 1px solid rgba(99,102,241,0.25);
+      background: rgba(255,255,255,0.98);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(236,64,122,0.2);
     }
     /* ── Nav hamburger ── */
     .nav-links { display: flex; align-items: center; gap: 8px; }
-    .hamburger { display: none; background: none; border: none; color: white; font-size: 22px; cursor: pointer; padding: 4px; }
+    .hamburger { display: none; background: none; border: none; color: #3d3929; font-size: 22px; cursor: pointer; padding: 4px; }
     /* ── Mobile ── */
     @media (max-width: 768px) {
       .photo-grid { columns: 2 160px; column-gap: 8px; }
@@ -187,7 +186,7 @@
       .lightbox .caption { bottom: 40px; font-size: 12px; }
       .hamburger { display: block; }
       .nav-links { display: none; }
-      .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: rgba(10,10,15,0.97); backdrop-filter: blur(12px); padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 8px; }
+      .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); padding: 12px 20px; border-bottom: 1px solid rgba(255,150,50,0.15); gap: 8px; }
       main { padding-left: 12px; padding-right: 12px; }
       #btn-upload { padding: 12px 20px; font-size: 14px; min-height: 46px; border-radius: 14px; }
       #btn-do-upload { padding: 10px 18px; font-size: 13px; min-height: 42px; }
@@ -201,17 +200,17 @@
     }
   </style>
 </head>
-<body class="bg-dark text-white min-h-screen">
+<body class="bg-white/0 text-gray-700 min-h-screen">
 
   <!-- ═══ Nav ═══ -->
-  <nav class="border-b border-white/5 px-6 py-4 flex items-center gap-2 sticky top-0 bg-dark/85 backdrop-blur z-20 relative">
+  <nav class="border-b border-amber-200/40 px-6 py-4 flex items-center gap-2 sticky top-0 bg-white/80 backdrop-blur z-20 relative shadow-sm">
     <button class="hamburger" id="hamburger" title="Menu">☰</button>
     <div class="nav-links" id="nav-links">
-      <a href="../../" class="text-white/40 hover:text-white transition text-sm">← SF-HUBS</a>
-      <span class="text-white/20">/</span>
-      <span class="text-sm font-semibold flex items-center gap-1.5">🖼️ Album Hub</span>
+      <a href="../../" class="text-gray-400 hover:text-gray-700 transition text-sm">← SF-HUBS</a>
+      <span class="text-gray-300">/</span>
+      <span class="text-sm font-semibold flex items-center gap-1.5 text-gray-800">🖼️ Album Hub</span>
     </div>
-    <span class="ml-auto text-white/20 text-xs" id="status">載入中…</span>
+    <span class="ml-auto text-gray-400 text-xs" id="status">載入中…</span>
   </nav>
 
   <!-- ═══ Main ═══ -->
@@ -219,13 +218,13 @@
 
     <!-- ── Trip Selector ── -->
     <section id="section-select" class="mb-8 fade-in">
-      <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+      <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800">
         <span>📂</span> 選擇旅程
       </h2>
       <div id="trip-list" class="flex flex-wrap gap-3">
         <!-- rendered by JS -->
       </div>
-      <div id="no-trips" class="hidden text-white/30 text-sm mt-4">
+      <div id="no-trips" class="hidden text-gray-400 text-sm mt-4">
         <p>📭 暫無相簿 — 上載第一張相就會自動建立 trip folder</p>
       </div>
     </section>
@@ -233,48 +232,48 @@
     <!-- ── Upload Bar ── -->
     <section id="section-upload" class="hidden mb-8 fade-in">
       <div class="flex items-center gap-4 flex-wrap">
-        <button id="btn-upload" class="px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-medium hover:bg-glow transition flex items-center gap-2 shadow-lg shadow-accent/20">
+        <button id="btn-upload" class="px-5 py-2.5 rounded-xl bg-pink-500 text-white text-sm font-medium hover:bg-pink-600 transition flex items-center gap-2 shadow-lg shadow-pink-200">
           📤 上載相片
         </button>
-        <span class="text-white/30 text-xs">
+        <span class="text-gray-400 text-xs">
           支援 JPG/PNG/WebP/HEIC · 拖放或點擊上載
         </span>
-        <span id="photo-count" class="text-white/20 text-xs ml-auto"></span>
+        <span id="photo-count" class="text-gray-300 text-xs ml-auto"></span>
       </div>
       <!-- Upload modal area -->
-      <div id="upload-panel" class="hidden mt-4 p-4 bg-card border border-white/5 rounded-2xl fade-in">
+      <div id="upload-panel" class="hidden mt-4 p-4 bg-white/90 border border-amber-100 rounded-2xl fade-in shadow-sm backdrop-blur">
         <div class="upload-zone" id="drop-zone">
-          <p class="text-white/50 text-sm mb-1">📁 拖放相片到此處，或點擊選擇檔案</p>
-          <p class="text-white/20 text-xs">一次可揀多張 · 每張最大 50MB</p>
+          <p class="text-gray-500 text-sm mb-1">📁 拖放相片到此處，或點擊選擇檔案</p>
+          <p class="text-gray-300 text-xs">一次可揀多張 · 每張最大 50MB</p>
           <input type="file" id="file-input" multiple accept="image/*" class="hidden">
         </div>
         <!-- Upload form fields -->
         <div class="mt-3 flex flex-wrap gap-3">
           <div class="flex-1 min-w-[120px]">
-            <label class="text-xs text-white/40">Day # (optional)</label>
-            <input id="upload-day" type="number" min="1" max="30" placeholder="e.g. 1" class="w-full mt-1 bg-surf border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-accent/50">
+            <label class="text-xs text-gray-400">Day # (optional)</label>
+            <input id="upload-day" type="number" min="1" max="30" placeholder="e.g. 1" class="w-full mt-1 bg-amber-50/50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-pink-300">
           </div>
           <div class="flex-1 min-w-[120px]">
-            <label class="text-xs text-white/40">景點 (optional)</label>
-            <input id="upload-spot" type="text" placeholder="e.g. 神戶牛" class="w-full mt-1 bg-surf border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-accent/50">
+            <label class="text-xs text-gray-400">景點 (optional)</label>
+            <input id="upload-spot" type="text" placeholder="e.g. 神戶牛" class="w-full mt-1 bg-amber-50/50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-pink-300">
           </div>
           <div class="flex-[2] min-w-[200px]">
-            <label class="text-xs text-white/40">Caption (optional)</label>
-            <input id="upload-caption" type="text" placeholder="一句話描述…" class="w-full mt-1 bg-surf border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-accent/50">
+            <label class="text-xs text-gray-400">Caption (optional)</label>
+            <input id="upload-caption" type="text" placeholder="一句話描述…" class="w-full mt-1 bg-amber-50/50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-pink-300">
           </div>
         </div>
         <div class="mt-3 flex items-center gap-3">
-          <button id="btn-do-upload" class="px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-glow transition disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+          <button id="btn-do-upload" class="px-4 py-2 rounded-lg bg-pink-500 text-white text-sm font-medium hover:bg-pink-600 transition disabled:opacity-40 disabled:cursor-not-allowed" disabled>
             ⬆️ 上載所選檔案
           </button>
           <div id="upload-progress-wrap" class="hidden flex-1">
             <div class="flex items-center gap-2 mb-1">
               <div class="spinner"></div>
-              <span id="upload-progress" class="text-white/50 text-xs"></span>
+              <span id="upload-progress" class="text-gray-500 text-xs"></span>
             </div>
             <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
           </div>
-          <span id="file-count" class="text-white/20 text-xs">未選擇檔案</span>
+          <span id="file-count" class="text-gray-300 text-xs">未選擇檔案</span>
         </div>
         <!-- Thumbnail preview of selected files -->
         <div id="preview-row" class="flex flex-wrap gap-2 mt-3"></div>
@@ -286,7 +285,7 @@
       <div id="photo-grid" class="photo-grid">
         <!-- rendered by JS -->
       </div>
-      <div id="photo-empty" class="hidden text-center py-16 text-white/20">
+      <div id="photo-empty" class="hidden text-center py-16 text-gray-300">
         <p class="text-4xl mb-3">📸</p>
         <p class="text-sm">呢個 trip 暫時未有相</p>
         <p class="text-xs mt-1">click 上面「上載相片」開始！</p>
@@ -306,8 +305,8 @@
   </div>
 
   <!-- ═══ Footer ═══ -->
-  <footer class="border-t border-white/5 py-8 text-center text-white/15 text-xs">
-    <p>Powered by <span class="text-white/30">SF-HUBS</span> · © 2026 Stephen Fan</p>
+  <footer class="border-t border-amber-100 py-8 text-center text-gray-400 text-xs">
+    <p>Powered by <span class="text-gray-600">SF-HUBS</span> · © 2026 Stephen Fan</p>
   </footer>
 
   <!-- ═══════════════════════════════════════════════════════════════════════
@@ -369,18 +368,18 @@
           const btn = document.createElement("button");
           btn.className = `px-4 py-3 rounded-xl border text-sm text-left transition-all ${
             currentTrip === t.id
-              ? "bg-accent/15 border-accent/40 text-white"
-              : "bg-card border-white/5 text-white/60 hover:text-white hover:border-white/15"
+              ? "bg-pink-50 border-pink-200 text-pink-700 font-medium shadow-sm"
+              : "bg-white/70 border-gray-200 text-gray-500 hover:text-gray-800 hover:border-pink-200 hover:shadow-sm"
           }`;
           btn.innerHTML = `
             <div class="font-medium">${esc(t.label)}</div>
-            <div class="text-xs text-white/30 mt-0.5">${t.photo_count} 張相 · ${fmtDate(t.updated)}</div>`;
+            <div class="text-xs text-gray-400 mt-0.5">${t.photo_count} 張相 · ${fmtDate(t.updated)}</div>`;
           btn.addEventListener("click", () => selectTrip(t.id));
           list.appendChild(btn);
         });
       } catch (err) {
         console.error("loadTrips:", err);
-        list.innerHTML = `<p class="text-red-400/60 text-sm">⚠️ 無法連接 API：${esc(err.message)}</p>`;
+        list.innerHTML = `<p class="text-red-400 text-sm">⚠️ 無法連接 API：${esc(err.message)}</p>`;
       }
     }
 
@@ -427,7 +426,7 @@
           card.innerHTML = `
             <button class="del-btn" title="刪除" data-key="${esc(p.key)}">✕</button>
             <img src="${esc(p.thumb_url)}" alt="${esc(p.caption)}" loading="lazy" data-idx="${idx}">
-            ${p.caption ? `<p class="text-xs text-white/40 mt-1 px-1 truncate">${esc(p.caption)}</p>` : ""}`;
+            ${p.caption ? `<p class="text-xs text-gray-400 mt-1 px-1 truncate">${esc(p.caption)}</p>` : ""}`;
           // Click photo → lightbox
           card.querySelector("img").addEventListener("click", () => openLightbox(idx));
           // Delete button
@@ -440,7 +439,7 @@
         $("#status").textContent = `${tripId} · ${photos.length} 張相`;
       } catch (err) {
         console.error("loadPhotos:", err);
-        grid.innerHTML = `<p class="text-red-400/60 text-sm col-span-full">⚠️ 載入失敗：${esc(err.message)}</p>`;
+        grid.innerHTML = `<p class="text-red-400 text-sm col-span-full">⚠️ 載入失敗：${esc(err.message)}</p>`;
       }
     }
 
@@ -458,7 +457,7 @@
         // Show undo toast with 30s timeout
         const dismissToast = toastHTML(
           `<span>已刪除 1 張相</span>
-           <button id="undo-btn" class="ml-3 px-3 py-1 rounded-lg bg-accent/30 hover:bg-accent text-white text-xs font-medium transition">
+           <button id="undo-btn" class="ml-3 px-3 py-1 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-700 text-xs font-medium transition">
              ↩️ Undo
            </button>`,
           30000  // 30s auto-dismiss

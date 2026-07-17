@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,134 +7,362 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      theme: { extend: { colors: { dark: '#0a0a0f', card: '#12121a', accent: '#6366f1' } } }
+      theme: {
+        extend: {
+          colors: {
+            accent: '#6366f1', glow: '#818cf8',
+            card: '#ffffff', cardBg: '#f8f9fb',
+            txt: '#1a1a2e', txtDim: '#6b7280', txtMuted: '#9ca3af',
+          }
+        }
+      }
     }
   </script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
+    .card-hover { transition: all 0.25s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.12); }
+    .skeleton { animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
-<body class="bg-dark text-white min-h-screen flex flex-col">
+<body class="bg-cardBg text-txt min-h-screen">
 
   <!-- Nav -->
-  <nav class="border-b border-white/5 px-6 py-4 flex items-center gap-2">
-    <a href="../../" class="text-white/40 hover:text-white transition text-sm">← SF-HUBS</a>
-    <span class="text-white/20">/</span>
-    <span class="text-sm font-semibold">Weather App</span>
+  <nav class="border-b border-gray-100 px-6 py-4 flex items-center gap-2 sticky top-0 bg-white/80 backdrop-blur z-10 shadow-sm">
+    <a href="../../" class="text-txtDim hover:text-txt transition text-sm">← SF-HUBS</a>
+    <span class="text-txtMuted">/</span>
+    <span class="text-sm font-semibold text-txt">Weather App</span>
+    <span class="ml-auto text-txtMuted text-xs" id="updateTime"></span>
   </nav>
 
-  <!-- Main -->
-  <main class="flex-1 flex items-center justify-center p-6">
-    <div class="w-full max-w-md">
+  <main class="max-w-6xl mx-auto px-6 py-8">
 
-      <h1 class="text-3xl font-bold mb-2">🌤️ Weather</h1>
-      <p class="text-white/40 text-sm mb-8">Search any city for current conditions</p>
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-extrabold mb-1 text-txt">🌤️ 天氣預報 Weather Dashboard</h1>
+      <p class="text-txtDim text-sm">即時天氣 + 7日預報 · Real-time + 7-Day Forecast — HK & Japan</p>
+    </div>
 
-      <!-- Search -->
-      <div class="flex gap-2 mb-6">
-        <input id="cityInput" type="text" placeholder="Enter city name..."
-          class="flex-1 bg-card border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-accent transition"
-          onkeydown="if(event.key==='Enter') getWeather()">
-        <button onclick="getWeather()"
-          class="bg-accent hover:bg-accent/80 px-5 py-3 rounded-xl text-sm font-semibold transition">
-          Search
+    <!-- ────── Osaka Trip 2026 Section ────── -->
+    <section class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-2xl">🎌</span>
+        <h2 class="text-lg font-bold text-txtDim">大阪之旅 Osaka Trip 2026</h2>
+        <span class="text-txtMuted text-xs ml-2">by 旅遊達人 TravelExpert</span>
+      </div>
+      <div id="osaka-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- filled by JS -->
+      </div>
+    </section>
+
+    <!-- ────── HK Section ────── -->
+    <section class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-2xl">🇭🇰</span>
+        <h2 class="text-lg font-bold text-txtDim">香港 Hong Kong</h2>
+      </div>
+      <div id="hk-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <!-- filled by JS -->
+      </div>
+    </section>
+
+    <!-- ────── Japan Section ────── -->
+    <section class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-2xl">🇯🇵</span>
+        <h2 class="text-lg font-bold text-txtDim">日本 Japan</h2>
+      </div>
+      <div id="jp-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- filled by JS -->
+      </div>
+    </section>
+
+    <!-- ────── Custom Search ────── -->
+    <section class="border-t border-gray-100 pt-8">
+      <h2 class="text-lg font-bold text-txtDim mb-4">🔍 搜尋城市 Search Any City</h2>
+      <div class="flex gap-2 mb-4 max-w-md">
+        <input id="cityInput" type="text" placeholder="城市名 City name..."
+          class="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-txt placeholder-txtMuted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition"
+          onkeydown="if(event.key==='Enter') searchWeather()">
+        <button onclick="searchWeather()"
+          class="bg-accent hover:bg-accent/90 px-5 py-3 rounded-xl text-sm font-semibold text-white transition shadow-sm">
+          搜尋 Search
         </button>
       </div>
+      <div id="searchResult" class="hidden fade-in max-w-lg"></div>
+      <div id="searchError" class="hidden bg-red-50 border border-red-200 rounded-xl p-4 text-red-500 text-sm max-w-md"></div>
+    </section>
 
-      <!-- Result -->
-      <div id="result" class="hidden bg-card border border-white/5 rounded-2xl p-6">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h2 id="cityName" class="text-xl font-bold"></h2>
-            <p id="description" class="text-white/50 text-sm capitalize"></p>
-          </div>
-          <div id="icon" class="text-5xl"></div>
-        </div>
-        <div class="grid grid-cols-2 gap-4 mt-4">
-          <div class="bg-white/5 rounded-xl p-4 text-center">
-            <p class="text-white/40 text-xs mb-1">Temperature</p>
-            <p id="temp" class="text-2xl font-bold"></p>
-          </div>
-          <div class="bg-white/5 rounded-xl p-4 text-center">
-            <p class="text-white/40 text-xs mb-1">Feels Like</p>
-            <p id="feelsLike" class="text-2xl font-bold"></p>
-          </div>
-          <div class="bg-white/5 rounded-xl p-4 text-center">
-            <p class="text-white/40 text-xs mb-1">Humidity</p>
-            <p id="humidity" class="text-2xl font-bold"></p>
-          </div>
-          <div class="bg-white/5 rounded-xl p-4 text-center">
-            <p class="text-white/40 text-xs mb-1">Wind</p>
-            <p id="wind" class="text-2xl font-bold"></p>
-          </div>
-        </div>
-      </div>
+    <!-- Source footer -->
+    <footer class="mt-12 pt-6 border-t border-gray-100 text-center text-txtMuted text-xs">
+      <p>天氣數據來源 Weather data by <a href="https://open-meteo.com/" target="_blank" class="text-accent hover:text-glow transition underline">Open-Meteo</a> · Free API, no key required</p>
+    </footer>
 
-      <!-- Error -->
-      <div id="error" class="hidden bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400 text-sm text-center"></div>
-
-      <!-- Loading -->
-      <div id="loading" class="hidden text-center text-white/30 text-sm py-8">Loading...</div>
-
-    </div>
   </main>
 
   <script>
-    const weatherIcons = {
-      '01d': '☀️', '01n': '🌙', '02d': '⛅', '02n': '☁️',
-      '03d': '☁️', '03n': '☁️', '04d': '☁️', '04n': '☁️',
-      '09d': '🌧️', '09n': '🌧️', '10d': '🌦️', '10n': '🌧️',
-      '11d': '⛈️', '11n': '⛈️', '13d': '❄️', '13n': '❄️',
-      '50d': '🌫️', '50n': '🌫️'
+    // ─────────────────────────────────────────────
+    //  City Presets
+    // ─────────────────────────────────────────────
+    const PRESETS = {
+      hk: [
+        { name: '香港 / Hong Kong', en: 'Hong Kong', lat: 22.3193, lon: 114.1694, flag: '🇭🇰' },
+        { name: '九龍 / Kowloon', en: 'Kowloon', lat: 22.3278, lon: 114.1823, flag: '🇭🇰' },
+        { name: '尖沙咀 / Tsim Sha Tsui', en: 'TST', lat: 22.2970, lon: 114.1724, flag: '🇭🇰' },
+      ],
+      jp: [
+        { name: '東京 / Tokyo', en: 'Tokyo', lat: 35.6762, lon: 139.6503, flag: '🇯🇵' },
+        { name: '大阪 / Osaka', en: 'Osaka', lat: 34.6937, lon: 135.5023, flag: '🇯🇵' },
+        { name: '京都 / Kyoto', en: 'Kyoto', lat: 35.0116, lon: 135.7681, flag: '🇯🇵' },
+        { name: '福岡 / Fukuoka', en: 'Fukuoka', lat: 33.5904, lon: 130.4017, flag: '🇯🇵' },
+        { name: '札幌 / Sapporo', en: 'Sapporo', lat: 43.0618, lon: 141.3545, flag: '🇯🇵' },
+        { name: '那霸 / Naha', en: 'Naha', lat: 26.2124, lon: 127.6809, flag: '🇯🇵' },
+        { name: '名古屋 / Nagoya', en: 'Nagoya', lat: 35.1815, lon: 136.9066, flag: '🇯🇵' },
+        { name: '廣島 / Hiroshima', en: 'Hiroshima', lat: 34.3853, lon: 132.4553, flag: '🇯🇵' },
+      ],
+      osaka: [
+        { name: '關西機場 / KIX', en: 'Kansai Airport', lat: 34.4320, lon: 135.2304, flag: '✈️' },
+        { name: '神戶 / Kobe', en: 'Kobe', lat: 34.6901, lon: 135.1956, flag: '🐂' },
+        { name: '姬路 / Himeji', en: 'Himeji', lat: 34.8167, lon: 134.6833, flag: '🏯' },
+        { name: '佐用 / Sayo', en: 'Sayo', lat: 34.9833, lon: 134.3500, flag: '🌻' },
+        { name: '鳥取 / Tottori', en: 'Tottori', lat: 35.5039, lon: 134.2378, flag: '🏖️' },
+        { name: '大山 / Daisen', en: 'Daisen', lat: 35.3600, lon: 133.5333, flag: '⛰️' },
+        { name: '真庭 / Maniwa', en: 'Maniwa', lat: 35.0833, lon: 133.7500, flag: '🌿' },
+        { name: '岡山 / Okayama', en: 'Okayama', lat: 34.6618, lon: 133.9350, flag: '🍑' },
+        { name: '大阪 / Osaka', en: 'Osaka', lat: 34.6937, lon: 135.5023, flag: '🏙️' },
+        { name: '堺 / Sakai', en: 'Sakai', lat: 34.5833, lon: 135.4667, flag: '🎢' },
+      ]
     };
 
-    async function getWeather() {
-      const city = document.getElementById('cityInput').value.trim();
-      if (!city) return;
+    // ─────────────────────────────────────────────
+    //  Bilingual WMO weather codes
+    // ─────────────────────────────────────────────
+    const WMO = {
+      0:  { zh: '晴朗',        en: 'Clear',         day: '☀️', night: '🌙' },
+      1:  { zh: '大致晴朗',    en: 'Mainly Clear',   day: '🌤️', night: '🌙' },
+      2:  { zh: '部分多雲',    en: 'Partly Cloudy',  day: '⛅', night: '☁️' },
+      3:  { zh: '多雲',        en: 'Overcast',       day: '☁️', night: '☁️' },
+      45: { zh: '霧',          en: 'Fog',            day: '🌫️', night: '🌫️' },
+      48: { zh: '霧淞',        en: 'Rime Fog',       day: '🌫️', night: '🌫️' },
+      51: { zh: '小毛毛雨',    en: 'Light Drizzle',  day: '🌦️', night: '🌦️' },
+      53: { zh: '毛毛雨',      en: 'Drizzle',        day: '🌦️', night: '🌦️' },
+      55: { zh: '大毛毛雨',    en: 'Heavy Drizzle',  day: '🌧️', night: '🌧️' },
+      61: { zh: '小雨',        en: 'Light Rain',     day: '🌧️', night: '🌧️' },
+      63: { zh: '雨',          en: 'Rain',           day: '🌧️', night: '🌧️' },
+      65: { zh: '大雨',        en: 'Heavy Rain',     day: '🌧️', night: '🌧️' },
+      71: { zh: '小雪',        en: 'Light Snow',     day: '🌨️', night: '🌨️' },
+      73: { zh: '雪',          en: 'Snow',           day: '❄️', night: '❄️' },
+      75: { zh: '大雪',        en: 'Heavy Snow',     day: '❄️', night: '❄️' },
+      80: { zh: '陣雨',        en: 'Rain Showers',   day: '🌧️', night: '🌧️' },
+      81: { zh: '中度陣雨',    en: 'Mod. Showers',   day: '🌧️', night: '🌧️' },
+      82: { zh: '大陣雨',      en: 'Heavy Showers',  day: '⛈️', night: '⛈️' },
+      95: { zh: '雷暴',        en: 'Thunderstorm',   day: '⛈️', night: '⛈️' },
+      96: { zh: '雷暴+冰雹',   en: 'T-Storm + Hail', day: '⛈️', night: '⛈️' },
+      99: { zh: '強雷暴',      en: 'Severe T-Storm', day: '⛈️', night: '⛈️' },
+    };
 
-      document.getElementById('result').classList.add('hidden');
-      document.getElementById('error').classList.add('hidden');
-      document.getElementById('loading').classList.remove('hidden');
+    function wmoInfo(code, isDay) {
+      const w = WMO[code] || { zh: '未知', en: 'Unknown', day: '🌡️', night: '🌡️' };
+      return { zh: w.zh, en: w.en, icon: isDay ? w.day : w.night };
+    }
+
+    // ─────────────────────────────────────────────
+    //  Day-of-week bilingual
+    // ─────────────────────────────────────────────
+    const DAY_ZH = ['日','一','二','三','四','五','六'];
+    const DAY_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    function dayLabel(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      const dow = d.getDay();
+      return { zh: `週${DAY_ZH[dow]}`, en: DAY_EN[dow] };
+    }
+
+    // ─────────────────────────────────────────────
+    //  Fetch weather + 7-day forecast
+    // ─────────────────────────────────────────────
+    async function fetchCityWeather(city) {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}`
+        + `&current_weather=true`
+        + `&hourly=relative_humidity_2m,apparent_temperature`
+        + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max`
+        + `&timezone=auto&forecast_days=7`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // Current
+      const cw = data.current_weather;
+      const now = new Date(cw.time).getHours();
+      const humidityArr = data.hourly.relative_humidity_2m;
+      const feelsArr = data.hourly.apparent_temperature;
+      const humidity = humidityArr[now] ?? humidityArr[humidityArr.length - 1];
+      const feelsLike = Math.round(feelsArr[now] ?? feelsArr[feelsArr.length - 1]);
+      const wi = wmoInfo(cw.weathercode, cw.is_day);
+
+      // Daily forecast — show all 7 days
+      const daily = data.daily;
+      const forecast = [];
+      for (let i = 0; i < 7; i++) {
+        const code = daily.weather_code[i];
+        const fwi = wmoInfo(code, true); // use day icon for forecast
+        const dl = dayLabel(daily.time[i]);
+        forecast.push({
+          dayZh: dl.zh,
+          dayEn: dl.en,
+          icon: fwi.icon,
+          zh: fwi.zh,
+          en: fwi.en,
+          hi: Math.round(daily.temperature_2m_max[i]),
+          lo: Math.round(daily.temperature_2m_min[i]),
+          pop: daily.precipitation_probability_max[i],
+        });
+      }
+
+      return {
+        name: city.name,
+        flag: city.flag,
+        temp: Math.round(cw.temperature),
+        feelsLike,
+        humidity,
+        wind: Math.round(cw.windspeed),
+        icon: wi.icon,
+        descZh: wi.zh,
+        descEn: wi.en,
+        isDay: !!cw.is_day,
+        forecast,
+      };
+    }
+
+    // ─────────────────────────────────────────────
+    //  Skeleton card
+    // ─────────────────────────────────────────────
+    function skeletonCard() {
+      return `
+        <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm skeleton">
+          <div class="flex items-center justify-between mb-3">
+            <div class="h-4 w-32 bg-gray-100 rounded"></div>
+            <div class="h-8 w-8 bg-gray-100 rounded-full"></div>
+          </div>
+          <div class="h-10 w-20 bg-gray-100 rounded mb-3"></div>
+          <div class="h-3 w-40 bg-gray-100 rounded mb-4"></div>
+          <div class="flex gap-4 mb-4">
+            <div class="h-3 w-16 bg-gray-100 rounded"></div>
+            <div class="h-3 w-16 bg-gray-100 rounded"></div>
+          </div>
+          <div class="border-t border-gray-100 pt-4 flex gap-3">
+            ${Array(7).fill('<div class="flex-1 text-center"><div class="h-3 w-8 mx-auto bg-gray-100 rounded mb-2"></div><div class="h-5 w-5 mx-auto bg-gray-100 rounded-full mb-2"></div><div class="h-3 w-10 mx-auto bg-gray-100 rounded"></div></div>').join('')}
+          </div>
+        </div>`;
+    }
+
+    // ─────────────────────────────────────────────
+    //  Weather card
+    // ─────────────────────────────────────────────
+    function weatherCard(w) {
+      const bgClass = w.isDay
+        ? 'bg-gradient-to-br from-white to-blue-50'
+        : 'bg-gradient-to-br from-white to-indigo-50';
+
+      // Forecast row
+      const fcRows = w.forecast.map(f => `
+        <div class="flex-1 text-center min-w-0">
+          <p class="text-[10px] text-txtDim leading-tight">${f.dayZh}</p>
+          <p class="text-[9px] text-txtMuted leading-tight mb-1">${f.dayEn}</p>
+          <p class="text-lg mb-0.5">${f.icon}</p>
+          <p class="text-[11px] font-semibold text-txt">${f.hi}°<span class="text-txtMuted font-normal">/${f.lo}°</span></p>
+          <p class="text-[9px] text-blue-500/70">${f.pop}%</p>
+        </div>`).join('');
+
+      return `
+        <div class="card-hover ${bgClass} border border-gray-100 rounded-2xl p-5 shadow-sm fade-in">
+          <!-- Current -->
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-semibold text-sm text-txt">
+              <span class="mr-1.5">${w.flag}</span>${w.name}
+            </h3>
+            <span class="text-3xl">${w.icon}</span>
+          </div>
+          <div class="text-4xl font-extrabold mb-1 text-txt">${w.temp}°</div>
+          <p class="text-txtDim text-xs mb-3">${w.descZh} ${w.descEn} · 體感 feels ${w.feelsLike}°</p>
+          <div class="flex gap-4 text-xs text-txtMuted mb-3">
+            <span>💧 ${w.humidity}% 濕度</span>
+            <span>💨 ${w.wind} km/h 風速</span>
+          </div>
+
+          <!-- Forecast -->
+          <div class="border-t border-gray-100 pt-3">
+            <p class="text-[10px] text-txtMuted mb-2 uppercase tracking-wider">7-Day 預報 Forecast · <a href="https://open-meteo.com/" target="_blank" class="hover:text-accent transition">數據來源 Source: Open-Meteo</a></p>
+            <div class="flex gap-1">
+              ${fcRows}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ─────────────────────────────────────────────
+    //  Render a section
+    // ─────────────────────────────────────────────
+    async function renderSection(cities, gridId) {
+      const grid = document.getElementById(gridId);
+      grid.innerHTML = cities.map(() => skeletonCard()).join('');
+      const results = await Promise.allSettled(cities.map(c => fetchCityWeather(c)));
+      grid.innerHTML = results.map((r, i) => {
+        if (r.status === 'fulfilled') return weatherCard(r.value);
+        return `
+          <div class="bg-red-50 border border-red-200 rounded-2xl p-5">
+            <p class="text-txtDim text-sm font-medium">${cities[i].flag} ${cities[i].name}</p>
+            <p class="text-red-500 text-xs mt-1">⚠️ 載入失敗 Failed to load</p>
+          </div>`;
+      }).join('');
+    }
+
+    // ─────────────────────────────────────────────
+    //  Search
+    // ─────────────────────────────────────────────
+    async function searchWeather() {
+      const query = document.getElementById('cityInput').value.trim();
+      if (!query) return;
+      const resEl = document.getElementById('searchResult');
+      const errEl = document.getElementById('searchError');
+      resEl.classList.add('hidden');
+      errEl.classList.add('hidden');
 
       try {
-        // Using Open-Meteo (free, no API key needed)
-        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`);
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=zh`);
         const geoData = await geoRes.json();
-
-        if (!geoData.results || geoData.results.length === 0) {
-          throw new Error('City not found');
-        }
-
-        const { latitude, longitude, name, country } = geoData.results[0];
-        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=relativehumidity_2m&timezone=auto`);
-        const weatherData = await weatherRes.json();
-
-        const current = weatherData.current_weather;
-        const humidityIdx = weatherData.hourly.time.findIndex(t => t >= current.time);
-
-        document.getElementById('cityName').textContent = `${name}, ${country}`;
-        document.getElementById('temp').textContent = `${current.temperature}°C`;
-        document.getElementById('feelsLike').textContent = `${current.temperature}°C`;
-        document.getElementById('humidity').textContent = `${weatherData.hourly.relativehumidity_2m[humidityIdx]}%`;
-        document.getElementById('wind').textContent = `${current.windspeed} km/h`;
-
-        // Weather code to description
-        const codes = { 0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
-          45: 'Foggy', 48: 'Rime fog', 51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle',
-          61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 71: 'Light snow', 73: 'Snow',
-          75: 'Heavy snow', 95: 'Thunderstorm', 96: 'Thunderstorm + hail' };
-        document.getElementById('description').textContent = codes[current.weathercode] || 'Unknown';
-        document.getElementById('icon').textContent = current.is_day ? '☀️' : '🌙';
-
-        document.getElementById('result').classList.remove('hidden');
+        if (!geoData.results || geoData.results.length === 0) throw new Error('找不到城市 City not found');
+        const g = geoData.results[0];
+        const cc = g.country_code ? String.fromCodePoint(...g.country_code.toUpperCase().split('').map(c => 0x1F1E6 + c.charCodeAt(0) - 65)) : '🌍';
+        const w = await fetchCityWeather({
+          name: `${g.name}${g.country ? ' / ' + g.country : ''}`,
+          lat: g.latitude, lon: g.longitude, flag: cc
+        });
+        resEl.innerHTML = weatherCard(w);
+        resEl.classList.remove('hidden');
       } catch (e) {
-        document.getElementById('error').textContent = `❌ ${e.message}`;
-        document.getElementById('error').classList.remove('hidden');
-      } finally {
-        document.getElementById('loading').classList.add('hidden');
+        errEl.textContent = `❌ ${e.message}`;
+        errEl.classList.remove('hidden');
       }
     }
+
+    // ─────────────────────────────────────────────
+    //  Init
+    // ─────────────────────────────────────────────
+    (async function init() {
+      const t0 = performance.now();
+      await Promise.all([
+        renderSection(PRESETS.hk, 'hk-grid'),
+        renderSection(PRESETS.jp, 'jp-grid'),
+        renderSection(PRESETS.osaka, 'osaka-grid'),
+      ]);
+      const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+      document.getElementById('updateTime').textContent =
+        `更新 Updated ${new Date().toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit' })} · ${elapsed}s`;
+    })();
   </script>
 
 </body>

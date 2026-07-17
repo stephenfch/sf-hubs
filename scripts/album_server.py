@@ -129,10 +129,6 @@ def _load_meta(trip_dir: Path) -> dict:
             return json.loads(meta_file.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             pass
-    # Auto-classify in background
-    filepath = str(trip_dir / key)
-    threading.Thread(target=_classify_async, args=(filepath, trip_id_safe, key), daemon=True).start()
-
     return {}
 
 def _save_meta(trip_dir: Path, meta: dict) -> None:
