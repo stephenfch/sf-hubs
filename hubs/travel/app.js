@@ -361,6 +361,7 @@
       { id: "risks", label: "⚠️ 風險提示" },
       { id: "tbc", label: "📌 待決事項" },
       { id: "extras", label: "💡 加推 / 備選" },
+      { id: "parking", label: "🅿️ 泊車" },
       { id: "practical", label: "📱 實用資訊" },
     ];
     const panes = {};
@@ -579,6 +580,87 @@
       panes.extras.appendChild(wrap);
     }
 
+
+    // ---- 🅿️ 泊車（獨立 tab）----------------------------------------------
+    (function renderParking() {
+      const pk = trip.parking || [];
+      if (!pk.length) {
+        panes.parking.appendChild(
+          el("div", "text-center text-sumi/40 text-sm py-16",
+            "🅿️ 暫時冇泊車資訊～")
+        );
+        return;
+      }
+      const wrap = el("div", "overflow-x-auto");
+      const table = document.createElement("table");
+      table.className = "w-full text-sm border-collapse";
+      // 表頭
+      const thead = document.createElement("thead");
+      thead.innerHTML = `<tr class="border-b border-sakura-200/40 text-sumi/50 text-xs">
+        <th class="text-left py-2 px-2">酒店</th>
+        <th class="text-left py-2 px-2">Day</th>
+        <th class="text-left py-2 px-2">泊車場</th>
+        <th class="text-center py-2 px-2">🚗 車高</th>
+        <th class="text-center py-2 px-2">💰 料金</th>
+        <th class="text-center py-2 px-2">📍 距離</th>
+        <th class="text-left py-2 px-2">📝 備註</th>
+      </tr>`;
+      table.appendChild(thead);
+      const tbody = document.createElement("tbody");
+      pk.forEach((p, idx) => {
+        function heightClass(h) {
+          if (!h || h === "—") return "text-sumi/40";
+          const v = parseFloat(h);
+          if (isNaN(v)) {
+            if (h.includes("無制限")) return "text-matcha-500 font-bold";
+            if (h.includes("確認")) return "text-aka/60";
+            return "text-sumi/40";
+          }
+          if (v <= 2.0) return "text-aka font-bold";
+          if (v <= 2.3) return "text-amber-500 font-bold";
+          return "text-matcha-500 font-bold";
+        }
+        // 主推場
+        const mainRow = document.createElement("tr");
+        mainRow.className = `border-b border-sakura-200/20 ${idx % 2 === 0 ? "bg-white/50" : "bg-sakura-50/20"}`;
+        mainRow.innerHTML = `
+          <td class="py-2 px-2 font-medium text-sumi/70 text-xs">${esc(p.hotel)}</td>
+          <td class="py-2 px-2 text-sumi/50 text-xs">${esc(p.day)}</td>
+          <td class="py-2 px-2 text-xs">⭐ ${esc(p.parking)}</td>
+          <td class="py-2 px-2 text-center ${heightClass(p.height)} text-xs">${esc(p.height)}</td>
+          <td class="py-2 px-2 text-center text-sumi/60 text-xs">${esc(p.fee)}</td>
+          <td class="py-2 px-2 text-center text-sumi/50 text-xs">${esc(p.distance)}</td>
+          <td class="py-2 px-2 text-sumi/40 text-xs">${esc(p.notes || "")}</td>
+        `;
+        tbody.appendChild(mainRow);
+        // 備用場
+        if (p.alt) {
+          const altRow = document.createElement("tr");
+          altRow.className = `border-b border-sakura-200/10 ${idx % 2 === 0 ? "bg-white/30" : "bg-sakura-50/10"}`;
+          altRow.innerHTML = `
+            <td class="py-1 px-2 text-sumi/30 text-[10px]" colspan="2"></td>
+            <td class="py-1 px-2 text-[10px]">🔄 ${esc(p.alt)}</td>
+            <td class="py-1 px-2 text-center ${heightClass(p.altHeight)} text-[10px]">${esc(p.altHeight || "—")}</td>
+            <td class="py-1 px-2 text-center text-sumi/50 text-[10px]">${esc(p.altFee || "—")}</td>
+            <td class="py-1 px-2 text-center text-sumi/40 text-[10px]">${esc(p.altDistance || "—")}</td>
+            <td class="py-1 px-2 text-sumi/30 text-[10px]">${esc(p.altNotes || "")}</td>
+          `;
+          tbody.appendChild(altRow);
+        }
+      });
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      // 車高 legend
+      const legend = el("div", "mt-3 flex gap-4 text-[10px] text-sumi/40 flex-wrap");
+      legend.innerHTML = `
+        <span><span class="inline-block w-3 h-3 rounded bg-aka mr-1"></span> ≤2.0m（⚠️ 注意）</span>
+        <span><span class="inline-block w-3 h-3 rounded bg-amber-500 mr-1"></span> 2.1-2.3m（留意）</span>
+        <span><span class="inline-block w-3 h-3 rounded bg-matcha-500 mr-1"></span> ≥2.3m / 無制限（✅ 安心）</span>
+        <span><span class="inline-block w-3 h-3 rounded border border-sumi/20 mr-1"></span> 未確認（❓ 要問）</span>
+      `;
+      wrap.appendChild(legend);
+      panes.parking.appendChild(wrap);
+    })();
     // ---- 實用資訊（📱 獨立 tab）-------------------------------------------
     (function renderPractical() {
       const pi = trip.practicalInfo || [];
@@ -629,3 +711,6 @@
         panes.map.appendChild(note);
       }
     })();
+  }
+
+})();
