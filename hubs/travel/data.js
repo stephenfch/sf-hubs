@@ -108,7 +108,7 @@ window.TRAVEL_DATA = {
             { time: "15:10", icon: "🛬", title: "到達 KIX 關西機場", desc: "入境 + 領行李，最快 16:00 出閘", url: "https://www.kansai-airport.or.jp/", drive: "4.5hr（飛航）" },
             { time: "17:30", icon: "🍽️", title: "八坐和 (Yazawa) 阪急三宮店", desc: "神戶牛燒肉 · 套餐 ¥4,400 起 · 需提前最少一日網上預訂！", url: "https://www.koubegyuu.com/yazawa-hankyusannomiya", drive: "1.5hr",
               info: { hours: "晚17:00–20:30（最終時段）", mapcode: "", intro: "八坐和（Yazawa）阪急三宮店 · 落機第一餐獎勵 🥩 📍 阪急三宮站徒步1分 🕐 17:00–20:30（預約時段每15min一檔） 🅿️ 三宮站周邊收費泊車場 🎯 套餐需提前最少一日網上預訂 + 信用卡預授權（hold位唔扣錢） 🔥 人氣No.1「祥福」10品特價¥4,400／CP值「幸福」10品¥5,280／「八坐和」11品¥6,380／豪華「響」90g牛排¥8,800／獲獎神戶牛「宴」9品¥11,000 ⚠️ 現場散叫貴好多（80g神戶牛單品¥3,190），建議預訂套餐！+5%服務費 📞 取消/更改前2日網上處理，前1日/當日打078-331-5029", photoSpot: "燒肉/鐵板燒上枱影特寫", photos: [] } },
-            { time: "", icon: "🏨", title: "住：姬路大和 ROYNET 酒店", desc: "Himeji Daiwa Roynet Hotel", url: "", drive: "1hr" },
+            { time: "", icon: "🏨", title: "住：姬路大和 ROYNET 酒店", desc: "Himeji Daiwa Roynet Hotel 🅿️ 提携場東駅前町／2.1m✅ ¥1,200/泊（14:00-翌11:00・徒步1分）", url: "", drive: "1hr" },
           ],
         },
         {
@@ -127,7 +127,7 @@ window.TRAVEL_DATA = {
               info: { hours: "8:30–17:00（東徳久）", mapcode: "", intro: "佐用町南光ひまわり畑，7-8 月向日葵季。東徳久地區 7/18-7/25 最穩陣", photoSpot: "企入花海影打卡相", photos: [] } },
             { time: "", icon: "🛒", title: "Daiso / 超市", desc: "補給日用品", url: "https://maps.app.goo.gl/H73NKakvsUVfdpZB9", drive: "1hr",
               info: { hours: "10:00–20:00", mapcode: "", intro: "Tenmaya Happies Koge（鳥取八頭町），補給尿片/濕紙巾/零食", photoSpot: "", photos: [] } },
-            { time: "", icon: "🏨", title: "住：鳥取 Green Rich Hotel", desc: "グリーンリッチホテル鳥取駅前", url: "", drive: "30min" },
+            { time: "", icon: "🏨", title: "住：鳥取 Green Rich Hotel", desc: "グリーンリッチホテル鳥取駅前 🅿️ 酒店平面14台¥1,000/泊（先着，1.85m要確認）／備用：Dパーキング永楽温泉町¥800/24h✅徒步2分", url: "", drive: "30min" },
           ],
         },
         {
@@ -140,7 +140,7 @@ window.TRAVEL_DATA = {
           items: [
             { time: "", icon: "🧒", title: "鳥取沙丘兒童之國", desc: "アイエム電子鳥取砂丘こどもの国", url: "https://kodomonokuni.tottori.jp/",
               info: { hours: "9:00–17:00（入園 16:30 止）· 第2水曜休", mapcode: "125 702 668", intro: "免費入場嘅大型兒童王國，動物區 + 遊樂設施 + 展望台，10 人家庭好去處", photoSpot: "動物區影羊駝 / 展望台影鳥取市", photos: [] } },
-            { time: "", icon: "🏨", title: "住：鳥取 Green Rich Hotel", desc: "", url: "", drive: "15min" },
+            { time: "", icon: "🏨", title: "住：鳥取 Green Rich Hotel", desc: "🅿️ 同上（Dパーキング永楽温泉町¥800/24h✅徒步2分）", url: "", drive: "15min" },
           ],
         },
         {
@@ -155,7 +155,7 @@ window.TRAVEL_DATA = {
               info: { hours: "24h（砂丘自由進入）", mapcode: "125 733 831*70", intro: "日本最大砂丘，騎駱駝 / 滑沙 / 日落超靚。35°C 酷暑記得帶水 + 防曬", photoSpot: "日落時影沙丘輪廓 + 駱駝剪影", photos: [] } },
             { time: "", icon: "🎨", title: "砂の美術館（加推）", desc: "砂丘旁室內冷氣，35°C 酷暑最佳中途站", url: "https://www.sakyu-vc.com/jp/sandmuseum/", drive: "5min（徒步）",
               info: { hours: "9:00–18:00（最終入館 17:30）", mapcode: "125 733 357*74", intro: "世界唯一砂像美術館，2026 主題「砂で世界旅行・スペイン／ガウディ」。冷氣室內，酷暑中途站首選", photoSpot: "砂像特寫 + 館外沙丘背景", photos: [] } },
-            { time: "", icon: "🏨", title: "住：鳥取 Green Rich Hotel", desc: "", url: "", drive: "15min" },
+            { time: "", icon: "🏨", title: "住：鳥取 Green Rich Hotel", desc: "🅿️ 同上（Dパーキング永楽温泉町¥800/24h✅徒步2分）", url: "", drive: "15min" },
           ],
         },
         {
@@ -172,7 +172,7 @@ window.TRAVEL_DATA = {
               info: { hours: "9:00–17:00（週二休）", mapcode: "252 335 299*37", intro: "日本最大級花卉公園，巨大溫室 + 季節花海 + 噴泉秀。室內外皆有，落雨/酷暑都啱", photoSpot: "噴泉廣場 + 溫室大樹影全家福", photos: [] } },
             { time: "", icon: "🍽️", title: "Dinner @", desc: "未定", url: "", tbc: true, drive: "20min",
               info: { hours: "", mapcode: "", intro: "大山美居酒店晚餐或附近食", photoSpot: "", photos: [] } },
-            { time: "", icon: "🏨", title: "住：鳥取大山美居溫泉度假酒店", desc: "溫泉親子友善", url: "", drive: "15min" },
+            { time: "", icon: "🏨", title: "住：鳥取大山美居溫泉度假酒店", desc: "溫泉親子友善 🅿️ 酒店免費平面停車場306台✅ 車高無制限", url: "", drive: "15min" },
           ],
         },
         {
@@ -190,7 +190,7 @@ window.TRAVEL_DATA = {
               info: { hours: "受付 9:00–11:00 / 13:00–16:00", mapcode: "", intro: "岡山白桃名物，夏季桃狩り放題。TOMOMIEN 要網上/電話預約，農地冇 navi 搜唔到，跟官網 Google Map", photoSpot: "拎住桃影得意相", photos: [] } },
             { time: "", icon: "🛑", title: "中途休息站：Seria / 超市", desc: "", url: "", drive: "30min",
               info: { hours: "", mapcode: "", intro: "100 円店 Seria 補給小物", photoSpot: "", photos: [] } },
-            { time: "", icon: "🏨", title: "住：姬路大和 ROYNET 酒店", desc: "✅ 已確定住姬路", url: "", drive: "1.5hr" },
+            { time: "", icon: "🏨", title: "住：姬路大和 ROYNET 酒店", desc: "✅ 已確定住姬路 🅿️ 提携場東駅前町／2.1m✅ ¥1,200/泊（14:00-翌11:00・徒步1分）", url: "", drive: "1.5hr" },
           ],
         },
         {
@@ -206,7 +206,7 @@ window.TRAVEL_DATA = {
               info: { hours: "營業時間随季節", mapcode: "", intro: "生駒山上遊園地嘅空中自轉單軌，踩單車 360° 睇大阪平野絕景", photoSpot: "車廂內影大阪全景", photos: [] } },
             { time: "備用", icon: "🅲️", title: "向日葵公園（備用）", desc: "時間鬆動先去", url: "https://maps.app.goo.gl/2wizmnHLECd81YsH8", drive: "30min",
               info: { hours: "", mapcode: "", intro: "岡山向日葵公園（ひまわりの丘公園等），7-8 月花季", photoSpot: "花海打卡", photos: [] } },
-            { time: "", icon: "🏨", title: "住：大阪北濱布萊頓酒店 (Hotel Brighton City Osaka Kitahama)", desc: "Check-in 15:00 · 🅿️ 北濱站附近平面泊車場（Biante 1.85m 入到）", url: "https://www.trip.com/w/HkHrHLP6XV2", drive: "1hr",
+            { time: "", icon: "🏨", title: "住：大阪北濱布萊頓酒店 (Hotel Brighton City Osaka Kitahama)", desc: "Check-in 15:00 · 🅿️ リパーク北浜1丁目／2.0m✅ ¥1,000-1,400/24h徒步3分", url: "https://www.trip.com/w/HkHrHLP6XV2", drive: "1hr",
               info: { hours: "Check-in 15:00 / Check-out 11:00", intro: "🏨 大阪北濱布萊頓酒店 ⭐ 9.2/10（Trip.com）📍 北長狭通1丁目1 — 北濱站5號口步行1分鐘 🚇 🏪 樓下7-11 🅿️ Biante(1.85m)要揀平面位／akippa 🛁 有浴缸 🧺 洗衣機+微波爐 🚰 大堂免費瓶裝水 🍳 早餐自助06:30–10:00（成人¥2,200/6歲以下免費/7-12歲¥1,350）" } },
           ],
         },
@@ -226,7 +226,7 @@ window.TRAVEL_DATA = {
               info: { hours: "陸渡御 15:30→船渡御 18:00", mapcode: "", intro: "日本三大祭之一，大阪天滿宮 🗓️ 本宮13:30→陸渡御15:30→船渡御18:00→奉納花火19:30–20:50 📍會場大阪天満宮（南森町站/大阪天満宮站）⚠️ 全日唔揸車，酒店泊車後搭地鐵", photoSpot: "河岸影船渡御 + 夜祭燈火", photos: [] } },
             { time: "17:30", icon: "🎆", title: "天神祭奉納花火（B会場指定席）", desc: "17:30 開場／18:00 開演 · B会場指定席 3列1〜7番（已買 7 張飛）", url: "https://www.tenjinmatsuri.com/", drive: "步行約10-15min",
               info: { hours: "17:30 開場／18:00 開演 · 花火 19:30–20:50", mapcode: "", intro: "天神祭奉納花火 🎫 B会場指定席 3列1〜7番（已購 7 張飛）🕐 開場 17:30／開演 18:00／花火 19:30–20:50 📍 桜之宮公園／大川沿岸 ✅ 已喺 Family Mart 拎飛", photoSpot: "從指定席影花火打上大阪天空", photos: [] } },
-            { time: "", icon: "🏨", title: "住：大阪北濱布萊頓酒店 (Hotel Brighton City Osaka Kitahama)", desc: "Check-in 15:00 · 🅿️ 北濱站附近平面泊車場（Biante 1.85m 入到）", url: "https://www.trip.com/w/HkHrHLP6XV2", drive: "搭車約15min",
+            { time: "", icon: "🏨", title: "住：大阪北濱布萊頓酒店 (Hotel Brighton City Osaka Kitahama)", desc: "Check-in 15:00 · 🅿️ リパーク北浜1丁目／2.0m✅ ¥1,000-1,400/24h徒步3分", url: "https://www.trip.com/w/HkHrHLP6XV2", drive: "搭車約15min",
               info: { hours: "Check-in 15:00 / Check-out 11:00", intro: "🏨 大阪北濱布萊頓酒店 ⭐ 9.2/10（Trip.com）📍 北長狭通1丁目1 — 北濱站5號口步行1分鐘 🚇 🏪 樓下7-11 🅿️ Biante(1.85m)要揀平面位／akippa 🛁 有浴缸 🧺 洗衣機+微波爐 🚰 大堂免費瓶裝水 🍳 早餐自助06:30–10:00（成人¥2,200/6歲以下免費/7-12歲¥1,350）" } },
           ],
         },
