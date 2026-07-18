@@ -779,27 +779,34 @@
     }
 
     // ═════════════════════════════════════════════
-    // Phase 2.3: Skeleton loading grid
+    // Phase 2.3: Skeleton loading grid (with debounce)
     // ═════════════════════════════════════════════
+    let skeletonTimer = null;
+
     function showSkeleton() {
-      const grid = $("#skeleton-grid");
-      grid.classList.remove("hidden");
-      grid.innerHTML = "";
-      // Generate 8 skeleton cards
-      for (let i = 0; i < 8; i++) {
-        const card = document.createElement("div");
-        card.className = "skeleton-card";
-        card.innerHTML = `
-          <div class="skeleton-img"></div>
-          <div class="skeleton-caption"></div>
-        `;
-        grid.appendChild(card);
-      }
-      $("#photo-grid").classList.add("hidden");
-      $("#photo-empty").classList.add("hidden");
+      // Debounce: only show skeleton if fetch takes > 250ms
+      // Avoids flicker when API responds quickly (< 250ms)
+      skeletonTimer = setTimeout(() => {
+        const grid = $("#skeleton-grid");
+        grid.classList.remove("hidden");
+        grid.innerHTML = "";
+        for (let i = 0; i < 8; i++) {
+          const card = document.createElement("div");
+          card.className = "skeleton-card";
+          card.innerHTML = `
+            <div class="skeleton-img"></div>
+            <div class="skeleton-caption"></div>
+          `;
+          grid.appendChild(card);
+        }
+        $("#photo-grid").classList.add("hidden");
+        $("#photo-empty").classList.add("hidden");
+      }, 250);
     }
 
     function hideSkeleton() {
+      clearTimeout(skeletonTimer);
+      skeletonTimer = null;
       $("#skeleton-grid").classList.add("hidden");
       $("#photo-grid").classList.remove("hidden");
     }
