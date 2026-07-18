@@ -1721,12 +1721,16 @@
           if (v <= 2.3) return "text-amber-500 font-bold";
           return "text-matcha-500 font-bold";
         }
+        function parkingLink(name, url) {
+          if (!url) return esc(name);
+          return `<a href="${esc(url)}" target="_blank" rel="noopener" class="text-aka/70 hover:text-aka hover:underline">${esc(name)} ↗</a>`;
+        }
         const mainRow = document.createElement("tr");
         mainRow.className = `border-b border-sakura-200/20 ${idx % 2 === 0 ? "bg-white/50" : "bg-sakura-50/20"}`;
         mainRow.innerHTML = `
           <td class="py-2 px-2 font-medium text-sumi/70 text-xs">${esc(p.hotel)}</td>
           <td class="py-2 px-2 text-sumi/50 text-xs">${esc(p.day)}</td>
-          <td class="py-2 px-2 text-xs">⭐ ${esc(p.parking)}</td>
+          <td class="py-2 px-2 text-xs">⭐ ${parkingLink(p.parking, p.mapUrl)}</td>
           <td class="py-2 px-2 text-center ${heightClass(p.height)} text-xs">${esc(p.height)}</td>
           <td class="py-2 px-2 text-center text-sumi/60 text-xs">${esc(p.fee)}</td>
           <td class="py-2 px-2 text-center text-sumi/50 text-xs">${esc(p.distance)}</td>
@@ -1738,7 +1742,7 @@
           altRow.className = `border-b border-sakura-200/10 ${idx % 2 === 0 ? "bg-white/30" : "bg-sakura-50/10"}`;
           altRow.innerHTML = `
             <td class="py-1 px-2 text-sumi/30 text-[10px]" colspan="2"></td>
-            <td class="py-1 px-2 text-[10px]">🔄 ${esc(p.alt)}</td>
+            <td class="py-1 px-2 text-[10px]">🔄 ${parkingLink(p.alt, p.altMapUrl)}</td>
             <td class="py-1 px-2 text-center ${heightClass(p.altHeight)} text-[10px]">${esc(p.altHeight || "—")}</td>
             <td class="py-1 px-2 text-center text-sumi/50 text-[10px]">${esc(p.altFee || "—")}</td>
             <td class="py-1 px-2 text-center text-sumi/40 text-[10px]">${esc(p.altDistance || "—")}</td>

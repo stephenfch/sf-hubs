@@ -97,17 +97,17 @@ window.TRAVEL_DATA = {
       parking: [
         { hotel: "姬路大和 ROYNET 酒店", day: "1, 6",
           parking: "提携場 東駅前町", height: "2.1m", fee: "¥1,200/泊",
-          distance: "徒歩1分", notes: "14:00-翌11:00" },
+          distance: "徒歩1分", notes: "14:00-翌11:00", mapUrl: "https://maps.app.goo.gl/5MqSNgGXheQHszuY8" },
         { hotel: "鳥取 Green Rich Hotel 駅前", day: "2-4",
           parking: "酒店平面駐車場14台", height: "1.85m確認", fee: "¥1,000/泊",
-          distance: "—", notes: "先著，去滿了就去備用場",
-          alt: "Dパーキング 永楽温泉町", altHeight: "—", altFee: "¥800/24h", altDistance: "徒歩2分" },
+          distance: "—", notes: "先著，去滿了就去備用場", mapUrl: "https://maps.app.goo.gl/UDYPtMWWYSHMZGKM6",
+          alt: "Dパーキング 永楽温泉町", altHeight: "—", altFee: "¥800/24h", altDistance: "徒歩2分", altMapUrl: "https://maps.app.goo.gl/36hbRzckEYQfpdkE9" },
         { hotel: "大山美居溫泉度假酒店", day: "5",
           parking: "酒店免費平面停車場306台", height: "無制限", fee: "免費",
-          distance: "—", notes: "" },
+          distance: "—", notes: "", mapUrl: "https://maps.app.goo.gl/Zqvv3uHKqsMsMWeC8" },
         { hotel: "大阪心齋橋橋樑酒店", day: "7-8",
           parking: "リパーク 北浜1丁目", height: "2.0m", fee: "¥1,000-1,400/24h",
-          distance: "徒歩3分", notes: "Check-in 15:00後泊" },
+          distance: "徒歩3分", notes: "Check-in 15:00後泊", mapUrl: "https://maps.app.goo.gl/eL3LbYLzUJzHFGLi7" },
       ],
 
       days: [
