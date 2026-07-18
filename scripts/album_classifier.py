@@ -50,6 +50,11 @@ def extract_exif(filepath: str) -> dict:
         exif_data = img._getexif()
         if not exif_data:
             result["error"] = "No EXIF data"
+            # Fallback: use file modification time as datetime
+            mtime = os.path.getmtime(filepath)
+            dt = datetime.fromtimestamp(mtime)
+            result["datetime"] = dt.strftime("%Y:%m:%d %H:%M:%S")
+            result["fallback"] = "mtime"
             return result
 
         gps_info = {}
@@ -75,9 +80,24 @@ def extract_exif(filepath: str) -> dict:
                 gps_info["GPSLongitude"], gps_info["GPSLongitudeRef"]
             )
 
+        # If no datetime found, fallback to mtime
+        if not result["datetime"]:
+            mtime = os.path.getmtime(filepath)
+            dt = datetime.fromtimestamp(mtime)
+            result["datetime"] = dt.strftime("%Y:%m:%d %H:%M:%S")
+            result["fallback"] = "mtime"
+
         return result
     except Exception as e:
         result["error"] = str(e)
+        # Fallback: mtime even on open failure
+        try:
+            mtime = os.path.getmtime(filepath)
+            dt = datetime.fromtimestamp(mtime)
+            result["datetime"] = dt.strftime("%Y:%m:%d %H:%M:%S")
+            result["fallback"] = "mtime"
+        except Exception:
+            pass
         return result
 
 
@@ -159,11 +179,16 @@ def match_gps(lat: float, lon: float, itinerary: dict, top_n: int = 5) -> list[d
 
 # ── Collect spots for a day ───────────────────────────────────────────────────
 def _collect_day_spots(day_info: dict) -> list[str]:
-    """Collect spot names from a day's items."""
+    """Collect spot names from a day's items or spots field."""
     spots = []
+    # Try spots[] first (our itinerary format)
+    for s in day_info.get("spots", []):
+        title = " ".join(str(s).split()).strip()
+        if title:
+            spots.append(title)
+    # Fallback: items[].title (alternate format)
     for item in day_info.get("items", []):
         title = item.get("title", "")
-        # Clean up: remove emoji prefix, trailing junk
         title = " ".join(title.split()).strip()
         if title:
             spots.append(title)
@@ -286,6 +311,13 @@ def classify_photo(
         if candidate_days:
             result["day"] = candidate_days[0]  # Best guess: first match
             result["confidence"] = 0.6
+        elif exif.get("fallback") == "mtime":
+            # mtime fallback is weak — treat as tentative date match
+            candidate_days = match_date(exif["datetime"], itinerary)
+            if candidate_days:
+                result["day"] = candidate_days[0]
+                result["confidence"] = 0.35  # lower confidence for mtime
+                result["method"] = "mtime"
 
     # 3. Match GPS
     nearby = []
@@ -295,9 +327,9 @@ def classify_photo(
             result["spot"] = nearby[0]["name"]
             result["confidence"] = 0.4
 
-    # 4. LLM classification (if available)
-    # Always try LLM — even without EXIF, use blind prompt with full itinerary context
-    if llm_call:
+    # 4. LLM classification — only if we have SOME signal
+    has_signal = bool(candidate_days) or bool(nearby) or bool(exif.get("camera"))
+    if llm_call and has_signal:
         try:
             prompt = build_classification_prompt(exif, candidate_days, nearby, itinerary)
             llm_response = llm_call(prompt)
@@ -311,6 +343,10 @@ def classify_photo(
             result["method"] = "exif+llm" if (candidate_days or nearby) else "llm-only"
         except Exception as e:
             result["llm_raw"] = f"LLM error: {e}"
+
+    # 5. If no spot identified, mark as unknown
+    if not result.get("spot"):
+        result["spot"] = "unknown"
 
     return result
 

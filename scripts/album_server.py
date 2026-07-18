@@ -146,16 +146,21 @@ def _save_meta(trip_dir: Path, meta: dict) -> None:
     tmp.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     tmp.replace(meta_file)  # atomic on Windows if same volume
 
+def _thumb_key(key: str) -> str:
+    """Derive thumbnail filename: always .jpg regardless of original extension."""
+    return Path(key).stem + ".jpg"
+
 def _generate_thumb(trip_dir: Path, key: str) -> str | None:
-    """Generate a 480px-wide thumbnail. Returns thumb filename or None."""
+    """Generate a 480px-wide JPEG thumbnail. Returns thumb filename or None."""
     if Image is None:
         return None
     src = trip_dir / key
     thumbs_dir = trip_dir / "thumbs"
     thumbs_dir.mkdir(exist_ok=True)
-    thumb_path = thumbs_dir / key
+    tkey = _thumb_key(key)
+    thumb_path = thumbs_dir / tkey
     if thumb_path.exists():
-        return key  # already generated
+        return tkey  # already generated
     try:
         with Image.open(src) as img:
             img = img.convert("RGB")
@@ -164,7 +169,7 @@ def _generate_thumb(trip_dir: Path, key: str) -> str | None:
                 ratio = THUMB_WIDTH / w
                 img = img.resize((THUMB_WIDTH, int(h * ratio)), Image.LANCZOS)
             img.save(thumb_path, "JPEG", quality=82, optimize=True)
-        return key
+        return tkey
     except Exception as e:
         print(f"[WARN] Thumbnail failed for {key}: {e}")
         return None
@@ -246,11 +251,12 @@ def list_photos(trip_id: str):
         if f.suffix.lower() not in ALLOWED_EXTENSIONS:
             continue
         info = meta.get(f.name, {})
-        has_thumb = (trip_dir / "thumbs" / f.name).exists()
+        tkey = _thumb_key(f.name)
+        has_thumb = (trip_dir / "thumbs" / tkey).exists()
         photos.append({
             "key": f.name,
             "url": f"/api/photo/{trip_id}/{f.name}",
-            "thumb_url": f"/api/photo/{trip_id}/thumbs/{f.name}" if has_thumb else f"/api/photo/{trip_id}/{f.name}",
+            "thumb_url": f"/api/photo/{trip_id}/thumbs/{tkey}" if has_thumb else f"/api/photo/{trip_id}/{f.name}",
             "caption": info.get("caption", ""),
             "day": info.get("day", 0),
             "spot": info.get("spot", ""),
@@ -314,7 +320,7 @@ async def upload_photo(
         "ok": True,
         "key": key,
         "url": f"/api/photo/{trip_id_safe}/{key}",
-        "thumb_url": f"/api/photo/{trip_id_safe}/thumbs/{key}" if has_thumb else None,
+        "thumb_url": f"/api/photo/{trip_id_safe}/thumbs/{_thumb_key(key)}" if has_thumb else None,
         "size": len(content),
     }
 
@@ -335,6 +341,13 @@ def get_photo(trip_id: str, key: str):
         raise HTTPException(403, "Access denied")
 
     if not file_path.is_file():
+        # For thumbnail requests, fallback: if key is not .jpg, try _thumb_key()
+        if key.startswith("thumbs/") and not key.lower().endswith(".jpg"):
+            alt_key = key.split("/", 1)[1]
+            alt_tkey = _thumb_key(alt_key)
+            alt_path = (trip_dir / "thumbs" / alt_tkey).resolve()
+            if str(alt_path).startswith(str(photo_root_resolved)) and alt_path.is_file():
+                return FileResponse(alt_path)
         raise HTTPException(404, "Photo not found")
     return FileResponse(file_path)
 
@@ -345,7 +358,8 @@ def soft_delete_photo(trip_id: str, key: str):
     trip_dir = PHOTO_ROOT / _safe_filename(trip_id)
     safe_key = _safe_filename(key)
     photo_path = trip_dir / safe_key
-    thumb_path = trip_dir / "thumbs" / safe_key
+    tkey = _thumb_key(safe_key)
+    thumb_path = trip_dir / "thumbs" / tkey
 
     if not photo_path.exists():
         raise HTTPException(404, "Photo not found")
@@ -402,11 +416,11 @@ def restore_photo(trip_id: str, key: str):
     trash_path.rename(dest_path)
 
     # Restore thumbnail
-    trash_thumb = trash_dir / "thumbs" / safe_key
+    trash_thumb = trash_dir / "thumbs" / _thumb_key(safe_key)
     if trash_thumb.exists():
         thumbs_dir = trip_dir / "thumbs"
         thumbs_dir.mkdir(exist_ok=True)
-        trash_thumb.rename(thumbs_dir / safe_key)
+        trash_thumb.rename(thumbs_dir / _thumb_key(safe_key))
 
     # Restore metadata
     meta = _load_meta(trip_dir)
@@ -458,7 +472,7 @@ def permanent_delete_photo(trip_id: str, key: str):
     safe_key = _safe_filename(key)
     trash_dir = trip_dir / ".trash"
     trash_path = trash_dir / safe_key
-    trash_thumb = trash_dir / "thumbs" / safe_key
+    trash_thumb = trash_dir / "thumbs" / _thumb_key(safe_key)
 
     deleted = []
     if trash_path.exists():
@@ -554,6 +568,48 @@ def classify_all_photos(trip_id: str):
         results.append({"key": photo_path.name, "status": "queued"})
 
     return {"ok": True, "queued": len(results), "photos": results}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Update Photo Metadata (PATCH)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.patch("/api/photo/{trip_id}/{key}")
+def update_photo_meta(trip_id: str, key: str, day: int = Form(0), spot: str = Form(""), caption: str = Form("")):
+    """Update photo metadata: day, spot, caption."""
+    trip_dir = PHOTO_ROOT / _safe_filename(trip_id)
+    safe_key = _safe_filename(key)
+    photo_path = trip_dir / safe_key
+    if not photo_path.exists():
+        raise HTTPException(404, "Photo not found")
+
+    meta = _load_meta(trip_dir)
+    if safe_key not in meta:
+        meta[safe_key] = {}
+
+    if day > 0:
+        meta[safe_key]["day"] = day
+    elif "day" not in meta[safe_key]:
+        meta[safe_key]["day"] = 0
+
+    if spot:
+        meta[safe_key]["spot"] = spot
+    elif "spot" not in meta[safe_key]:
+        meta[safe_key]["spot"] = "unknown"
+
+    if caption:
+        meta[safe_key]["caption"] = caption
+
+    meta["updated"] = datetime.now().isoformat()
+    _save_meta(trip_dir, meta)
+
+    return {
+        "ok": True,
+        "key": safe_key,
+        "day": meta[safe_key].get("day", 0),
+        "spot": meta[safe_key].get("spot", ""),
+        "caption": meta[safe_key].get("caption", ""),
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
