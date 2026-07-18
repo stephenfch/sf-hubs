@@ -1,0 +1,15 @@
+{
+  "name": "sf-hubs",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:album": "npx tailwindcss -i hubs/album/tailwind.css -o hubs/album/output.css --minify",
+    "watch:album": "npx tailwindcss -i hubs/album/tailwind.css -o hubs/album/output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "^4.3.3"
+  }
+}

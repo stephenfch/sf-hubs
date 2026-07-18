@@ -1,0 +1,21 @@
+/* ═══════════════════════════════════════
+   Album Hub — Tailwind Input
+   Design tokens moved to index.html <style> block
+   Only Tailwind directives + base remain here
+   ═══════════════════════════════════════ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Google Font Import ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Minimal base — everything else in index.html <style> */
+* { box-sizing: border-box; }
+html { color-scheme: light dark; }
+
+body {
+  font-family: 'Inter', -apple-system, "Segoe UI", "PingFang HK", "Hiragino Sans", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}

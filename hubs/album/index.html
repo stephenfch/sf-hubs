@@ -5,229 +5,583 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Album Hub 🖼️ | SF-HUBS</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖼️</text></svg>">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            dark: '#0a0a0f', card: '#12121a', accent: '#6366f1', glow: '#818cf8',
-            surf: '#1a1a24'
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Phase 1.1: Self-hosted Tailwind (甩 CDN) -->
+  <link rel="stylesheet" href="output.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    /* ── Global (Light Theme) ── */
-    * { box-sizing: border-box; }
+    /* ═══════════════════════════════════════════════════════════════════════
+       Album Hub — Design System: Soft Glass + Warm Minimal
+       CSS Custom Properties · Glass Effects · Badges · Hover · Animations
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    /* ── CSS Custom Properties (Light) ── */
+    :root {
+      --bg: #f4f1ea;
+      --bg-grad-1: #faf7f0;
+      --bg-grad-2: #ece6da;
+      --surface: rgba(255, 255, 255, 0.55);
+      --surface-solid: #ffffff;
+      --card: rgba(255, 255, 255, 0.62);
+      --card-border: rgba(255, 255, 255, 0.8);
+      --text: #2b2620;
+      --text-soft: #6b6358;
+      --text-faint: #9a9183;
+      --primary: #e8552d;
+      --primary-soft: #f6b9a4;
+      --accent: #2f6f6a;
+      --accent-soft: #bcdad6;
+      --badge-d: #e8552d;
+      --badge-spot: rgba(43, 38, 32, 0.72);
+      --shadow-soft: 0 8px 24px rgba(80, 60, 40, 0.10);
+      --shadow-lift: 0 18px 48px rgba(80, 60, 40, 0.22);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --font-ui: -apple-system, "Segoe UI", "PingFang HK", "Hiragino Sans", Roboto, sans-serif;
+      --font-display: "Segoe UI Semibold", var(--font-ui);
+    }
+
+    /* ── Custom Properties (Dark) ── */
+    [data-theme="dark"] {
+      --bg: #14110d;
+      --bg-grad-1: #1a1611;
+      --bg-grad-2: #0e0c09;
+      --surface: rgba(255, 255, 255, 0.05);
+      --surface-solid: #1c1813;
+      --card: rgba(255, 255, 255, 0.06);
+      --card-border: rgba(255, 255, 255, 0.10);
+      --text: #f2ece1;
+      --text-soft: #b9af9f;
+      --text-faint: #7d7464;
+      --primary: #ff6b3d;
+      --primary-soft: #5a2a1c;
+      --accent: #4fb3a8;
+      --accent-soft: #1f3f3c;
+      --badge-d: #ff6b3d;
+      --badge-spot: rgba(0, 0, 0, 0.55);
+      --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.40);
+      --shadow-lift: 0 20px 60px rgba(0, 0, 0, 0.60);
+    }
+
+    /* ── Base ── */
+    *, *::before, *::after { box-sizing: border-box; }
     body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(170deg, #faf8f5 0%, #f0ece6 30%, #f7f3ec 60%, #fcf9f5 100%);
-      background-attachment: fixed;
-      color: #3d3929;
-      -webkit-tap-highlight-color: transparent;
-    }
-    body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      margin: 0;
+      font-family: var(--font-ui);
+      color: var(--text);
       background:
-        radial-gradient(ellipse at 50% 0%, rgba(236, 64, 122, 0.04) 0%, transparent 50%),
-        radial-gradient(ellipse at 85% 75%, rgba(66, 165, 245, 0.05) 0%, transparent 45%),
-        radial-gradient(ellipse at 10% 90%, rgba(129, 199, 132, 0.04) 0%, transparent 40%);
+        radial-gradient(1200px 600px at 80% -10%, var(--bg-grad-1), transparent 60%),
+        radial-gradient(900px 500px at -10% 110%, var(--accent-soft), transparent 55%),
+        linear-gradient(160deg, var(--bg-grad-1), var(--bg-grad-2));
+      background-attachment: fixed;
+      min-height: 100vh;
+      transition: background .4s ease, color .3s ease, border-color .3s ease;
     }
-    /* ── Animations ── */
-    .fade-in { animation: fadeIn 0.45s cubic-bezier(0.16,1,0.3,1); }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes toastBounce {
-      0% { transform: translateY(30px) scale(0.9); opacity: 0; }
-      50% { transform: translateY(-4px) scale(1.02); }
-      100% { transform: translateY(0) scale(1); opacity: 1; }
+
+    /* ── Glass Nav ── */
+    #main-nav {
+      transition: background .35s ease, box-shadow .35s ease, border-color .3s ease;
     }
-    @keyframes progressPulse { 0%,100% { opacity: 0.8; } 50% { opacity: 1; } }
-    /* ── Card hover ── */
-    .card-hover { transition: all 0.3s cubic-bezier(0.16,1,0.3,1); }
-    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(236,64,122,0.12); }
+    #main-nav:not([data-theme-bound]) {
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(14px) saturate(1.1);
+      -webkit-backdrop-filter: blur(14px) saturate(1.1);
+      border-bottom: 1px solid rgba(255,255,255,0.6);
+    }
+    [data-theme="dark"] #main-nav {
+      background: rgba(28, 24, 19, 0.65);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+    }
+
+    /* ── Theme Toggle ── */
+    .theme-toggle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid rgba(80,60,40,0.15);
+      background: rgba(255,255,255,0.6);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all .25s cubic-bezier(0.16,1,0.3,1);
+      line-height: 1;
+    }
+    .theme-toggle:hover {
+      background: rgba(232,85,45,0.08);
+      border-color: rgba(232,85,45,0.3);
+      transform: rotate(15deg);
+    }
+    .theme-toggle:active { transform: scale(0.9) rotate(30deg); }
+    [data-theme="dark"] .theme-toggle {
+      border-color: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+    }
+    [data-theme="dark"] .theme-toggle:hover {
+      background: rgba(255,107,61,0.12);
+      border-color: rgba(255,107,61,0.3);
+    }
+
     /* ── Photo Grid ── */
     .photo-grid {
       columns: 4 200px;
-      column-gap: 12px;
+      column-gap: 18px;
     }
-    .photo-grid > div {
+    @media (max-width: 1100px) { .photo-grid { columns: 3; } }
+    @media (max-width: 760px)  { .photo-grid { columns: 2; column-gap: 12px; } }
+    @media (max-width: 480px)  { .photo-grid { columns: 1; } }
+
+    /* ── Photo Card ── */
+    .photo-card {
+      position: relative;
       break-inside: avoid;
-      margin-bottom: 12px;
-    }
-    .photo-grid img {
-      width: 100%;
-      border-radius: 12px;
-      display: block;
-      transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
+      margin-bottom: 18px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px) saturate(1.1);
+      -webkit-backdrop-filter: blur(14px) saturate(1.1);
+      box-shadow: var(--shadow-soft);
       cursor: pointer;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      transition: transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s ease, background .3s ease, border-color .3s ease;
+      opacity: 0;
+      transform: translateY(20px);
     }
-    .photo-grid img:hover {
-      transform: scale(1.04);
-      box-shadow: 0 8px 30px rgba(236,64,122,0.2);
+    .photo-card.revealed {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.5s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.5s cubic-bezier(0.16,1,0.3,1),
+                  background .3s ease, border-color .3s ease;
     }
-    /* ── Delete button ── */
-    .photo-card { position: relative; }
-    .photo-card .del-btn {
-      position: absolute; top: 8px; right: 8px;
-      width: 30px; height: 30px; border-radius: 50%;
-      background: rgba(255,255,255,0.85); color: #e53e3e;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; opacity: 0; transform: scale(0.8);
-      transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
-      cursor: pointer; border: none; z-index: 2;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    .photo-card:hover {
+      transform: translateY(-6px) scale(1.012);
+      box-shadow: var(--shadow-lift);
     }
-    .photo-card:hover .del-btn, .photo-card .del-btn.show-mobile { opacity: 1; transform: scale(1); }
-    .photo-card .del-btn:hover { background: rgba(229,62,62,0.9); color: white; transform: scale(1.1); }
-    /* ── Badge overlay ── */
+    .photo-card img {
+      width: 100%;
+      display: block;
+      transition: transform .5s ease, filter .3s ease;
+    }
+    .photo-card:hover img {
+      transform: scale(1.06);
+      filter: saturate(1.08);
+    }
+    /* ── Badge Row ── */
     .badge-row {
-      position: absolute; top: 8px; left: 8px; z-index: 3;
-      display: flex; gap: 4px; flex-wrap: wrap; pointer-events: none;
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 2;
     }
     .badge-day {
-      background: rgba(236,64,122,0.88); color: white;
-      font-size: 10px; font-weight: 600; padding: 2px 8px;
-      border-radius: 999px; backdrop-filter: blur(4px);
-      letter-spacing: 0.3px;
+      background: var(--badge-d);
+      color: #fff;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .03em;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
     .badge-spot {
-      background: rgba(255,179,0,0.85); color: white;
-      font-size: 10px; padding: 2px 8px;
-      border-radius: 999px; backdrop-filter: blur(4px);
-      max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      background: var(--badge-spot);
+      color: #fff;
+      border-radius: 999px;
+      padding: 5px 10px 5px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 2px 10px rgba(0,0,0,.25);
+      transition: transform .2s ease;
     }
-    /* ── Lightbox ── */
-    .lightbox {
-      position: fixed; inset: 0; z-index: 60;
-      background: rgba(0,0,0,0.94);
-      display: flex; align-items: center; justify-content: center;
-      animation: fadeIn 0.2s ease-out;
-    }
-    .lightbox img {
-      max-width: 92vw; max-height: 90vh;
-      border-radius: 12px;
-      object-fit: contain;
-      user-select: none;
-      -webkit-user-drag: none;
-      transition: transform 0.15s ease-out;
-    }
-    .lightbox .close { position: absolute; top: 16px; right: 20px; font-size: 36px; color: white; opacity: 0.5; cursor: pointer; z-index: 1; transition: opacity 0.2s; line-height: 1; }
-    .lightbox .close:hover { opacity: 1; }
-    .lightbox .caption { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.85); font-size: 14px; text-align: center; max-width: 80vw; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
-    .lightbox .nav {
-      position: absolute; top: 50%; transform: translateY(-50%);
-      font-size: 44px; color: rgba(255,255,255,0.4);
-      cursor: pointer; padding: 16px 8px; user-select: none; z-index: 1;
-      transition: color 0.2s;
-    }
-    .lightbox .nav:hover { color: white; }
-    .lightbox .nav.prev { left: 4px; }
-    .lightbox .nav.next { right: 4px; }
-    .lightbox .dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 1; }
-    .lightbox .dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3); transition: all 0.2s; }
-    .lightbox .dots span.active { background: white; transform: scale(1.3); }
-    /* ── Upload zone ── */
-    .upload-zone {
-      border: 2px dashed rgba(236,64,122,0.25);
-      border-radius: 16px;
-      padding: 32px 20px;
-      text-align: center;
-      transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+    .photo-card:hover .badge-spot { transform: translateY(-2px); }
+
+    /* ── Delete Button ── */
+    .del-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 3;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      font-size: 14px;
       cursor: pointer;
-      background: rgba(236,64,122,0.02);
+      opacity: 0;
+      transition: opacity .25s ease, background .2s ease, transform .2s ease;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .photo-card:hover .del-btn { opacity: 1; }
+    .del-btn:hover {
+      background: rgba(220,60,40,0.75);
+      transform: scale(1.15);
+    }
+    @media (hover: none) {
+      .del-btn { opacity: 1; }
+      .photo-card:hover { transform: none; box-shadow: var(--shadow-soft); }
+      .photo-card:hover img { transform: none; filter: none; }
+      .photo-card:hover .badge-spot { transform: none; }
+    }
+
+    /* ── Caption ── */
+    .photo-card p {
+      padding: 8px 10px 10px;
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-soft);
+      transition: color .3s ease;
+    }
+    .caption-text {
+      margin: 4px 10px 10px;
+      font-size: 12px;
+      color: var(--text-soft);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: color .3s ease;
+    }
+
+    /* ── Trip Buttons ── */
+    .trip-btn {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--card-border);
+      background: var(--card);
+      color: var(--text);
+      font-size: 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: all .25s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-soft);
+      font-family: var(--font-ui);
+    }
+    .trip-btn:hover {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lift);
+    }
+    .trip-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 4px 16px rgba(232,85,45,0.25);
+    }
+    [data-theme="dark"] .trip-btn.active {
+      background: var(--primary);
+      box-shadow: 0 4px 20px rgba(255,107,61,0.2);
+    }
+
+    /* ── Upload Zone ── */
+    #upload-panel {
+      transition: background .3s ease, border-color .3s ease;
+    }
+    .upload-zone {
+      border: 2px dashed rgba(232,85,45,0.3);
+      border-radius: var(--radius);
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .25s ease;
+      background: var(--surface);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
     .upload-zone:hover, .upload-zone.drag-over {
-      border-color: #ec407a;
-      background: rgba(236,64,122,0.06);
-      transform: scale(1.01);
+      border-color: var(--primary);
+      background: rgba(232,85,45,0.05);
+      transform: translateY(-2px);
     }
-    .upload-zone.drag-over { border-style: solid; box-shadow: 0 0 30px rgba(236,64,122,0.1); }
-    /* ── Progress bar ── */
-    .progress-bar {
-      height: 4px; border-radius: 2px;
-      background: linear-gradient(90deg, #ec407a, #f48fb1, #ec407a);
+    [data-theme="dark"] .upload-zone {
+      border-color: rgba(255,107,61,0.25);
+    }
+    [data-theme="dark"] .upload-zone:hover {
+      background: rgba(255,107,61,0.08);
+      border-color: var(--primary);
+    }
+
+    /* ── Lightbox ── */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    .lightbox img {
+      max-width: 90vw;
+      max-height: 85vh;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      transition: transform .15s ease;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .lightbox img.zoomed { transform: scale(2.5); cursor: zoom-out; }
+    .lightbox img.zoomed-more { transform: scale(4); cursor: zoom-out; }
+    .lightbox .close {
+      position: absolute;
+      top: 16px;
+      right: 24px;
+      font-size: 32px;
+      color: #fff;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity .2s;
+      z-index: 1000;
+      line-height: 1;
+    }
+    .lightbox .close:hover { opacity: 1; }
+    .lightbox .nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 40px;
+      color: #fff;
+      cursor: pointer;
+      opacity: 0.5;
+      transition: opacity .2s;
+      padding: 12px;
+      user-select: none;
+    }
+    .lightbox .nav:hover { opacity: 1; }
+    .lightbox .prev { left: 12px; }
+    .lightbox .next { right: 12px; }
+    .lightbox .dots {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+    }
+    .lightbox .dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .lightbox .dots span.active { background: #fff; }
+    .lightbox .dots span:hover { background: rgba(255,255,255,0.6); }
+    .lightbox .caption {
+      margin-top: 10px;
+      color: rgba(255,255,255,0.75);
+      font-size: 14px;
+      text-align: center;
+      max-width: 80vw;
+    }
+
+    /* ── Skeleton Grid ── */
+    .skeleton-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .skeleton-card {
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      box-shadow: var(--shadow-soft);
+    }
+    .skeleton-img {
+      aspect-ratio: 4 / 3;
+      background: linear-gradient(100deg, transparent 20%, var(--accent-soft) 50%, transparent 80%);
       background-size: 200% 100%;
-      animation: shimmer 1.5s linear infinite, progressPulse 1s ease-in-out infinite;
-      transition: width 0.3s ease-out;
+      animation: shimmer 1.3s infinite linear;
     }
-    /* ── Skeleton ── */
-    .skeleton {
-      animation: pulse 1.5s ease-in-out infinite;
-      background: linear-gradient(135deg, #f0ede6 25%, #e8e2d8 50%, #f0ede6 75%);
+    .skeleton-caption {
+      height: 16px;
+      margin: 10px 12px;
+      border-radius: 6px;
+      background: linear-gradient(100deg, transparent 20%, var(--accent-soft) 50%, transparent 80%);
       background-size: 200% 100%;
-      border-radius: 12px;
+      animation: shimmer 1.3s infinite linear;
     }
-    /* ── Spinner ── */
-    .spinner {
-      width: 22px; height: 22px; border: 2.5px solid rgba(0,0,0,0.08);
-      border-top-color: #ec407a; border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+    @keyframes shimmer {
+      from { background-position: 200% 0; }
+      to   { background-position: -200% 0; }
     }
+
     /* ── Toast ── */
     .toast {
-      position: fixed; bottom: 24px; right: 24px; z-index: 70;
-      background: rgba(255,255,255,0.97); color: #3d3929;
-      padding: 14px 22px; border-radius: 12px; font-size: 13.5px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 0 1px rgba(236,64,122,0.15);
-      backdrop-filter: blur(16px);
-      animation: toastBounce 0.4s cubic-bezier(0.16,1,0.3,1);
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      background: rgba(43,38,32,0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 13px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      animation: toastBounce 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      white-space: nowrap;
     }
-    #undo-toast {
-      background: rgba(255,255,255,0.98);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(236,64,122,0.2);
+    [data-theme="dark"] .toast {
+      background: rgba(242,236,225,0.88);
+      color: #1a1611;
     }
-    /* ── Nav hamburger ── */
-    .nav-links { display: flex; align-items: center; gap: 8px; }
-    .hamburger { display: none; background: none; border: none; color: #3d3929; font-size: 22px; cursor: pointer; padding: 4px; }
-    /* ── Mobile ── */
-    @media (max-width: 768px) {
-      .photo-grid { columns: 2 160px; column-gap: 8px; }
-      .photo-grid > div { margin-bottom: 8px; }
-      .photo-grid img { border-radius: 10px; }
-      .photo-card .del-btn { opacity: 0.7; width: 28px; height: 28px; font-size: 12px; }
-      .upload-zone { padding: 24px 14px; border-radius: 14px; }
-      .upload-zone p { font-size: 13px; }
-      .toast { left: 16px; right: 16px; bottom: 16px; font-size: 12.5px; text-align: center; }
-      #undo-toast { flex-direction: column; gap: 8px; }
-      .lightbox .nav { font-size: 36px; padding: 12px 4px; }
-      .lightbox .close { top: 12px; right: 14px; font-size: 28px; }
-      .lightbox .caption { bottom: 40px; font-size: 12px; }
-      .hamburger { display: block; }
-      .nav-links { display: none; }
-      .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); padding: 12px 20px; border-bottom: 1px solid rgba(255,150,50,0.15); gap: 8px; }
-      main { padding-left: 12px; padding-right: 12px; }
-      #btn-upload { padding: 12px 20px; font-size: 14px; min-height: 46px; border-radius: 14px; }
-      #btn-do-upload { padding: 10px 18px; font-size: 13px; min-height: 42px; }
+    @keyframes toastBounce {
+      0% { opacity: 0; transform: translateX(-50%) translateY(16px) scale(0.95); }
+      100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
     }
-    @media (max-width: 480px) {
-      .photo-grid { columns: 1; column-gap: 0; }
-      .photo-grid > div { margin-bottom: 12px; }
-      main { padding: 12px 8px 80px; }
-      .upload-zone { padding: 20px 10px; }
-      .lightbox .nav { font-size: 28px; padding: 10px 2px; }
+    #undo-toast { animation: toastBounce 0.35s cubic-bezier(0.34,1.56,0.64,1); }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--accent-soft);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Progress Bar ── */
+    .progress-bar {
+      height: 4px;
+      background: var(--primary);
+      border-radius: 2px;
+      transition: width .3s ease;
+    }
+
+    /* ── Hamburger / Nav Links ── */
+    .hamburger {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid rgba(80,60,40,0.12);
+      background: rgba(255,255,255,0.5);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s ease;
+      line-height: 1;
+    }
+    .hamburger:hover {
+      background: rgba(232,85,45,0.06);
+      border-color: rgba(232,85,45,0.2);
+    }
+    [data-theme="dark"] .hamburger {
+      border-color: rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+    }
+    [data-theme="dark"] .hamburger:hover {
+      background: rgba(255,107,61,0.1);
+      border-color: rgba(255,107,61,0.2);
+    }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-links.open {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(80,60,40,0.08);
+      z-index: 20;
+    }
+    .nav-links.open a { padding: 8px 0; }
+
+    /* ── Meta Edit Inline ── */
+    .meta-edit input:focus {
+      border-color: var(--primary) !important;
+      outline: 2px solid var(--primary-soft) !important;
+      outline-offset: -1px;
+    }
+
+    /* ── Fade In Animation ── */
+    .fade-in {
+      animation: fadeIn 0.45s cubic-bezier(0.16,1,0.3,1);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Footer ── */
+    footer { transition: border-color .3s ease, color .3s ease; }
+    [data-theme="dark"] footer {
+      border-color: rgba(255,255,255,0.05) !important;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(80,60,40,0.12);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(80,60,40,0.2); }
+    [data-theme="dark"] ::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.08);
+    }
+
+    /* ── Backdrop-filter Fallback ── */
+    @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+      .photo-card { background: var(--surface-solid); }
+      #upload-panel { background: var(--surface-solid) !important; }
+      #main-nav { background: var(--surface-solid) !important; }
+      .trip-btn { background: var(--surface-solid); }
+      .toast { background: rgba(43,38,32,0.95); }
+      .lightbox { background: rgba(0,0,0,0.8); }
+      .nav-links.open { background: var(--surface-solid); }
     }
   </style>
 </head>
-<body class="bg-white/0 text-gray-700 min-h-screen">
+<body class="min-h-screen">
+  <div class="bg-canvas" aria-hidden="true"></div>
 
-  <!-- ═══ Nav ═══ -->
-  <nav class="border-b border-amber-200/40 px-6 py-4 flex items-center gap-2 sticky top-0 bg-white/80 backdrop-blur z-20 relative shadow-sm">
-    <button class="hamburger" id="hamburger" title="Menu">☰</button>
-    <div class="nav-links" id="nav-links">
-      <a href="../../" class="text-gray-400 hover:text-gray-700 transition text-sm">← SF-HUBS</a>
-      <span class="text-gray-300">/</span>
-      <span class="text-sm font-semibold flex items-center gap-1.5 text-gray-800">🖼️ Album Hub</span>
+  <!-- ═══ Glass Nav ═══ -->
+  <nav id="main-nav" class="glass-nav">
+    <div class="glass-nav-inner">
+      <div class="flex items-center gap-2">
+        <button class="hamburger" id="hamburger" title="Menu" aria-label="Menu">☰</button>
+        <div class="nav-links" id="nav-links">
+          <a href="../../" class="text-sm transition" style="color:var(--text-faint);text-decoration:none;">← SF-HUBS</a>
+          <span style="color:var(--text-faint);opacity:0.5;">/</span>
+          <span class="font-semibold flex items-center gap-1.5" style="color:var(--text);font-size:14px;">🖼️ Album Hub</span>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <span style="color:var(--text-faint);font-size:11px;" id="status">載入中…</span>
+        <button id="theme-toggle" class="theme-toggle" title="切換深色模式" aria-label="Toggle dark mode">🌙</button>
+      </div>
     </div>
-    <span class="ml-auto text-gray-400 text-xs" id="status">載入中…</span>
   </nav>
 
   <!-- ═══ Main ═══ -->
@@ -235,13 +589,13 @@
 
     <!-- ── Trip Selector ── -->
     <section id="section-select" class="mb-8 fade-in">
-      <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800">
+      <h2 class="text-lg font-semibold mb-4 flex items-center gap-2" style="color:var(--text);">
         <span>📂</span> 選擇旅程
       </h2>
       <div id="trip-list" class="flex flex-wrap gap-3">
         <!-- rendered by JS -->
       </div>
-      <div id="no-trips" class="hidden text-gray-400 text-sm mt-4">
+      <div id="no-trips" class="hidden" style="color:var(--text-soft);font-size:13px;margin-top:1rem;">
         <p>📭 暫無相簿 — 上載第一張相就會自動建立 trip folder</p>
       </div>
     </section>
@@ -249,63 +603,67 @@
     <!-- ── Upload Bar ── -->
     <section id="section-upload" class="hidden mb-8 fade-in">
       <div class="flex items-center gap-4 flex-wrap">
-        <button id="btn-upload" class="px-5 py-2.5 rounded-xl bg-pink-500 text-white text-sm font-medium hover:bg-pink-600 transition flex items-center gap-2 shadow-lg shadow-pink-200">
+        <button id="btn-upload" class="px-5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-lg" style="background:var(--primary);color:#fff;border:none;box-shadow:0 4px 16px rgba(232,85,45,0.25);border-radius:var(--radius-sm);cursor:pointer;">
           📤 上載相片
         </button>
-        <span class="text-gray-400 text-xs">
+        <span class="text-soft text-xs" style="color:var(--text-faint);">
           支援 JPG/PNG/WebP/HEIC · 拖放或點擊上載
         </span>
-        <span id="photo-count" class="text-gray-300 text-xs ml-auto"></span>
+        <span id="photo-count" class="text-xs ml-auto" style="color:var(--text-faint);"></span>
       </div>
       <!-- Upload modal area -->
-      <div id="upload-panel" class="hidden mt-4 p-4 bg-white/90 border border-amber-100 rounded-2xl fade-in shadow-sm backdrop-blur">
+      <div id="upload-panel" class="hidden mt-4 p-4 fade-in" style="background:var(--surface);border:1px solid var(--card-border);border-radius:var(--radius);box-shadow:var(--shadow-soft);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">
         <div class="upload-zone" id="drop-zone">
-          <p class="text-gray-500 text-sm mb-1">📁 拖放相片到此處，或點擊選擇檔案</p>
-          <p class="text-gray-300 text-xs">一次可揀多張 · 每張最大 50MB</p>
+          <p style="color:var(--text-soft);font-size:13px;margin-bottom:4px;">📁 拖放相片到此處，或點擊選擇檔案</p>
+          <p style="color:var(--text-faint);font-size:11px;">一次可揀多張 · 每張最大 50MB</p>
           <input type="file" id="file-input" multiple accept="image/*,.heic,.heif" class="hidden">
         </div>
         <!-- Upload form fields -->
         <div class="mt-3 flex flex-wrap gap-3">
           <div class="flex-1 min-w-[120px]">
-            <label class="text-xs text-gray-400">Day # (optional)</label>
-            <input id="upload-day" type="number" min="1" max="30" placeholder="e.g. 1" class="w-full mt-1 bg-amber-50/50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-pink-300">
+            <label style="color:var(--text-soft);font-size:11px;">Day # (optional)</label>
+            <input id="upload-day" type="number" min="1" max="30" placeholder="e.g. 1" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);outline:none;">
           </div>
           <div class="flex-1 min-w-[120px]">
-            <label class="text-xs text-gray-400">景點 (optional)</label>
-            <input id="upload-spot" type="text" placeholder="e.g. 神戶牛" class="w-full mt-1 bg-amber-50/50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-pink-300">
+            <label style="color:var(--text-soft);font-size:11px;">景點 (optional)</label>
+            <input id="upload-spot" type="text" placeholder="e.g. 神戶牛" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);outline:none;">
           </div>
           <div class="flex-[2] min-w-[200px]">
-            <label class="text-xs text-gray-400">Caption (optional)</label>
-            <input id="upload-caption" type="text" placeholder="一句話描述…" class="w-full mt-1 bg-amber-50/50 border border-amber-200 rounded-lg px-3 py-2 text-sm text-gray-700 outline-none focus:border-pink-300">
+            <label style="color:var(--text-soft);font-size:11px;">Caption (optional)</label>
+            <input id="upload-caption" type="text" placeholder="一句話描述…" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);outline:none;">
           </div>
         </div>
         <div class="mt-3 flex items-center gap-3">
-          <button id="btn-do-upload" class="px-4 py-2 rounded-lg bg-pink-500 text-white text-sm font-medium hover:bg-pink-600 transition disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+          <button id="btn-do-upload" class="px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed" style="background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;" disabled>
             ⬆️ 上載所選檔案
           </button>
           <div id="upload-progress-wrap" class="hidden flex-1">
             <div class="flex items-center gap-2 mb-1">
               <div class="spinner"></div>
-              <span id="upload-progress" class="text-gray-500 text-xs"></span>
+              <span id="upload-progress" style="color:var(--text-soft);font-size:11px;"></span>
             </div>
             <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
           </div>
-          <span id="file-count" class="text-gray-300 text-xs">未選擇檔案</span>
+          <span id="file-count" style="color:var(--text-faint);font-size:11px;">未選擇檔案</span>
         </div>
-        <!-- Thumbnail preview of selected files -->
+        <!-- Thumbnail preview -->
         <div id="preview-row" class="flex flex-wrap gap-2 mt-3"></div>
       </div>
     </section>
 
     <!-- ── Photo Grid ── -->
     <section id="section-photos" class="hidden fade-in">
-      <div id="photo-grid" class="photo-grid">
+      <!-- Phase 2.3: Skeleton loading grid -->
+      <div id="skeleton-grid" class="skeleton-grid">
+        <!-- filled by JS -->
+      </div>
+      <div id="photo-grid" class="photo-grid hidden">
         <!-- rendered by JS -->
       </div>
-      <div id="photo-empty" class="hidden text-center py-16 text-gray-300">
-        <p class="text-4xl mb-3">📸</p>
-        <p class="text-sm">呢個 trip 暫時未有相</p>
-        <p class="text-xs mt-1">click 上面「上載相片」開始！</p>
+      <div id="photo-empty" class="hidden text-center py-16" style="color:var(--text-faint);">
+        <p style="font-size:2.25rem;margin-bottom:0.75rem;">📸</p>
+        <p style="font-size:13px;">呢個 trip 暫時未有相</p>
+        <p style="font-size:11px;margin-top:4px;">click 上面「上載相片」開始！</p>
       </div>
     </section>
 
@@ -322,20 +680,19 @@
   </div>
 
   <!-- ═══ Footer ═══ -->
-  <footer class="border-t border-amber-100 py-8 text-center text-gray-400 text-xs">
-    <p>Powered by <span class="text-gray-600">SF-HUBS</span> · © 2026 Stephen Fan</p>
+  <footer style="border-top:1px solid var(--card-border);padding:2rem 1rem;text-align:center;color:var(--text-faint);font-size:11px;">
+    <p style="color:var(--text-faint);font-size:11px;">Powered by <span style="color:var(--text-soft);">SF-HUBS</span> · © 2026 Stephen Fan</p>
   </footer>
 
   <!-- ═══════════════════════════════════════════════════════════════════════
        App Logic — Vanilla JS
+       Phase 1+2: theme toggle + lazy-reveal + view-transitions + lightbox-zoom + skeleton
        ═══════════════════════════════════════════════════════════════════════ -->
   <script>
   (function () {
     "use strict";
 
     // ── Config ──
-    // Auto-detect API base: if served from sf-hubs.dev, use album.sf-hubs.dev
-    // otherwise fall back to localhost:5300 for dev
     const API = (() => {
       if (location.hostname === "sf-hubs.dev" || location.hostname.endsWith(".pages.dev")) {
         return "https://album.sf-hubs.dev";
@@ -346,16 +703,121 @@
     // ── State ──
     let currentTrip = null;
     let currentPhotos = [];
-    let selectedFiles = [];     // File objects for pending upload
+    let selectedFiles = [];
     let lightboxIdx = -1;
+    let lazyObserver = null;
+    let lightboxZoomLevel = 0;  // Phase 2.2: 0=normal, 1=2x, 2=3x
 
     // ── DOM refs ──
     const $ = (s) => document.querySelector(s);
     const $$ = (s) => document.querySelectorAll(s);
 
+    // ═════════════════════════════════════════════
+    // Phase 1.2: Dark Mode Toggle
+    // ═════════════════════════════════════════════
+    function initTheme() {
+      const toggle = $("#theme-toggle");
+      const saved = localStorage.getItem("album-theme");
+      if (saved) {
+        document.documentElement.setAttribute("data-theme", saved);
+      } else {
+        // Respect system preference
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+      }
+      updateThemeIcon();
+
+      toggle.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme");
+        const next = current === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("album-theme", next);
+        updateThemeIcon();
+      });
+
+      // Listen for system preference changes (only when no manual override)
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+        if (!localStorage.getItem("album-theme")) {
+          document.documentElement.setAttribute("data-theme", e.matches ? "dark" : "light");
+          updateThemeIcon();
+        }
+      });
+    }
+
+    function updateThemeIcon() {
+      const toggle = $("#theme-toggle");
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      toggle.textContent = isDark ? "☀️" : "🌙";
+    }
+
+    // ═════════════════════════════════════════════
+    // Phase 1.3: IntersectionObserver lazy-reveal
+    // ═════════════════════════════════════════════
+    function initLazyReveal() {
+      if (lazyObserver) lazyObserver.disconnect();
+      lazyObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+            lazyObserver.unobserve(entry.target);
+          }
+        });
+      }, {
+        rootMargin: "80px 0px",
+        threshold: 0.05,
+      });
+    }
+
+    function observeCards() {
+      $$(".photo-card:not(.revealed)").forEach((card) => {
+        lazyObserver.observe(card);
+      });
+    }
+
+    // ═════════════════════════════════════════════
+    // Phase 2.3: Skeleton loading grid
+    // ═════════════════════════════════════════════
+    function showSkeleton() {
+      const grid = $("#skeleton-grid");
+      grid.classList.remove("hidden");
+      grid.innerHTML = "";
+      // Generate 8 skeleton cards
+      for (let i = 0; i < 8; i++) {
+        const card = document.createElement("div");
+        card.className = "skeleton-card";
+        card.innerHTML = `
+          <div class="skeleton-img"></div>
+          <div class="skeleton-caption"></div>
+        `;
+        grid.appendChild(card);
+      }
+      $("#photo-grid").classList.add("hidden");
+      $("#photo-empty").classList.add("hidden");
+    }
+
+    function hideSkeleton() {
+      $("#skeleton-grid").classList.add("hidden");
+      $("#photo-grid").classList.remove("hidden");
+    }
+
+    // ═════════════════════════════════════════════
+    // Phase 2.1: View Transitions helper
+    // ═════════════════════════════════════════════
+    function tripTransition(callback) {
+      if (!document.startViewTransition) {
+        callback();
+        return;
+      }
+      document.startViewTransition(() => {
+        callback();
+      });
+    }
+
     // ── Init ──
     async function init() {
-      // Check for ?trip= query param
+      initTheme();
+      initLazyReveal();
+
       const params = new URLSearchParams(location.search);
       const tripParam = params.get("trip");
 
@@ -383,37 +845,36 @@
         noTrips.classList.add("hidden");
         trips.forEach((t) => {
           const btn = document.createElement("button");
-          btn.className = `px-4 py-3 rounded-xl border text-sm text-left transition-all ${
-            currentTrip === t.id
-              ? "bg-pink-50 border-pink-200 text-pink-700 font-medium shadow-sm"
-              : "bg-white/70 border-gray-200 text-gray-500 hover:text-gray-800 hover:border-pink-200 hover:shadow-sm"
-          }`;
+          const isActive = currentTrip === t.id;
+          btn.className = `trip-btn px-4 py-3 rounded-xl text-sm text-left ${isActive ? "active" : ""}`;
+          btn.setAttribute("data-trip-id", t.id);
           btn.innerHTML = `
             <div class="font-medium">${esc(t.label)}</div>
-            <div class="text-xs text-gray-400 mt-0.5">${t.photo_count} 張相 · ${fmtDate(t.updated)}</div>`;
+            <div class="text-xs opacity-60 mt-0.5">${t.photo_count} 張相 · ${fmtDate(t.updated)}</div>`;
           btn.addEventListener("click", () => selectTrip(t.id));
           list.appendChild(btn);
         });
       } catch (err) {
         console.error("loadTrips:", err);
-        list.innerHTML = `<p class="text-red-400 text-sm">⚠️ 無法連接 API：${esc(err.message)}</p>`;
+        list.innerHTML = `<p style="color:var(--primary);font-size:13px;">⚠️ 無法連接 API：${esc(err.message)}</p>`;
       }
     }
 
     // ── Select trip ──
     function selectTrip(tripId) {
       currentTrip = tripId;
-      // Update URL without reload
       const url = new URL(location);
       url.searchParams.set("trip", tripId);
       history.replaceState(null, "", url);
-      // Show upload + photo sections
+
       $("#section-upload").classList.remove("hidden");
       $("#section-photos").classList.remove("hidden");
-      // Refresh trip list styling
-      loadTrips();
-      // Load photos
-      loadPhotos(tripId);
+
+      // Phase 2.1: View Transition on trip switch
+      tripTransition(() => {
+        loadTrips();
+        loadPhotos(tripId);
+      });
     }
 
     // ── Load photos ──
@@ -421,19 +882,24 @@
       const grid = $("#photo-grid");
       const empty = $("#photo-empty");
       grid.innerHTML = "";
+
+      // Phase 2.3: Show skeleton during fetch
+      showSkeleton();
+
       try {
         const resp = await fetch(`${API}/api/photos/${encodeURIComponent(tripId)}`);
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const photos = await resp.json();
-        // Normalize: API returns relative paths, prepend API base for cross-origin
         currentPhotos = photos.map(p => ({
           ...p,
           url: p.url.startsWith("http") ? p.url : `${API}${p.url}`,
           thumb_url: p.thumb_url
             ? (p.thumb_url.startsWith("http") ? p.thumb_url : `${API}${p.thumb_url}`)
-            : (p.url.startsWith("http") ? p.url : `${API}${p.url}`),  // fallback to original if no thumbnail
+            : (p.url.startsWith("http") ? p.url : `${API}${p.url}`),
         }));
         $("#photo-count").textContent = `${photos.length} 張相`;
+
+        hideSkeleton();
 
         if (photos.length === 0) {
           empty.classList.remove("hidden");
@@ -445,8 +911,7 @@
 
         currentPhotos.forEach((p, idx) => {
           const card = document.createElement("div");
-          card.className = "photo-card fade-in";
-          card.style.animationDelay = `${idx * 0.03}s`;
+          card.className = "photo-card lazy-load";
           const dayBadge = p.day > 0 ? `<span class="badge-day">D${esc(p.day)}</span>` : "";
           const spotBadge = p.spot
             ? (p.spot === "unknown" ? `<span class="badge-spot" style="background:rgba(150,150,150,0.5);">❔ unknown</span>`
@@ -459,26 +924,29 @@
             <button class="del-btn" title="刪除" data-key="${esc(p.key)}">✕</button>
             ${badges}
             <img src="${esc(p.thumb_url)}" alt="${esc(p.caption)}" loading="lazy" data-idx="${idx}">
-            ${p.caption ? `<p class="text-xs text-gray-400 mt-1 px-1 truncate">${esc(p.caption)}</p>` : ""}`;
-          // Click photo → lightbox
+            ${p.caption ? `<p class="caption-text">${esc(p.caption)}</p>` : ""}`;
           card.querySelector("img").addEventListener("click", () => openLightbox(idx));
-          // Delete button
           card.querySelector(".del-btn").addEventListener("click", (e) => {
             e.stopPropagation();
             deletePhoto(p.key);
           });
-          // Make badge editable
           makeBadgeEditable(card, p);
           grid.appendChild(card);
         });
+
+        // Phase 1.3: Observe new cards for lazy-reveal
+        observeCards();
+
         $("#status").textContent = `${tripId} · ${photos.length} 張相`;
       } catch (err) {
         console.error("loadPhotos:", err);
-        grid.innerHTML = `<p class="text-red-400 text-sm col-span-full">⚠️ 載入失敗：${esc(err.message)}</p>`;
+        hideSkeleton();
+        grid.classList.remove("hidden");
+        grid.innerHTML = `<p style="color:var(--primary);font-size:13px;grid-column:1/-1;">⚠️ 載入失敗：${esc(err.message)}</p>`;
       }
     }
 
-    // ── Edit photo metadata (PATCH) ──
+    // ── Edit photo metadata ──
     async function updatePhotoMeta(key, day, spot, caption) {
       try {
         const form = new FormData();
@@ -497,12 +965,10 @@
       }
     }
 
-    // ── Inline edit badge ──
     function makeBadgeEditable(card, photo) {
       const badgeRow = card.querySelector(".badge-row");
       if (!badgeRow) return;
 
-      // Make spot badge clickable
       const spotBadge = badgeRow.querySelector(".badge-spot");
       if (spotBadge) {
         spotBadge.style.cursor = "pointer";
@@ -514,7 +980,6 @@
         });
       }
 
-      // Make day badge clickable
       const dayBadge = badgeRow.querySelector(".badge-day");
       if (dayBadge) {
         dayBadge.style.cursor = "pointer";
@@ -526,7 +991,6 @@
         });
       }
 
-      // If no badge at all (unknown), add a clickable placeholder
       if (!spotBadge && !dayBadge) {
         const editBtn = document.createElement("span");
         editBtn.className = "badge-spot";
@@ -543,14 +1007,12 @@
     }
 
     function startEditMeta(card, photo) {
-      // Remove existing edit UI
       const existing = card.querySelector(".meta-edit");
       if (existing) existing.remove();
 
       const badgeRow = card.querySelector(".badge-row");
       if (!badgeRow) return;
 
-      // Hide badges
       badgeRow.style.display = "none";
 
       const editDiv = document.createElement("div");
@@ -562,54 +1024,119 @@
         border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
         backdrop-filter: blur(8px); min-width: 140px;
       `;
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      if (isDark) {
+        editDiv.style.background = "rgba(30,27,22,0.96)";
+        editDiv.style.boxShadow = "0 4px 16px rgba(0,0,0,0.4)";
+      }
 
       editDiv.innerHTML = `
-        <div style="display:flex;gap:4px;align-items:center;font-size:11px;color:#666;">
+        <div style="display:flex;gap:4px;align-items:center;font-size:11px;color:${isDark ? '#ccc' : '#666'};">
           <span>D</span>
           <input type="number" min="0" max="30" value="${photo.day || 0}"
-            style="width:40px;padding:2px 4px;border:1px solid #ddd;border-radius:4px;font-size:11px;">
+            style="width:40px;padding:2px 4px;border:1px solid ${isDark ? '#444' : '#ddd'};border-radius:4px;font-size:11px;background:${isDark ? '#2a2520' : '#fff'};color:${isDark ? '#eee' : '#333'};">
           <span style="margin-left:4px;">📍</span>
           <input type="text" value="${esc(photo.spot || '')}" placeholder="unknown"
-            style="flex:1;padding:2px 4px;border:1px solid #ddd;border-radius:4px;font-size:11px;min-width:60px;">
+            style="flex:1;padding:2px 4px;border:1px solid ${isDark ? '#444' : '#ddd'};border-radius:4px;font-size:11px;min-width:60px;background:${isDark ? '#2a2520' : '#fff'};color:${isDark ? '#eee' : '#333'};">
         </div>
         <div style="display:flex;gap:4px;justify-content:flex-end;margin-top:4px;">
           <button class="edit-save" style="padding:2px 10px;background:#6366f1;color:white;border:none;border-radius:6px;font-size:10px;cursor:pointer;">✓</button>
-          <button class="edit-cancel" style="padding:2px 8px;background:#eee;color:#666;border:none;border-radius:6px;font-size:10px;cursor:pointer;">✕</button>
+          <button class="edit-cancel" style="padding:2px 8px;background:${isDark ? '#444' : '#eee'};color:${isDark ? '#ccc' : '#666'};border:none;border-radius:6px;font-size:10px;cursor:pointer;">✕</button>
         </div>
       `;
 
       card.appendChild(editDiv);
 
-      // Focus spot input
       const spotInput = editDiv.querySelector('input[type="text"]');
       if (spotInput) setTimeout(() => spotInput.focus(), 100);
 
-      // Save
       editDiv.querySelector(".edit-save").addEventListener("click", async () => {
         const dayVal = parseInt(editDiv.querySelector('input[type="number"]').value) || 0;
         const spotVal = editDiv.querySelector('input[type="text"]').value.trim() || "unknown";
         await updatePhotoMeta(photo.key, dayVal, spotVal, "");
         toast(`✅ Day ${dayVal} · ${esc(spotVal)}`);
         editDiv.remove();
-        badgeRow.style.display = "";  // restore badges
-        loadPhotos(currentTrip);      // refresh
+        badgeRow.style.display = "";
+        loadPhotos(currentTrip);
       });
 
-      // Cancel
       editDiv.querySelector(".edit-cancel").addEventListener("click", () => {
         editDiv.remove();
         badgeRow.style.display = "";
       });
 
-      // Click outside = cancel
-      const cancelClick = (e2) => {
-        if (!editDiv.contains(e2.target) && !badgeRow.contains(e2.target)) {
-          editDiv.remove();
-          badgeRow.style.display = "";
-          document.removeEventListener("mousedown", cancelClick);
-        }
+      // Close on outside click
+      setTimeout(() => {
+        const handler = (e) => {
+          if (!editDiv.contains(e.target) && !badgeRow?.contains(e.target)) {
+            editDiv.remove();
+            if (badgeRow) badgeRow.style.display = "";
+            document.removeEventListener("click", handler);
+          }
+        };
+        document.addEventListener("click", handler);
+      }, 0);
+    }
+
+    // ═════════════════════════════════════════════
+    // Phase 2.2: Lightbox with double-tap zoom
+    // ═════════════════════════════════════════════
+    function openLightbox(idx) {
+      lightboxIdx = idx;
+      const p = currentPhotos[idx];
+      const lb = $("#lightbox");
+      const img = $("#lb-img");
+      const caption = $("#lb-caption");
+      const dots = $("#lb-dots");
+
+      img.src = p.url;
+      img.classList.remove("zoomed", "zoomed-more");
+      lightboxZoomLevel = 0;
+      caption.textContent = p.caption || "";
+      lb.style.display = "flex";
+
+      // Dots
+      dots.innerHTML = "";
+      if (currentPhotos.length > 1) {
+        currentPhotos.forEach((_, i) => {
+          const dot = document.createElement("span");
+          if (i === idx) dot.classList.add("active");
+          dot.addEventListener("click", () => openLightbox(i));
+          dots.appendChild(dot);
+        });
+      }
+
+      // Phase 2.2: Double-tap zoom
+      let lastTap = 0;
+      img.ondblclick = (e) => {
+        e.preventDefault();
+        cycleLightboxZoom(img);
       };
-      document.addEventListener("mousedown", cancelClick);
+
+      document.body.style.overflow = "hidden";
+    }
+
+    function cycleLightboxZoom(img) {
+      lightboxZoomLevel = (lightboxZoomLevel + 1) % 3;
+      img.classList.remove("zoomed", "zoomed-more");
+      if (lightboxZoomLevel === 1) img.classList.add("zoomed");
+      if (lightboxZoomLevel === 2) img.classList.add("zoomed-more");
+    }
+
+    function closeLightbox() {
+      const lb = $("#lightbox");
+      lb.style.display = "none";
+      document.body.style.overflow = "";
+      lightboxIdx = -1;
+      lightboxZoomLevel = 0;
+    }
+
+    function navigateLightbox(dir) {
+      if (currentPhotos.length <= 1) return;
+      let idx = lightboxIdx + dir;
+      if (idx < 0) idx = currentPhotos.length - 1;
+      if (idx >= currentPhotos.length) idx = 0;
+      openLightbox(idx);
     }
 
     // ── Delete photo ──
@@ -620,413 +1147,190 @@
           method: "DELETE",
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
-        const remaining = data.remaining || 0;
-
-        // Show undo toast with 30s timeout
-        const dismissToast = toastHTML(
-          `<span>已刪除 1 張相</span>
-           <button id="undo-btn" class="ml-3 px-3 py-1 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-700 text-xs font-medium transition">
-             ↩️ Undo
-           </button>`,
-          30000  // 30s auto-dismiss
-        );
-
-        // Quick refresh grid
+        closeLightbox();
+        toast("🗑️ 已刪除");
         loadPhotos(currentTrip);
         loadTrips();
-
-        // Attach undo handler (after DOM update)
-        setTimeout(() => {
-          const undoBtn = document.getElementById("undo-btn");
-          if (undoBtn) {
-            undoBtn.addEventListener("click", async () => {
-              // Dismiss the toast
-              if (dismissToast) dismissToast();
-              try {
-                const restoreResp = await fetch(
-                  `${API}/api/photo/${encodeURIComponent(currentTrip)}/${encodeURIComponent(key)}/restore`,
-                  { method: "POST" }
-                );
-                if (!restoreResp.ok) throw new Error(`HTTP ${restoreResp.status}`);
-                toast("✅ 已還原");
-                loadPhotos(currentTrip);
-                loadTrips();
-              } catch (err) {
-                toast(`❌ 還原失敗：${err.message}`);
-              }
-            });
-          }
-
-          // If not undone within 30s → permanent delete
-          const toastEl = document.getElementById("undo-toast");
-          if (toastEl) {
-            const fadeTimer = setTimeout(async () => {
-              try {
-                await fetch(
-                  `${API}/api/trash/${encodeURIComponent(currentTrip)}/${encodeURIComponent(key)}`,
-                  { method: "DELETE" }
-                );
-              } catch {
-                // Silently fail if already restored or network issue
-              }
-            }, 30000);
-
-            // Cancel permanent delete if undo clicked
-            const checkUndo = setInterval(() => {
-              if (!document.getElementById("undo-toast")) {
-                clearTimeout(fadeTimer);
-                clearInterval(checkUndo);
-              }
-            }, 500);
-          }
-        }, 50);
       } catch (err) {
         toast(`❌ 刪除失敗：${err.message}`);
       }
     }
 
-    // ── Lightbox ──
-    function openLightbox(idx) {
-      lightboxIdx = idx;
-      showLightboxImage();
-      updateDots();
-      $("#lightbox").style.display = "flex";
-      $("#lightbox").classList.remove("hidden");
-      document.body.style.overflow = "hidden";
+    // ── Utility functions ──
+    function esc(str) {
+      const d = document.createElement("div");
+      d.textContent = str;
+      return d.innerHTML;
     }
-    function closeLightbox() {
-      $("#lightbox").style.display = "none";
-      $("#lightbox").classList.add("hidden");
-      document.body.style.overflow = "";
-      lightboxIdx = -1;
-    }
-    function showLightboxImage() {
-      const p = currentPhotos[lightboxIdx];
-      if (!p) return;
-      const img = $("#lb-img");
-      img.style.transform = "scale(0.95)";
-      img.src = p.url;
-      img.onload = () => { img.style.transform = "scale(1)"; };
-      $("#lb-caption").textContent = p.caption || "";
-      updateDots();
-    }
-    function updateDots() {
-      const dots = $("#lb-dots");
-      dots.innerHTML = "";
-      currentPhotos.forEach((_, i) => {
-        const span = document.createElement("span");
-        if (i === lightboxIdx) span.className = "active";
-        dots.appendChild(span);
-      });
-    }
-    function lightboxPrev(e) { e?.stopPropagation(); if (lightboxIdx > 0) { lightboxIdx--; showLightboxImage(); } }
-    function lightboxNext(e) { e?.stopPropagation(); if (lightboxIdx < currentPhotos.length - 1) { lightboxIdx++; showLightboxImage(); } }
 
-    $("#lb-close").addEventListener("click", closeLightbox);
-    $("#lightbox").addEventListener("click", (e) => {
-      if (e.target === $("#lightbox")) closeLightbox();
-    });
-    $("#lb-prev").addEventListener("click", lightboxPrev);
-    $("#lb-next").addEventListener("click", lightboxNext);
+    function fmtDate(d) {
+      if (!d) return "";
+      const dt = new Date(d);
+      return dt.toLocaleDateString("zh-Hant", { month: "short", day: "numeric" });
+    }
 
-    // ── Lightbox swipe (mobile) ──
-    let touchStartX = 0;
-    $("#lightbox").addEventListener("touchstart", (e) => { touchStartX = e.touches[0].clientX; }, {passive: true});
-    $("#lightbox").addEventListener("touchend", (e) => {
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      if (Math.abs(dx) > 60) {
-        if (dx < 0) lightboxNext();
-        else lightboxPrev();
+    function toast(msg, undo) {
+      const existing = document.querySelector(".toast");
+      if (existing) existing.remove();
+      const t = document.createElement("div");
+      t.className = "toast";
+      t.textContent = msg;
+      if (undo) {
+        const btn = document.createElement("button");
+        btn.textContent = undo.label || "↩️ 復原";
+        btn.style.cssText = "margin-left:12px;background:none;border:1px solid var(--accent-pink);color:var(--accent-pink);padding:2px 10px;border-radius:8px;font-size:12px;cursor:pointer;";
+        btn.addEventListener("click", () => {
+          t.remove();
+          undo.action();
+        });
+        t.appendChild(btn);
+        t.id = "undo-toast";
       }
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), undo ? 6000 : 3000);
+    }
+
+    // ═════════════════════════════════════════════
+    // Upload handlers
+    // ═════════════════════════════════════════════
+    $("#btn-upload").addEventListener("click", () => {
+      const panel = $("#upload-panel");
+      panel.classList.toggle("hidden");
     });
 
-    // ── Keyboard nav ──
-    document.addEventListener("keydown", (e) => {
-      if (lightboxIdx < 0) return;
-      if (e.key === "Escape") closeLightbox();
-      if (e.key === "ArrowLeft") lightboxPrev(e);
-      if (e.key === "ArrowRight") lightboxNext(e);
-    });
-
-    // ── Mobile hamburger ──
-    $("#hamburger").addEventListener("click", () => {
-      $("#nav-links").classList.toggle("open");
-    });
-
-    // ── Upload ──
-    const btnUpload = $("#btn-upload");
-    const uploadPanel = $("#upload-panel");
     const dropZone = $("#drop-zone");
     const fileInput = $("#file-input");
-    const previewRow = $("#preview-row");
-    const btnDoUpload = $("#btn-do-upload");
-    const uploadProgress = $("#upload-progress");
     const fileCount = $("#file-count");
-
-    btnUpload.addEventListener("click", () => {
-      const hidden = uploadPanel.classList.toggle("hidden");
-      if (!hidden) {
-        uploadPanel.scrollIntoView({ behavior: "smooth" });
-      }
-    });
+    const btnDoUpload = $("#btn-do-upload");
+    const previewRow = $("#preview-row");
 
     dropZone.addEventListener("click", () => fileInput.click());
-    fileInput.addEventListener("change", () => handleFiles(fileInput.files));
 
-    // Drag & drop
-    dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drag-over"); });
-    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.classList.add("drag-over");
+    });
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.classList.remove("drag-over");
+    });
     dropZone.addEventListener("drop", (e) => {
       e.preventDefault();
       dropZone.classList.remove("drag-over");
       handleFiles(e.dataTransfer.files);
     });
 
-    function handleFiles(files) {
-      selectedFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
-      if (selectedFiles.length === 0) {
-        fileCount.textContent = "⚠️ 請選擇圖片檔案";
-        return;
-      }
-      fileCount.textContent = `已選 ${selectedFiles.length} 個檔案`;
-      btnDoUpload.disabled = false;
+    fileInput.addEventListener("change", () => {
+      handleFiles(fileInput.files);
+    });
 
-      // Show previews
+    function handleFiles(files) {
+      selectedFiles = Array.from(files).filter(f => {
+        const ext = f.name.split(".").pop().toLowerCase();
+        return ["jpg","jpeg","png","webp","heic","heif"].includes(ext);
+      });
+      fileCount.textContent = selectedFiles.length ? `${selectedFiles.length} 個檔案` : "未選擇檔案";
+      btnDoUpload.disabled = selectedFiles.length === 0;
+
       previewRow.innerHTML = "";
-      selectedFiles.forEach((f) => {
-        const url = URL.createObjectURL(f);
-        const thumb = document.createElement("img");
-        thumb.src = url;
-        thumb.className = "w-16 h-16 object-cover rounded-lg border border-white/10";
-        thumb.title = f.name;
-        previewRow.appendChild(thumb);
+      selectedFiles.slice(0, 12).forEach(f => {
+        const reader = new FileReader();
+        reader.onload = (e2) => {
+          const img = document.createElement("img");
+          img.src = e2.target.result;
+          img.style.cssText = "width:60px;height:60px;object-fit:cover;border-radius:8px;";
+          previewRow.appendChild(img);
+        };
+        reader.readAsDataURL(f);
       });
     }
 
     btnDoUpload.addEventListener("click", async () => {
-      if (selectedFiles.length === 0 || !currentTrip) return;
+      if (selectedFiles.length === 0) return;
+      const wrap = $("#upload-progress-wrap");
+      const bar = $("#progress-bar");
+      const prog = $("#upload-progress");
+      wrap.classList.remove("hidden");
       btnDoUpload.disabled = true;
-      const progWrap = $("#upload-progress-wrap");
-      const progText = $("#upload-progress");
-      const progBar = $("#progress-bar");
-      progWrap.classList.remove("hidden");
-      progBar.style.width = "0%";
 
-      let done = 0;
+      const dayVal = parseInt($("#upload-day").value) || 0;
+      const spotVal = $("#upload-spot").value.trim();
+      const captionVal = $("#upload-caption").value.trim();
+
+      let uploaded = 0;
       let failed = 0;
-      const uploadedPhotos = [];  // { url, thumb_url, caption, key }
 
       for (const file of selectedFiles) {
-        const pct = Math.round((done / selectedFiles.length) * 100);
-        progText.textContent = `⬆️ 上載中… ${done + 1}/${selectedFiles.length}`;
-        progBar.style.width = `${pct}%`;
-        try {
-          const form = new FormData();
-          form.append("file", file);
-          form.append("caption", $("#upload-caption").value.trim());
-          form.append("day", $("#upload-day").value || "0");
-          form.append("spot", $("#upload-spot").value.trim());
+        const form = new FormData();
+        form.append("file", file);
+        if (dayVal > 0) form.append("day", String(dayVal));
+        if (spotVal) form.append("spot", spotVal);
+        if (captionVal) form.append("caption", captionVal);
 
+        try {
           const resp = await fetch(`${API}/api/upload/${encodeURIComponent(currentTrip)}`, {
             method: "POST",
             body: form,
           });
-          if (!resp.ok) {
-            const errData = await resp.json().catch(() => ({}));
-            throw new Error(errData.detail || `HTTP ${resp.status}`);
-          }
-          const uploadData = await resp.json();
-          uploadedPhotos.push({
-            url: `${API}${uploadData.url}`,
-            thumb_url: uploadData.thumb_url ? `${API}${uploadData.thumb_url}` : `${API}${uploadData.url}`,
-            caption: $("#upload-caption").value.trim(),
-            key: uploadData.key,
-          });
-          done++;
-          progBar.style.width = `${Math.round((done / selectedFiles.length) * 100)}%`;
+          if (resp.ok) { uploaded++; }
+          else { failed++; }
         } catch (err) {
           failed++;
-          console.error("Upload failed:", file.name, err);
         }
+
+        const pct = Math.round(((uploaded + failed) / selectedFiles.length) * 100);
+        bar.style.width = pct + "%";
+        prog.textContent = `${uploaded + failed} / ${selectedFiles.length} · ✅ ${uploaded} ❌ ${failed}`;
       }
 
-      progWrap.classList.add("hidden");
-      btnDoUpload.disabled = false;
+      toast(`✅ ${uploaded} 張上載完成` + (failed > 0 ? ` · ${failed} 張失敗` : ""));
+
+      // Reset
       selectedFiles = [];
+      fileInput.value = "";
       fileCount.textContent = "未選擇檔案";
       previewRow.innerHTML = "";
+      btnDoUpload.disabled = true;
+      wrap.classList.add("hidden");
+      bar.style.width = "0%";
+      $("#upload-day").value = "";
+      $("#upload-spot").value = "";
+      $("#upload-caption").value = "";
 
-      if (done > 0) {
-        toast(`✅ 成功上載 ${done} 張相` + (failed > 0 ? ` · ${failed} 張失敗` : ""));
-        // Show upload preview lightbox
-        showUploadPreview(uploadedPhotos);
-      } else {
-        toast(`❌ 上載失敗`);
-      }
-
-      // Refresh
       loadPhotos(currentTrip);
       loadTrips();
     });
 
-    // ── Upload Preview Lightbox ──
-    function showUploadPreview(photos) {
-      if (photos.length === 0) return;
+    // ═════════════════════════════════════════════
+    // Hamburger menu
+    // ═════════════════════════════════════════════
+    $("#hamburger").addEventListener("click", () => {
+      $("#nav-links").classList.toggle("open");
+    });
 
-      // Build preview modal
-      const overlay = document.createElement("div");
-      overlay.className = "lightbox";
-      overlay.style.display = "flex";
-      overlay.style.flexDirection = "column";
-      overlay.style.gap = "16px";
-      overlay.id = "upload-preview";
+    // ═════════════════════════════════════════════
+    // Keyboard events: lightbox navigation
+    // ═════════════════════════════════════════════
+    document.addEventListener("keydown", (e) => {
+      if (lightboxIdx < 0) return;
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") navigateLightbox(-1);
+      if (e.key === "ArrowRight") navigateLightbox(1);
+    });
 
-      const closeBtn = document.createElement("span");
-      closeBtn.className = "close";
-      closeBtn.textContent = "×";
-      closeBtn.style.position = "absolute";
-      closeBtn.style.top = "16px";
-      closeBtn.style.right = "20px";
-      closeBtn.style.fontSize = "36px";
-      closeBtn.style.color = "white";
-      closeBtn.style.opacity = "0.5";
-      closeBtn.style.cursor = "pointer";
-      closeBtn.style.zIndex = "1";
-      closeBtn.addEventListener("click", () => closeUploadPreview());
+    // Lightbox close via background click or ✕
+    $("#lb-close").addEventListener("click", closeLightbox);
+    $("#lightbox").addEventListener("click", (e) => {
+      if (e.target === $("#lightbox")) closeLightbox();
+    });
+    $("#lb-prev").addEventListener("click", () => navigateLightbox(-1));
+    $("#lb-next").addEventListener("click", () => navigateLightbox(1));
 
-      const title = document.createElement("p");
-      title.textContent = `✅ 成功上載 ${photos.length} 張相`;
-      title.style.color = "rgba(255,255,255,0.9)";
-      title.style.fontSize = "16px";
-      title.style.fontWeight = "500";
-
-      const grid = document.createElement("div");
-      grid.style.display = "flex";
-      grid.style.flexWrap = "wrap";
-      grid.style.gap = "12px";
-      grid.style.justifyContent = "center";
-      grid.style.maxWidth = "90vw";
-      grid.style.maxHeight = "70vh";
-      grid.style.overflowY = "auto";
-
-      photos.forEach((p, i) => {
-        const wrapper = document.createElement("div");
-        wrapper.style.display = "flex";
-        wrapper.style.flexDirection = "column";
-        wrapper.style.alignItems = "center";
-        wrapper.style.gap = "4px";
-        wrapper.style.cursor = "pointer";
-        wrapper.addEventListener("click", () => {
-          // Open in main lightbox
-          closeUploadPreview();
-          setTimeout(() => {
-            // Find this photo in currentPhotos to get correct idx
-            const idx = currentPhotos.findIndex(ph => ph.key === p.key);
-            if (idx >= 0) openLightbox(idx);
-          }, 300);
-        });
-
-        const img = document.createElement("img");
-        img.src = p.thumb_url;
-        img.style.width = "160px";
-        img.style.height = "120px";
-        img.style.objectFit = "cover";
-        img.style.borderRadius = "10px";
-        img.style.border = "1px solid rgba(255,255,255,0.1)";
-        img.style.transition = "transform 0.2s";
-        img.addEventListener("mouseenter", () => { img.style.transform = "scale(1.05)"; });
-        img.addEventListener("mouseleave", () => { img.style.transform = "scale(1)"; });
-
-        const label = document.createElement("span");
-        label.textContent = p.caption || `📷 #${i + 1}`;
-        label.style.color = "rgba(255,255,255,0.5)";
-        label.style.fontSize = "11px";
-        label.style.maxWidth = "160px";
-        label.style.textAlign = "center";
-        label.style.overflow = "hidden";
-        label.style.textOverflow = "ellipsis";
-        label.style.whiteSpace = "nowrap";
-
-        wrapper.appendChild(img);
-        wrapper.appendChild(label);
-        grid.appendChild(wrapper);
-      });
-
-      const dimmedBg = document.createElement("div");
-      dimmedBg.id = "upload-preview-bg";
-      dimmedBg.style.position = "fixed";
-      dimmedBg.style.inset = "0";
-      dimmedBg.style.zIndex = "59";
-      dimmedBg.style.background = "rgba(0,0,0,0.7)";
-      dimmedBg.addEventListener("click", () => closeUploadPreview());
-
-      overlay.appendChild(closeBtn);
-      overlay.appendChild(title);
-      overlay.appendChild(grid);
-      document.body.appendChild(dimmedBg);
-      document.body.appendChild(overlay);
-      document.body.style.overflow = "hidden";
-
-      function closeUploadPreview() {
-        overlay.remove();
-        dimmedBg.remove();
-        document.body.style.overflow = "";
-      }
-    }
-
-    // ── Toast ──
-    function toast(msg) {
-      const t = document.createElement("div");
-      t.className = "toast";
-      t.textContent = msg;
-      document.body.appendChild(t);
-      setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity 0.3s"; }, 2500);
-      setTimeout(() => t.remove(), 2900);
-    }
-
-    // toastHTML — supports inner HTML (for undo button) + returns dismiss function
-    function toastHTML(html, durationMs) {
-      // Remove any existing undo toast
-      const old = document.getElementById("undo-toast");
-      if (old) old.remove();
-
-      const t = document.createElement("div");
-      t.className = "toast";
-      t.id = "undo-toast";
-      t.style.display = "flex";
-      t.style.alignItems = "center";
-      t.innerHTML = html;
-      document.body.appendChild(t);
-
-      let dismissed = false;
-      const dismiss = () => {
-        if (dismissed) return;
-        dismissed = true;
-        t.style.opacity = "0";
-        t.style.transition = "opacity 0.3s";
-        setTimeout(() => t.remove(), 300);
-      };
-
-      setTimeout(dismiss, durationMs);
-      return dismiss;
-    }
-
-    // ── Helpers ──
-    function esc(s) {
-      if (!s) return "";
-      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-    }
-    function fmtDate(d) {
-      if (!d) return "";
-      try {
-        return new Date(d).toLocaleDateString("zh-HK", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
-      } catch { return d.slice(0,10); }
-    }
-
-    // ── Go ──
+    // ═════════════════════════════════════════════
+    // Init
+    // ═════════════════════════════════════════════
     init();
+
   })();
-  </script>
+</script>
 </body>
 </html>
