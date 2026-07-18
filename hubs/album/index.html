@@ -262,7 +262,7 @@
         <div class="upload-zone" id="drop-zone">
           <p class="text-gray-500 text-sm mb-1">📁 拖放相片到此處，或點擊選擇檔案</p>
           <p class="text-gray-300 text-xs">一次可揀多張 · 每張最大 50MB</p>
-          <input type="file" id="file-input" multiple accept="image/*" class="hidden">
+          <input type="file" id="file-input" multiple accept="image/*,.heic,.heif" class="hidden">
         </div>
         <!-- Upload form fields -->
         <div class="mt-3 flex flex-wrap gap-3">
@@ -429,7 +429,9 @@
         currentPhotos = photos.map(p => ({
           ...p,
           url: p.url.startsWith("http") ? p.url : `${API}${p.url}`,
-          thumb_url: p.thumb_url ? (p.thumb_url.startsWith("http") ? p.thumb_url : `${API}${p.thumb_url}`) : null,
+          thumb_url: p.thumb_url
+            ? (p.thumb_url.startsWith("http") ? p.thumb_url : `${API}${p.thumb_url}`)
+            : (p.url.startsWith("http") ? p.url : `${API}${p.url}`),  // fallback to original if no thumbnail
         }));
         $("#photo-count").textContent = `${photos.length} 張相`;
 

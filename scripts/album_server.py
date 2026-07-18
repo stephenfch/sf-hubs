@@ -25,6 +25,14 @@ try:
 except ImportError as e:
     sys.exit(f"Missing dependency: {e}\nRun: pip install fastapi uvicorn python-multipart pillow")
 
+# Register HEIC/HEIF support for iPhone photos
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+    print("[HEIC] pillow-heif opener registered — HEIC/HEIF support enabled")
+except ImportError:
+    print("[WARN] pillow-heif not installed — HEIC/HEIF thumbnails will fail. Run: pip install pillow-heif")
+
 try:
     from PIL import Image
 except ImportError:
