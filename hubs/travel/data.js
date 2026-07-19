@@ -154,6 +154,8 @@ window.TRAVEL_DATA = {
           location: "鳥取",
           hotel: "鳥取 Green Rich Hotel Tottori Ekimae",
           items: [
+            { time: "09:00", icon: "☕", title: "The Mill's 朝食", desc: "鳥取駅附近人氣咖啡店（4.2⭐），10:00 開門，推薦早餐/咖啡", url: "https://maps.app.goo.gl/3jyYfbRNKfQes7kZ7?g_st=iw",
+              info: { hours: "10:00–", address: "1 Chome-155 Gyotoku, Tottori, 680-0824", intro: "鳥取駅附近嘅時尚咖啡店 The Mill's，提供咖啡同輕食，朝早行過去食個悠閒早餐再出發", photoSpot: "咖啡拉花特寫 + 店內木系裝潢", photos: [] } },
             { time: "", icon: "🧒", title: "鳥取沙丘兒童之國", desc: "アイエム電子鳥取砂丘こどもの国", url: "https://kodomonokuni.tottori.jp/",
               info: { hours: "9:00–17:00（入園 16:30 止）· 第2水曜休", mapcode: "125 702 668", intro: "免費入場嘅大型兒童王國，動物區 + 遊樂設施 + 展望台，10 人家庭好去處", photoSpot: "動物區影羊駝 / 展望台影鳥取市", photos: [] } },
             { time: "", icon: "🏨", title: "住：鳥取 Green Rich Hotel", desc: "🅿️ 同上（Dパーキング永楽温泉町¥800/24h✅徒步2分）", url: "", drive: "15min" },
