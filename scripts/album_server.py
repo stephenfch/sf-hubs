@@ -34,9 +34,10 @@ except ImportError:
     print("[WARN] pillow-heif not installed — HEIC/HEIF thumbnails will fail. Run: pip install pillow-heif")
 
 try:
-    from PIL import Image
+    from PIL import Image, ImageOps
 except ImportError:
     Image = None
+    ImageOps = None
     print("[WARN] Pillow not installed — thumbnails disabled. Run: pip install pillow")
 
 # ── Config ──────────────────────────────────────────────────────────────────
@@ -163,6 +164,7 @@ def _generate_thumb(trip_dir: Path, key: str) -> str | None:
         return tkey  # already generated
     try:
         with Image.open(src) as img:
+            img = ImageOps.exif_transpose(img)  # Apply EXIF orientation (fix portrait→landscape)
             img = img.convert("RGB")
             w, h = img.size
             if w > THUMB_WIDTH:
@@ -253,6 +255,10 @@ def list_photos(trip_id: str):
         info = meta.get(f.name, {})
         tkey = _thumb_key(f.name)
         has_thumb = (trip_dir / "thumbs" / tkey).exists()
+        # Check if classifier has run (has "classifier" key) vs pending (no classifier, no user day)
+        classifier_done = "classifier" in info
+        user_tagged = info.get("day", 0) > 0 or info.get("spot", "")
+        classifying = not classifier_done and not user_tagged
         photos.append({
             "key": f.name,
             "url": f"/api/photo/{trip_id}/{f.name}",
@@ -262,6 +268,7 @@ def list_photos(trip_id: str):
             "spot": info.get("spot", ""),
             "uploaded": info.get("uploaded", ""),
             "size": f.stat().st_size,
+            "classifying": classifying,
         })
     return photos
 
@@ -597,7 +604,7 @@ def update_photo_meta(trip_id: str, key: str, day: int = Form(0), spot: str = Fo
     elif "spot" not in meta[safe_key]:
         meta[safe_key]["spot"] = "unknown"
 
-    if caption:
+    if caption is not None:
         meta[safe_key]["caption"] = caption
 
     meta["updated"] = datetime.now().isoformat()

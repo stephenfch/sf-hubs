@@ -80,7 +80,7 @@
     #main-nav {
       transition: background .35s ease, box-shadow .35s ease, border-color .3s ease;
     }
-    #main-nav:not([data-theme-bound]) {
+    #main-nav {
       background: rgba(255, 255, 255, 0.55);
       backdrop-filter: blur(14px) saturate(1.1);
       -webkit-backdrop-filter: blur(14px) saturate(1.1);
@@ -786,6 +786,7 @@
     function showSkeleton() {
       // Debounce: only show skeleton if fetch takes > 250ms
       // Avoids flicker when API responds quickly (< 250ms)
+      clearTimeout(skeletonTimer);
       skeletonTimer = setTimeout(() => {
         const grid = $("#skeleton-grid");
         grid.classList.remove("hidden");
@@ -924,17 +925,19 @@
           const card = document.createElement("div");
           card.className = "photo-card lazy-load";
           const dayBadge = p.day > 0 ? `<span class="badge-day">D${esc(p.day)}</span>` : "";
-          const spotBadge = p.spot
-            ? (p.spot === "unknown" ? `<span class="badge-spot" style="background:rgba(150,150,150,0.5);">❔ unknown</span>`
-                                     : `<span class="badge-spot">${esc(p.spot)}</span>`)
-            : `<span class="badge-spot" style="background:rgba(150,150,150,0.5);">❔ unknown</span>`;
+          const spotBadge = p.classifying
+            ? `<span class="badge-spot" style="background:rgba(99,102,241,0.5);">⏳ classifying...</span>`
+            : (p.spot
+              ? (p.spot === "unknown" ? `<span class="badge-spot" style="background:rgba(150,150,150,0.5);">❔ unknown</span>`
+                                      : `<span class="badge-spot">${esc(p.spot)}</span>`)
+              : `<span class="badge-spot" style="background:rgba(150,150,150,0.5);">❔ unknown</span>`);
           const badges = (dayBadge || spotBadge)
             ? `<div class="badge-row">${dayBadge}${spotBadge}</div>`
             : "";
           card.innerHTML = `
-            <button class="del-btn" title="刪除" data-key="${esc(p.key)}">✕</button>
+            <button class="del-btn" title="刪除" data-key="${escAttr(p.key)}">✕</button>
             ${badges}
-            <img src="${esc(p.thumb_url)}" alt="${esc(p.caption)}" loading="lazy" data-idx="${idx}">
+            <img src="${escUrl(p.thumb_url)}" alt="${escAttr(p.caption)}" loading="lazy" data-idx="${idx}">
             ${p.caption ? `<p class="caption-text">${esc(p.caption)}</p>` : ""}`;
           card.querySelector("img").addEventListener("click", () => openLightbox(idx));
           card.querySelector(".del-btn").addEventListener("click", (e) => {
@@ -963,7 +966,7 @@
         const form = new FormData();
         if (day > 0) form.append("day", String(day));
         if (spot) form.append("spot", spot);
-        if (caption) form.append("caption", caption);
+        if (caption !== undefined) form.append("caption", caption);
         const resp = await fetch(`${API}/api/photo/${encodeURIComponent(currentTrip)}/${encodeURIComponent(key)}`, {
           method: "PATCH",
           body: form,
@@ -1050,6 +1053,11 @@
           <input type="text" value="${esc(photo.spot || '')}" placeholder="unknown"
             style="flex:1;padding:2px 4px;border:1px solid ${isDark ? '#444' : '#ddd'};border-radius:4px;font-size:11px;min-width:60px;background:${isDark ? '#2a2520' : '#fff'};color:${isDark ? '#eee' : '#333'};">
         </div>
+        <div style="display:flex;gap:4px;align-items:center;font-size:11px;color:${isDark ? '#ccc' : '#666'};margin-top:2px;">
+          <span>📝</span>
+          <input type="text" class="edit-caption-input" value="${esc(photo.caption || '')}" placeholder="Caption"
+            style="flex:1;padding:2px 4px;border:1px solid ${isDark ? '#444' : '#ddd'};border-radius:4px;font-size:11px;background:${isDark ? '#2a2520' : '#fff'};color:${isDark ? '#eee' : '#333'};">
+        </div>
         <div style="display:flex;gap:4px;justify-content:flex-end;margin-top:4px;">
           <button class="edit-save" style="padding:2px 10px;background:#6366f1;color:white;border:none;border-radius:6px;font-size:10px;cursor:pointer;">✓</button>
           <button class="edit-cancel" style="padding:2px 8px;background:${isDark ? '#444' : '#eee'};color:${isDark ? '#ccc' : '#666'};border:none;border-radius:6px;font-size:10px;cursor:pointer;">✕</button>
@@ -1064,11 +1072,35 @@
       editDiv.querySelector(".edit-save").addEventListener("click", async () => {
         const dayVal = parseInt(editDiv.querySelector('input[type="number"]').value) || 0;
         const spotVal = editDiv.querySelector('input[type="text"]').value.trim() || "unknown";
-        await updatePhotoMeta(photo.key, dayVal, spotVal, "");
-        toast(`✅ Day ${dayVal} · ${esc(spotVal)}`);
+        const captionVal = editDiv.querySelector(".edit-caption-input").value;
+        await updatePhotoMeta(photo.key, dayVal, spotVal, captionVal);
+        toast(`✅ Day ${dayVal} · ${esc(spotVal)}` + (captionVal ? ` · ${esc(captionVal)}` : ""));
         editDiv.remove();
         badgeRow.style.display = "";
-        loadPhotos(currentTrip);
+        // In-place update: refresh just this card's badges + caption without full reload
+        photo.day = dayVal;
+        photo.spot = spotVal;
+        photo.caption = captionVal;
+        const dayBadge = photo.day > 0 ? `<span class="badge-day">D${esc(photo.day)}</span>` : "";
+        const spotBadge = photo.spot
+          ? (photo.spot === "unknown" ? `<span class="badge-spot" style="background:rgba(150,150,150,0.5);">❔ unknown</span>`
+                                       : `<span class="badge-spot">${esc(photo.spot)}</span>`)
+          : `<span class="badge-spot" style="background:rgba(150,150,150,0.5);">❔ unknown</span>`;
+        badgeRow.innerHTML = dayBadge + spotBadge;
+        // Update caption text
+        const captionEl = card.querySelector(".caption-text");
+        if (captionVal) {
+          if (captionEl) {
+            captionEl.textContent = captionVal;
+          } else {
+            const p = document.createElement("p");
+            p.className = "caption-text";
+            p.textContent = captionVal;
+            card.appendChild(p);
+          }
+        } else {
+          if (captionEl) captionEl.remove();
+        }
       });
 
       editDiv.querySelector(".edit-cancel").addEventListener("click", () => {
@@ -1164,8 +1196,8 @@
           label: "↩️ 復原",
           action: () => restorePhoto(key),
         });
-        loadPhotos(currentTrip);
-        loadTrips();
+        await loadPhotos(currentTrip);
+        await loadTrips();
       } catch (err) {
         toast(`❌ 刪除失敗：${err.message}`);
       }
@@ -1178,8 +1210,8 @@
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         toast("✅ 已復原");
-        loadPhotos(currentTrip);
-        loadTrips();
+        await loadPhotos(currentTrip);
+        await loadTrips();
       } catch (err) {
         toast(`❌ 復原失敗：${err.message}`);
       }
@@ -1190,6 +1222,12 @@
       const d = document.createElement("div");
       d.textContent = str;
       return d.innerHTML;
+    }
+    function escAttr(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function escUrl(str) {
+      return encodeURIComponent(String(str));
     }
 
     function fmtDate(d) {
@@ -1224,7 +1262,18 @@
     // ═════════════════════════════════════════════
     $("#btn-upload").addEventListener("click", () => {
       const panel = $("#upload-panel");
+      const wasHidden = panel.classList.contains("hidden");
       panel.classList.toggle("hidden");
+      // Reset inputs every time panel opens to avoid stale tags
+      if (wasHidden) {
+        $("#upload-day").value = "";
+        $("#upload-spot").value = "";
+        $("#upload-caption").value = "";
+        selectedFiles = [];
+        $("#file-input").value = "";
+        $("#file-count").textContent = "未選擇檔案";
+        $("#preview-row").innerHTML = "";
+      }
     });
 
     const dropZone = $("#drop-zone");
@@ -1253,10 +1302,16 @@
     });
 
     function handleFiles(files) {
-      selectedFiles = Array.from(files).filter(f => {
+      const allFiles = Array.from(files);
+      const allowedExts = ["jpg","jpeg","png","webp","heic","heif"];
+      selectedFiles = allFiles.filter(f => {
         const ext = f.name.split(".").pop().toLowerCase();
-        return ["jpg","jpeg","png","webp","heic","heif"].includes(ext);
+        return allowedExts.includes(ext);
       });
+      const skipped = allFiles.length - selectedFiles.length;
+      if (skipped > 0) {
+        toast(`⚠️ ${skipped} 個檔案不支援（僅 JPG/PNG/WebP/HEIC），已略過`);
+      }
       fileCount.textContent = selectedFiles.length ? `${selectedFiles.length} 個檔案` : "未選擇檔案";
       btnDoUpload.disabled = selectedFiles.length === 0;
 
@@ -1275,45 +1330,61 @@
 
     btnDoUpload.addEventListener("click", async () => {
       if (selectedFiles.length === 0) return;
+
+      const dayVal = parseInt($("#upload-day").value) || 0;
+      const spotVal = $("#upload-spot").value.trim();
+      const captionVal = $("#upload-caption").value.trim();
+
+      async function uploadFile(file) {
+        const form = new FormData();
+        form.append("file", file);
+        if (dayVal > 0) form.append("day", String(dayVal));
+        if (spotVal) form.append("spot", spotVal);
+        if (captionVal) form.append("caption", captionVal);
+        const resp = await fetch(`${API}/api/upload/${encodeURIComponent(currentTrip)}`, {
+          method: "POST",
+          body: form,
+        });
+        return resp.ok;
+      }
+
       const wrap = $("#upload-progress-wrap");
       const bar = $("#progress-bar");
       const prog = $("#upload-progress");
       wrap.classList.remove("hidden");
       btnDoUpload.disabled = true;
 
-      const dayVal = parseInt($("#upload-day").value) || 0;
-      const spotVal = $("#upload-spot").value.trim();
-      const captionVal = $("#upload-caption").value.trim();
-
+      const concurrency = 3;
       let uploaded = 0;
       let failed = 0;
+      let idx = 0;
 
-      for (const file of selectedFiles) {
-        const form = new FormData();
-        form.append("file", file);
-        if (dayVal > 0) form.append("day", String(dayVal));
-        if (spotVal) form.append("spot", spotVal);
-        if (captionVal) form.append("caption", captionVal);
-
-        try {
-          const resp = await fetch(`${API}/api/upload/${encodeURIComponent(currentTrip)}`, {
-            method: "POST",
-            body: form,
-          });
-          if (resp.ok) { uploaded++; }
-          else { failed++; }
-        } catch (err) {
-          failed++;
-        }
-
-        const pct = Math.round(((uploaded + failed) / selectedFiles.length) * 100);
+      function updateProgress() {
+        const total = uploaded + failed;
+        const pct = Math.round((total / selectedFiles.length) * 100);
         bar.style.width = pct + "%";
-        prog.textContent = `${uploaded + failed} / ${selectedFiles.length} · ✅ ${uploaded} ❌ ${failed}`;
+        prog.textContent = `${total} / ${selectedFiles.length} · ✅ ${uploaded} ❌ ${failed}`;
       }
 
-      toast(`✅ ${uploaded} 張上載完成` + (failed > 0 ? ` · ${failed} 張失敗` : ""));
+      async function worker() {
+        while (idx < selectedFiles.length) {
+          const file = selectedFiles[idx++];
+          try {
+            if (await uploadFile(file)) uploaded++; else failed++;
+          } catch {
+            failed++;
+          }
+          updateProgress();
+        }
+      }
 
-      // Reset
+      const workers = Array.from({ length: Math.min(concurrency, selectedFiles.length) }, () => worker());
+      await Promise.all(workers);
+
+
+      toast(`✅ ${uploaded} 張上載完成 — AI 分類中，請稍候…` + (failed > 0 ? ` · ${failed} 張失敗` : ""));
+
+      // Reset inputs
       selectedFiles = [];
       fileInput.value = "";
       fileCount.textContent = "未選擇檔案";
@@ -1325,8 +1396,10 @@
       $("#upload-spot").value = "";
       $("#upload-caption").value = "";
 
-      loadPhotos(currentTrip);
-      loadTrips();
+      // Wait for background classifier to finish (~3s for LLM round-trip)
+      await new Promise(r => setTimeout(r, 3000));
+      await loadPhotos(currentTrip);
+      await loadTrips();
     });
 
     // ═════════════════════════════════════════════

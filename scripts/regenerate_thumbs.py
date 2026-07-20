@@ -1,44 +1,43 @@
-"""Regenerate all thumbnails with .jpg extension."""
-from pathlib import Path
-import shutil
+"""Regenerate all thumbnails for a trip with EXIF orientation fix applied.
+Usage:
+  python scripts/regenerate_thumbs.py [trip_id] [--force]
+  python scripts/regenerate_thumbs.py osaka-2026 --force
+"""
+import argparse, sys
+sys.path.insert(0, r"C:\Users\Win 11\Desktop\sf-hubs\scripts")
+from album_server import PHOTO_ROOT, _generate_thumb, _thumb_key, ALLOWED_EXTENSIONS
 
-from pillow_heif import register_heif_opener
-register_heif_opener()
-from PIL import Image
+parser = argparse.ArgumentParser()
+parser.add_argument("trip_id", nargs="?", default="osaka-2026")
+parser.add_argument("--force", action="store_true", help="Overwrite existing thumbnails")
+args = parser.parse_args()
 
-PHOTO_ROOT = Path(r"C:\Users\Win 11\sf-hubs-photos")
-THUMB_WIDTH = 480
-ALLOWED = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"}
+trip_dir = PHOTO_ROOT / args.trip_id
+if not trip_dir.exists():
+    sys.exit(f"Trip not found: {trip_dir}")
 
-def thumb_key(key: str) -> str:
-    return Path(key).stem + ".jpg"
+photos = sorted([f for f in trip_dir.glob("*") if f.suffix.lower() in ALLOWED_EXTENSIONS],
+                key=lambda x: x.name)
 
-for trip_dir in sorted(PHOTO_ROOT.iterdir()):
-    if not trip_dir.is_dir() or trip_dir.name.startswith("."):
-        continue
-    thumbs_dir = trip_dir / "thumbs"
-    if thumbs_dir.exists():
-        shutil.rmtree(thumbs_dir)
-    thumbs_dir.mkdir(exist_ok=True)
-    count_ok = 0
-    count_fail = 0
-    for f in sorted(trip_dir.glob("*")):
-        if f.suffix.lower() not in ALLOWED:
+print(f"Found {len(photos)} photos in {trip_dir}")
+regenerated = deleted = skipped = failed = 0
+
+for p in photos:
+    thumb_path = trip_dir / "thumbs" / _thumb_key(p.name)
+    if thumb_path.exists():
+        if args.force:
+            thumb_path.unlink()
+            deleted += 1
+        else:
+            print(f"  SKIP (exists): {p.name}")
+            skipped += 1
             continue
-        tkey = thumb_key(f.name)
-        thumb_path = thumbs_dir / tkey
-        try:
-            with Image.open(f) as img:
-                img = img.convert("RGB")
-                w, h = img.size
-                if w > THUMB_WIDTH:
-                    ratio = THUMB_WIDTH / w
-                    img = img.resize((THUMB_WIDTH, int(h * ratio)), Image.LANCZOS)
-                img.save(thumb_path, "JPEG", quality=82, optimize=True)
-            count_ok += 1
-            print(f"  ✅ {f.name}  ->  {tkey}")
-        except Exception as e:
-            count_fail += 1
-            print(f"  ❌ {f.name}: {e}")
-    print(f"  [{trip_dir.name}] OK={count_ok} FAIL={count_fail}\n")
-print("Done! All thumbnails regenerated as .jpg")
+    result = _generate_thumb(trip_dir, p.name)
+    if result:
+        print(f"  OK: {p.name} -> {result}")
+        regenerated += 1
+    else:
+        print(f"  FAIL: {p.name}")
+        failed += 1
+
+print(f"\nDone: {regenerated} regenerated, {deleted} deleted-old, {skipped} skipped, {failed} failed")
