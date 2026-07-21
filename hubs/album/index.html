@@ -147,6 +147,9 @@
       transition: transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s ease, background .3s ease, border-color .3s ease;
       opacity: 0;
       transform: translateY(20px);
+      /* Phase 4: Skip off-screen rendering for faster initial load */
+      content-visibility: auto;
+      contain-intrinsic-size: auto 300px;
     }
     .photo-card.revealed {
       opacity: 1;
@@ -917,7 +920,7 @@
       });
     }
 
-    // ── Load photos ──
+    // ── Load photos (with batch progressive render) ──
     async function loadPhotos(tripId) {
       const grid = $("#photo-grid");
       const empty = $("#photo-empty");
@@ -949,43 +952,77 @@
         empty.classList.add("hidden");
         grid.classList.remove("hidden");
 
-        currentPhotos.forEach((p, idx) => {
-          const card = document.createElement("div");
-          card.className = "photo-card lazy-load";
-          const dayBadge = p.day > 0 ? `<span class="badge-day">D${esc(p.day)}</span>` : "";
-          const spotBadge = p.classifying
-            ? `<span class="badge-spot" style="background:rgba(99,102,241,0.5);">⏳ classifying...</span>`
-            : (p.spot
-              ? (p.spot === "unknown" ? `<span class="badge-spot" style="background:rgba(150,150,150,0.5);">❔ unknown</span>`
-                                      : `<span class="badge-spot">${esc(p.spot)}</span>`)
-              : `<span class="badge-spot" style="background:rgba(150,150,150,0.5);">❔ unknown</span>`);
-          const badges = (dayBadge || spotBadge)
-            ? `<div class="badge-row">${dayBadge}${spotBadge}</div>`
-            : "";
-          card.innerHTML = `
-            <button class="del-btn" title="刪除" data-key="${escAttr(p.key)}">✕</button>
-            ${badges}
-            <img src="${escUrl(p.thumb_url)}" alt="${escAttr(p.caption)}" loading="lazy" data-idx="${idx}">
-            ${p.caption ? `<p class="caption-text">${esc(p.caption)}</p>` : `<p class="caption-text caption-placeholder" style="color:var(--text-faint);font-size:11px;">Click to add caption</p>`}`;
-          card.querySelector("img").addEventListener("click", () => openLightbox(idx));
-          card.querySelector(".del-btn").addEventListener("click", (e) => {
-            e.stopPropagation();
-            deletePhoto(p.key);
-          });
-          // Click caption text to edit
-          const captionEl = card.querySelector(".caption-text");
-          if (captionEl) {
-            captionEl.addEventListener("click", (e) => {
-              e.stopPropagation();
-              startEditMeta(card, p);
-            });
-          }
-          makeBadgeEditable(card, p);
-          grid.appendChild(card);
-        });
+        // ── Batch render: first 12 immediately, rest in batches of 12 via scroll ──
+        const BATCH_SIZE = 12;
+        let renderIdx = 0;
+        let scrollObserver = null;
 
-        // Phase 1.3: Observe new cards for lazy-reveal
-        observeCards();
+        function renderBatch() {
+          const batchEnd = Math.min(renderIdx + BATCH_SIZE, currentPhotos.length);
+          for (let idx = renderIdx; idx < batchEnd; idx++) {
+            const p = currentPhotos[idx];
+            const card = document.createElement("div");
+            card.className = "photo-card lazy-load";
+            const isFristBatch = idx < 6;
+            const dayBadge = p.day > 0 ? `<span class="badge-day">D${esc(p.day)}</span>` : "";
+            const spotBadge = p.classifying
+              ? `<span class="badge-spot" style="background:rgba(99,102,241,0.5);">⏳ classifying...</span>`
+              : (p.spot
+                ? (p.spot === "unknown" ? `<span class="badge-spot" style="background:rgba(150,150,150,0.5);">❔ unknown</span>`
+                                        : `<span class="badge-spot">${esc(p.spot)}</span>`)
+                : `<span class="badge-spot" style="background:rgba(150,150,150,0.5);">❔ unknown</span>`);
+            const badges = (dayBadge || spotBadge)
+              ? `<div class="badge-row">${dayBadge}${spotBadge}</div>`
+              : "";
+            // fetchpriority="high" for first 6 photos (viewport), rest auto
+            const fetchPrio = isFristBatch ? ' fetchpriority="high"' : '';
+            card.innerHTML = `
+              <button class="del-btn" title="刪除" data-key="${escAttr(p.key)}">✕</button>
+              ${badges}
+              <img src="${escUrl(p.thumb_url)}" alt="${escAttr(p.caption)}" loading="lazy" decoding="async" width="480" data-idx="${idx}"${fetchPrio}>
+              ${p.caption ? `<p class="caption-text">${esc(p.caption)}</p>` : `<p class="caption-text caption-placeholder" style="color:var(--text-faint);font-size:11px;">Click to add caption</p>`}`;
+            card.querySelector("img").addEventListener("click", () => openLightbox(idx));
+            card.querySelector(".del-btn").addEventListener("click", (e) => {
+              e.stopPropagation();
+              deletePhoto(p.key);
+            });
+            const captionEl = card.querySelector(".caption-text");
+            if (captionEl) {
+              captionEl.addEventListener("click", (e) => {
+                e.stopPropagation();
+                startEditMeta(card, p);
+              });
+            }
+            makeBadgeEditable(card, p);
+            grid.appendChild(card);
+          }
+          renderIdx = batchEnd;
+
+          // Observe newly added cards for lazy-reveal
+          observeCards();
+        }
+
+        // Render initial batch
+        renderBatch();
+
+        // Set up scroll observer for remaining batches
+        if (renderIdx < currentPhotos.length) {
+          scrollObserver = new IntersectionObserver((entries) => {
+            // Use last rendered card as sentinel
+            const sentinel = grid.querySelector('.photo-card:last-child');
+            if (sentinel && entries.some(e => e.target === sentinel && e.isIntersecting)) {
+              renderBatch();
+              if (renderIdx >= currentPhotos.length && scrollObserver) {
+                scrollObserver.disconnect();
+                scrollObserver = null;
+              }
+            }
+          }, { rootMargin: '400px 0px' });
+
+          // Observe the last card; when user scrolls near it, load next batch
+          const lastCard = grid.querySelector('.photo-card:last-child');
+          if (lastCard) scrollObserver.observe(lastCard);
+        }
 
         $("#status").textContent = `${tripId} · ${photos.length} 張相`;
       } catch (err) {

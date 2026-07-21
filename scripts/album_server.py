@@ -13,12 +13,15 @@ Install (one-time):
   pip install fastapi uvicorn python-multipart pillow
 """
 
-import argparse, json, os, sys, uuid, threading
+import argparse, json, os, sys, uuid, threading, time, urllib.request
+from concurrent.futures import ThreadPoolExecutor, Future
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
+from fastapi import Body
 
 try:
-    from fastapi import FastAPI, UploadFile, Form, HTTPException
+    from fastapi import FastAPI, UploadFile, Form, HTTPException, Request, Body
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import FileResponse
     import uvicorn
@@ -46,6 +49,194 @@ THUMB_WIDTH = 480
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".heic", ".heif"}
 ITINERARY_PATH = Path(__file__).resolve().parent.parent / "data" / "osaka-2026.json"
 
+# ── Bounded Classifier Worker Pool ────────────────────────────────────────────
+_CLASSIFY_WORKERS = 2          # max concurrent Ollama calls
+_CLASSIFY_RETRY_MAX = 2        # max retries on LLM failure
+_CLASSIFY_RETRY_BACKOFF = [1.0, 3.0]  # seconds between retries
+
+_executor = ThreadPoolExecutor(max_workers=_CLASSIFY_WORKERS)
+print(f"[Classifier Pool] Created ThreadPoolExecutor(max_workers={_CLASSIFY_WORKERS})")
+
+
+def _call_ollama_classify(prompt: str, img_b64: str, retries: int = _CLASSIFY_RETRY_MAX) -> str:
+    """Call Ollama qwen3.5:9b-32k via /api/chat with vision + JSON schema.
+
+    Automatic retry on timeout/exception with exponential backoff (1s, 3s).
+    Raises RuntimeError if all retries exhausted.
+    """
+    last_error = None
+    for attempt in range(retries + 1):  # 1 initial + N retries
+        try:
+            # NOTE: `format` (JSON schema) is REMOVED for vision calls.
+            # qwen3.5:9b-32k hangs when format=json + images are used together.
+            # The prompt itself already enforces JSON output via <classification_task>.
+            payload = json.dumps({
+                "model": "qwen3.5:9b-32k",
+                "messages": [{
+                    "role": "user",
+                    "content": prompt,
+                    "images": [img_b64],
+                }],
+                "stream": False,
+                "options": {"temperature": 0},
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                "http://127.0.0.1:11434/api/chat",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=150) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                return data.get("message", {}).get("content", "")
+        except Exception as e:
+            last_error = e
+            if attempt < retries:
+                backoff = _CLASSIFY_RETRY_BACKOFF[min(attempt, len(_CLASSIFY_RETRY_BACKOFF) - 1)]
+                print(f"[Classifier Pool] LLM call failed (attempt {attempt+1}/{retries+1}): {e} — retrying in {backoff}s")
+                time.sleep(backoff)
+            else:
+                print(f"[Classifier Pool] LLM call failed all {retries+1} attempts: {e}")
+
+    raise RuntimeError(f"Ollama classify failed after {retries+1} attempts: {type(last_error).__name__}")
+
+
+# ── Classify Progress Tracker ─────────────────────────────────────────────────
+# Tracks batch classify progress per trip so /api/classify-progress can poll it.
+# _classify_progress: {trip_id: {"total": int, "done": int, "errors": int,
+#                                 "results": list[dict], "started": float, "finished": float|None}}
+_classify_progress: dict[str, dict] = {}
+_classify_progress_lock = threading.Lock()
+
+
+def _init_progress(trip_id: str, total: int) -> None:
+    with _classify_progress_lock:
+        _classify_progress[trip_id] = {
+            "total": total,
+            "done": 0,
+            "errors": 0,
+            "results": [],
+            "started": time.time(),
+            "finished": None,
+        }
+
+
+def _update_progress(trip_id: str, key: str, status_dict: dict) -> None:
+    with _classify_progress_lock:
+        tracker = _classify_progress.get(trip_id)
+        if not tracker:
+            return
+        if status_dict.get("status") == "done":
+            tracker["done"] += 1
+        elif status_dict.get("status") == "error":
+            tracker["errors"] += 1
+        tracker["results"].append({
+            "key": key,
+            "status": status_dict.get("status", "unknown"),
+            "classifier": status_dict.get("classifier"),
+            "error": status_dict.get("error"),
+        })
+        if tracker["done"] + tracker["errors"] >= tracker["total"]:
+            tracker["finished"] = time.time()
+
+
+def _get_progress(trip_id: str) -> Optional[dict]:
+    with _classify_progress_lock:
+        t = _classify_progress.get(trip_id)
+        if not t:
+            return None
+        return dict(t)  # shallow copy
+
+
+# ── Metadata cache (LRU-like, per-trip) ──────────────────────────────────────
+# Avoids re-reading metadata.json from disk on every request.
+# _meta_cache: {trip_id: (metadata_dict, mtime_timestamp)}
+_meta_cache: dict[str, tuple[dict, float]] = {}
+_meta_lock = threading.Lock()
+_META_CACHE_TTL = 2.0  # seconds — stale reads will re-read from disk
+
+
+def _load_meta_safe(trip_dir: Path, force_reload: bool = False) -> dict:
+    """Thread-safe load metadata.json with in-memory cache.
+
+    Cache invalidates after _META_CACHE_TTL seconds or when file mtime changes.
+    Pass force_reload=True to skip cache entirely (e.g. after write).
+    """
+    meta_file = trip_dir / "metadata.json"
+    trip_id = trip_dir.name
+
+    if not force_reload:
+        with _meta_lock:
+            cached = _meta_cache.get(trip_id)
+            if cached is not None:
+                meta_dict, cached_at = cached
+                age = time.time() - cached_at
+                try:
+                    current_mtime = meta_file.stat().st_mtime if meta_file.exists() else 0
+                except OSError:
+                    current_mtime = 0
+                if age < _META_CACHE_TTL and current_mtime <= cached_at:
+                    return meta_dict
+
+    if meta_file.exists():
+        try:
+            meta_dict = json.loads(meta_file.read_text(encoding="utf-8"))
+            with _meta_lock:
+                _meta_cache[trip_id] = (meta_dict, time.time())
+            return meta_dict
+        except (json.JSONDecodeError, OSError) as e:
+            corrupt_backup = trip_dir / f"metadata.json.corrupt.{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+            try:
+                import shutil
+                shutil.copy2(meta_file, corrupt_backup)
+                print(f"[WARN] Corrupt metadata.json backed up to {corrupt_backup.name}: {e}")
+            except Exception:
+                print(f"[ERROR] Failed to backup corrupt metadata.json: {e}")
+    return {}
+
+
+def _save_meta_safe(trip_dir: Path, meta: dict) -> None:
+    """Thread-safe atomic save of metadata.json + invalidate cache."""
+    meta_file = trip_dir / "metadata.json"
+    tmp = trip_dir / "metadata.json.tmp"
+    tmp.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.replace(meta_file)  # atomic on Windows if same volume
+    # Invalidate cache immediately
+    with _meta_lock:
+        _meta_cache[trip_dir.name] = (meta, time.time())
+
+
+def _atomic_update_meta(trip_dir: Path, key: str, update_fn) -> dict:
+    """Load metadata, apply update_fn to entry, save — all under _meta_lock.
+
+    Args:
+        trip_dir: Trip directory path
+        key: Photo key in metadata dict
+        update_fn: callable(entry_dict) -> updated_entry_dict
+
+    Returns:
+        The metadata dict after update.
+    """
+    meta_file = trip_dir / "metadata.json"
+    with _meta_lock:
+        # Read directly — don't call _load_meta_safe which also acquires _meta_lock
+        if meta_file.exists():
+            try:
+                meta = json.loads(meta_file.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                meta = {}
+        else:
+            meta = {}
+        if key in meta:
+            meta[key] = update_fn(meta[key])
+        # Save atomically
+        tmp = trip_dir / "metadata.json.tmp"
+        tmp.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(meta_file)
+        # Update cache
+        _meta_cache[trip_dir.name] = (meta, time.time())
+        return meta
+
+
 # ── Classifier (lazy load) ───────────────────────────────────────────────────
 _classifier = None
 _itinerary = None
@@ -70,46 +261,162 @@ def _get_classifier():
     return _classifier, _itinerary
 
 
-def _classify_async(filepath: str, trip_id: str, key: str):
-    """Background thread: classify photo and update metadata."""
+def _classify_one(filepath: str, trip_id: str, key: str, progress_callback=None) -> dict:
+    """Classify one photo and update metadata. Returns classifier metadata dict.
+    
+    If progress_callback is provided, calls it with (key, status_dict) after metadata update.
+    """
+    import io, tempfile, os as _os
+    orig_path = filepath
+    tmp_file_created = False
     try:
+        # ── HEIC/HEIF pre-conversion to JPEG (bypass PIL's lack of native _getexif support) ──
+        ext = _os.path.splitext(key)[1].lower()
+        if ext in ('.heic', '.heif'):
+            try:
+                import pillow_heif
+                pillow_heif.register_heif_opener()
+                from PIL import Image as PILImage
+                pil_img = PILImage.open(filepath)
+                pil_img = pil_img.convert("RGB")
+                # Resize if needed
+                w, h = pil_img.size
+                if max(w, h) > 1024:
+                    ratio = min(1024 / w, 1024 / h)
+                    pil_img = pil_img.resize((int(w * ratio), int(h * ratio)), PILImage.LANCZOS)
+                tmp_jpg = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+                pil_img.save(tmp_jpg, format='JPEG', quality=85, optimize=True)
+                filepath = tmp_jpg.name
+                tmp_file_created = True
+                print(f"[Classifier] HEIC→JPEG converted {key} -> {_os.path.basename(filepath)}")
+            except Exception as e:
+                print(f"[Classifier] HEIC conversion failed for {key}: {e} — using original")
+                import traceback as _tb
+                _tb.print_exc()
+
         classifier, itinerary = _get_classifier()
         if not itinerary.get("days"):
-            return
+            return {"error": "no_itinerary"}
 
-        def _llm_call(prompt: str) -> str:
-            """Call Ollama Local_LLM."""
-            import urllib.request
-            payload = json.dumps({
-                "model": "qwen2.5:7b",
-                "prompt": prompt,
-                "stream": False,
-                "options": {"temperature": 0.1, "num_predict": 200},
-            }).encode("utf-8")
-            req = urllib.request.Request(
-                "http://127.0.0.1:11434/api/generate",
-                data=payload,
-                headers={"Content-Type": "application/json"},
-            )
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                return data.get("response", "")
+        # ── Read caption from existing metadata for extra context ──
+        caption = ""
+        trip_dir = PHOTO_ROOT / _safe_filename(trip_id)
+        meta = _load_meta_safe(trip_dir)
+        existing = meta.get(key, {})
+        if isinstance(existing, dict):
+            caption = existing.get("caption", "")
 
-        result = classifier.classify_photo(filepath, itinerary, llm_call=_llm_call)
-        if result.get("day") or result.get("spot"):
+        result = classifier.classify_photo(
+            filepath, itinerary,
+            llm_call=_call_ollama_classify,
+            caption=caption,
+        )
+
+        # ── Conformal calibration ──
+        cal_result = _apply_conformal(result.get("confidence", 0))
+
+        # ── Determine needs_review ──
+        fallback_reason = result.get("fallback_reason")
+        needs_review = cal_result.get("needs_review", False) or bool(fallback_reason)
+
+        # ── Build classifier metadata ──
+        classifier_meta = {
+            "method": result.get("method", ""),
+            "confidence": result.get("confidence", 0),
+            "calibrated_confidence": cal_result.get("calibrated_confidence", result.get("confidence", 0)),
+            "needs_review": needs_review,
+            "heuristic_threshold": cal_result.get("conformal_threshold"),
+            "coverage_target": cal_result.get("coverage"),
+        }
+        if fallback_reason:
+            classifier_meta["fallback_reason"] = fallback_reason
+
+        # ── Update metadata (thread-safe: _atomic_update_meta holds _meta_lock) ──
+        if result.get("day") or result.get("spot") or fallback_reason:
             trip_dir = PHOTO_ROOT / trip_id
-            meta = _load_meta(trip_dir)
-            if key in meta:
-                meta[key]["day"] = result.get("day", meta[key].get("day", 0))
-                meta[key]["spot"] = result.get("spot", meta[key].get("spot", ""))
-                meta[key]["classifier"] = {
-                    "method": result.get("method", ""),
-                    "confidence": result.get("confidence", 0),
-                }
-                _save_meta(trip_dir, meta)
-                print(f"[Classifier] Tagged {key}: day={result['day']}, spot={result['spot']} ({result.get('confidence', 0):.0%})")
+
+            def _apply(entry):
+                entry["day"] = result.get("day", entry.get("day", 0))
+                entry["spot"] = result.get("spot", entry.get("spot", ""))
+                entry["classifier"] = classifier_meta
+                return entry
+
+            _atomic_update_meta(trip_dir, key, _apply)
+            review_flag = "⚠️NEEDS_REVIEW" if needs_review else "✅"
+            print(f"[Classifier] Tagged {key}: day={result['day']}, spot={result['spot']} "
+                  f"({result.get('confidence', 0):.0%} raw → {cal_result.get('calibrated_confidence', 0):.0%} cal) {review_flag}")
+
+        # ── Call progress callback ──
+        if progress_callback:
+            progress_callback(key, {"status": "done", "classifier": classifier_meta})
+        return classifier_meta
+
     except Exception as e:
-        print(f"[Classifier] Async classify failed for {key}: {e}")
+        print(f"[Classifier] Classify failed for {key}: {e}")
+        if progress_callback:
+            progress_callback(key, {"status": "error", "error": str(e)})
+        return {"error": str(e)}
+    finally:
+        # Clean up temp HEIC→JPEG converted file
+        if tmp_file_created and filepath != orig_path and _os.path.exists(filepath):
+            try:
+                _os.unlink(filepath)
+            except Exception:
+                pass
+
+
+def _classify_async(filepath: str, trip_id: str, key: str):
+    """Background thread: classify photo via bounded executor pool."""
+    _executor.submit(_classify_one, filepath, trip_id, key)
+
+
+# ── Conformal calibration helper ─────────────────────────────────────────────
+_conformal_calibrator = None
+_conformal_lock = threading.Lock()
+
+
+def _get_conformal() -> "ConformalCalibrator | None":
+    """Lazy-load heuristic calibrator (NOT a conformal guarantee — self-referential labels)."""
+    global _conformal_calibrator
+    if _conformal_calibrator is None:
+        with _conformal_lock:
+            if _conformal_calibrator is None:
+                meta_path = PHOTO_ROOT / ITINERARY_PATH.parent.name / ITINERARY_PATH.name
+                # Re-derive: metadata sits at sf-hubs-photos/<trip>/metadata.json
+                # ITINERARY_PATH = .../sf-hubs/data/osaka-2026.json
+                # So we need: PHOTO_ROOT / "osaka-2026" / "metadata.json"
+                trip_id = ITINERARY_PATH.stem  # e.g. "osaka-2026"
+                meta_path = PHOTO_ROOT / trip_id / "metadata.json"
+                if meta_path.exists():
+                    try:
+                        from conformal_calibrator import ConformalCalibrator
+                        _conformal_calibrator = ConformalCalibrator.load_from_metadata(
+                            str(meta_path), coverage=0.9
+                        )
+                        print(f"[Heuristic] Loaded calibrator: threshold={_conformal_calibrator.threshold:.4f}, "
+                              f"n={_conformal_calibrator.calibration_size} (self-referential labels — NOT a coverage guarantee)")
+                    except Exception as e:
+                        print(f"[Heuristic] Failed to load: {e}")
+                        _conformal_calibrator = False  # sentinel: tried and failed
+    return _conformal_calibrator if _conformal_calibrator is not False else None
+
+
+def _apply_conformal(raw_confidence: float) -> dict:
+    """Apply heuristic confidence threshold (NOT a conformal guarantee).
+
+    Returns:
+        {"calibrated_confidence": float, "needs_review": bool,
+         "heuristic_threshold": float|None, "coverage_target": float|None}
+    """
+    cal = _get_conformal()
+    if cal is None:
+        return {
+            "calibrated_confidence": raw_confidence,
+            "needs_review": False,
+            "conformal_threshold": None,
+            "coverage": None,
+        }
+    return cal.calibrate(raw_confidence)
 
 # ── App ─────────────────────────────────────────────────────────────────────
 app = FastAPI(title="Album Hub Server", version="1.0.0")
@@ -130,29 +437,12 @@ def _safe_filename(name: str) -> str:
     """Strip path separators from filenames."""
     return Path(name).name
 
-def _load_meta(trip_dir: Path) -> dict:
-    """Load metadata.json for a trip directory."""
-    meta_file = trip_dir / "metadata.json"
-    if meta_file.exists():
-        try:
-            return json.loads(meta_file.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            pass
-    return {}
-
-def _save_meta(trip_dir: Path, meta: dict) -> None:
-    """Save metadata.json atomically."""
-    meta_file = trip_dir / "metadata.json"
-    tmp = trip_dir / "metadata.json.tmp"
-    tmp.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
-    tmp.replace(meta_file)  # atomic on Windows if same volume
-
 def _thumb_key(key: str) -> str:
-    """Derive thumbnail filename: always .jpg regardless of original extension."""
-    return Path(key).stem + ".jpg"
+    """Derive thumbnail filename: always .webp regardless of original extension."""
+    return Path(key).stem + ".webp"
 
 def _generate_thumb(trip_dir: Path, key: str) -> str | None:
-    """Generate a 480px-wide JPEG thumbnail. Returns thumb filename or None."""
+    """Generate a 480px-wide WebP thumbnail (~33% smaller than JPEG). Returns thumb filename or None."""
     if Image is None:
         return None
     src = trip_dir / key
@@ -170,10 +460,28 @@ def _generate_thumb(trip_dir: Path, key: str) -> str | None:
             if w > THUMB_WIDTH:
                 ratio = THUMB_WIDTH / w
                 img = img.resize((THUMB_WIDTH, int(h * ratio)), Image.LANCZOS)
-            img.save(thumb_path, "JPEG", quality=82, optimize=True)
+            img.save(thumb_path, "WebP", quality=80, optimize=True)
+        print(f"[Thumb] {tkey} — saved as WebP (q=80)")
         return tkey
     except Exception as e:
         print(f"[WARN] Thumbnail failed for {key}: {e}")
+        # Fallback: try saving as JPEG as WebP may fail on some envs
+        try:
+            fallback_tkey = Path(key).stem + ".jpg"
+            fallback_path = thumbs_dir / fallback_tkey
+            if not fallback_path.exists():
+                with Image.open(src) as img:
+                    img = ImageOps.exif_transpose(img)
+                    img = img.convert("RGB")
+                    w, h = img.size
+                    if w > THUMB_WIDTH:
+                        ratio = THUMB_WIDTH / w
+                        img = img.resize((THUMB_WIDTH, int(h * ratio)), Image.LANCZOS)
+                    img.save(fallback_path, "JPEG", quality=82, optimize=True)
+                print(f"[Thumb] {fallback_tkey} — fallback to JPEG")
+                return fallback_tkey
+        except Exception as e2:
+            print(f"[WARN] Thumbnail fallback also failed for {key}: {e2}")
         return None
 
 
@@ -214,7 +522,7 @@ def list_trips():
         for d in PHOTO_ROOT.iterdir():
             if d.is_dir() and not d.name.startswith("."):
                 photo_count = len([f for f in d.glob("*") if f.suffix.lower() in ALLOWED_EXTENSIONS])
-                meta = _load_meta(d)
+                meta = _load_meta_safe(d)
                 tid = d.name
                 if tid in trips_by_id:
                     trips_by_id[tid]["photo_count"] = photo_count
@@ -247,7 +555,7 @@ def list_photos(trip_id: str):
     trip_dir = PHOTO_ROOT / _safe_filename(trip_id)
     if not trip_dir.exists():
         return []
-    meta = _load_meta(trip_dir)
+    meta = _load_meta_safe(trip_dir)
     photos = []
     for f in sorted(trip_dir.glob("*"), key=lambda x: x.name):
         if f.suffix.lower() not in ALLOWED_EXTENSIONS:
@@ -307,7 +615,7 @@ async def upload_photo(
     has_thumb = _generate_thumb(trip_dir, key)
 
     # Update metadata
-    meta = _load_meta(trip_dir)
+    meta = _load_meta_safe(trip_dir)
     meta[key] = {
         "caption": caption,
         "day": day,
@@ -317,11 +625,11 @@ async def upload_photo(
     }
     meta["updated"] = datetime.now().isoformat()
     meta["trip_label"] = meta.get("trip_label", trip_id_safe)
-    _save_meta(trip_dir, meta)
+    _save_meta_safe(trip_dir, meta)
 
-    # Auto-classify in background
+    # Auto-classify in background via executor
     filepath = str(trip_dir / key)
-    threading.Thread(target=_classify_async, args=(filepath, trip_id_safe, key), daemon=True).start()
+    _executor.submit(_classify_one, filepath, trip_id_safe, key)
 
     return {
         "ok": True,
@@ -354,8 +662,29 @@ def get_photo(trip_id: str, key: str):
             alt_tkey = _thumb_key(alt_key)
             alt_path = (trip_dir / "thumbs" / alt_tkey).resolve()
             if str(alt_path).startswith(str(photo_root_resolved)) and alt_path.is_file():
-                return FileResponse(alt_path)
+                return FileResponse(alt_path, headers={
+                    "Cache-Control": "public, max-age=31536000, immutable",
+                })
         raise HTTPException(404, "Photo not found")
+
+    # Thumbnails are immutable — cache aggressively
+    if key.startswith("thumbs/"):
+        # Infer MIME type from extension for correct Content-Type header
+        ext = Path(file_path).suffix.lower()
+        media_type_map = {
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+            ".avif": "image/avif",
+        }
+        media_type = media_type_map.get(ext, "image/jpeg")
+        return FileResponse(
+            file_path,
+            media_type=media_type,
+            headers={"Cache-Control": "public, max-age=31536000, immutable"},
+        )
     return FileResponse(file_path)
 
 
@@ -387,14 +716,14 @@ def soft_delete_photo(trip_id: str, key: str):
         thumb_trashed = True
 
     # Mark metadata as deleted (keep it for restore)
-    meta = _load_meta(trip_dir)
+    meta = _load_meta_safe(trip_dir)
     if safe_key in meta:
         meta[f".trash:{safe_key}"] = {
             "deleted_at": datetime.now().isoformat(),
             **meta.pop(safe_key),
         }
     meta["updated"] = datetime.now().isoformat()
-    _save_meta(trip_dir, meta)
+    _save_meta_safe(trip_dir, meta)
 
     remaining = [f for f in trip_dir.glob("*") if f.suffix.lower() in ALLOWED_EXTENSIONS]
 
@@ -430,14 +759,14 @@ def restore_photo(trip_id: str, key: str):
         trash_thumb.rename(thumbs_dir / _thumb_key(safe_key))
 
     # Restore metadata
-    meta = _load_meta(trip_dir)
+    meta = _load_meta_safe(trip_dir)
     trash_key = f".trash:{safe_key}"
     if trash_key in meta:
         trashed = meta.pop(trash_key)
         del trashed["deleted_at"]
         meta[safe_key] = trashed
     meta["updated"] = datetime.now().isoformat()
-    _save_meta(trip_dir, meta)
+    _save_meta_safe(trip_dir, meta)
 
     remaining = [f for f in trip_dir.glob("*") if f.suffix.lower() in ALLOWED_EXTENSIONS]
     # Auto-classify in background (photo restored, so classify it)
@@ -456,7 +785,7 @@ def list_trash(trip_id: str):
     if not trash_dir.exists():
         return []
 
-    meta = _load_meta(trip_dir)
+    meta = _load_meta_safe(trip_dir)
     items = []
     for f in sorted(trash_dir.glob("*"), key=lambda x: x.name):
         if f.is_dir() or f.suffix.lower() not in ALLOWED_EXTENSIONS:
@@ -498,12 +827,12 @@ def permanent_delete_photo(trip_id: str, key: str):
             pass
 
     # Remove trash metadata entry
-    meta = _load_meta(trip_dir)
+    meta = _load_meta_safe(trip_dir)
     trash_key = f".trash:{safe_key}"
     if trash_key in meta:
         del meta[trash_key]
     meta["updated"] = datetime.now().isoformat()
-    _save_meta(trip_dir, meta)
+    _save_meta_safe(trip_dir, meta)
 
     return {"ok": True, "permanently_deleted": deleted, "key": safe_key}
 
@@ -514,108 +843,149 @@ def permanent_delete_photo(trip_id: str, key: str):
 
 @app.post("/api/classify/{trip_id}/{key}")
 def classify_photo_endpoint(trip_id: str, key: str):
-    """Run classifier on an already-uploaded photo (on-demand)."""
+    """Run classifier on an already-uploaded photo (on-demand, via executor)."""
     trip_dir = PHOTO_ROOT / _safe_filename(trip_id)
     safe_key = _safe_filename(key)
     filepath = trip_dir / safe_key
     if not filepath.exists():
         raise HTTPException(404, "Photo not found")
 
-    classifier, itinerary = _get_classifier()
+    # Submit to bounded executor (ensures at most 2 concurrent Ollama calls)
+    future = _executor.submit(_classify_one, str(filepath), _safe_filename(trip_id), safe_key)
+    classifier_meta = future.result(timeout=180)  # 3 min timeout per photo
 
-    def _llm_call(prompt: str) -> str:
-        import urllib.request
-        payload = json.dumps({
-            "model": "qwen2.5:7b",
-            "prompt": prompt,
-            "stream": False,
-            "options": {"temperature": 0.1, "num_predict": 200},
-        }).encode("utf-8")
-        req = urllib.request.Request(
-            "http://127.0.0.1:11434/api/generate",
-            data=payload,
-            headers={"Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return data.get("response", "")
-
-    result = classifier.classify_photo(str(filepath), itinerary, llm_call=_llm_call)
-
-    # Update metadata
-    if result.get("day") or result.get("spot"):
-        meta = _load_meta(trip_dir)
-        if safe_key in meta:
-            meta[safe_key]["day"] = result.get("day", meta[safe_key].get("day", 0))
-            meta[safe_key]["spot"] = result.get("spot", meta[safe_key].get("spot", ""))
-            meta[safe_key]["classifier"] = {
-                "method": result.get("method", ""),
-                "confidence": result.get("confidence", 0),
-            }
-            _save_meta(trip_dir, meta)
-
-    return {"ok": True, "result": result}
+    return {"ok": True, "classifier": classifier_meta}
 
 
 @app.post("/api/classify-all/{trip_id}")
 def classify_all_photos(trip_id: str):
-    """Batch re-classify all photos in a trip (useful after itinerary updates)."""
+    """Batch classify all photos in a trip — submits all and returns immediately.
+    
+    Returns a tracking ID. Poll GET /api/classify-progress/{trip_id} for progress.
+
+    Query params (future use via Pydantic model):
+      force: bool = query param (default False)
+    """
     trip_dir = PHOTO_ROOT / _safe_filename(trip_id)
     if not trip_dir.exists():
         raise HTTPException(404, "Trip not found")
 
-    photos = [f for f in trip_dir.glob("*") if f.suffix.lower() in ALLOWED_EXTENSIONS]
-    results = []
-    for photo_path in photos:
-        threading.Thread(
-            target=_classify_async,
-            args=(str(photo_path), _safe_filename(trip_id), photo_path.name),
-            daemon=True,
-        ).start()
-        results.append({"key": photo_path.name, "status": "queued"})
+    trip_id_safe = _safe_filename(trip_id)
+    photos = sorted(
+        [f for f in trip_dir.glob("*") if f.suffix.lower() in ALLOWED_EXTENSIONS],
+        key=lambda x: x.name,
+    )
 
-    return {"ok": True, "queued": len(results), "photos": results}
+    if not photos:
+        return {"ok": True, "total": 0, "results": []}
+
+    # Init progress tracker
+    _init_progress(trip_id_safe, len(photos))
+
+    # Submit all to executor at once (true parallelism up to max_workers=2)
+    for photo_path in photos:
+        key = photo_path.name
+        _executor.submit(
+            _classify_one, str(photo_path), trip_id_safe, key,
+            lambda k, s: _update_progress(trip_id_safe, k, s)
+        )
+
+    return {
+        "ok": True,
+        "total": len(photos),
+        "trip_id": trip_id_safe,
+        "status": "running",
+        "progress_url": f"/api/classify-progress/{trip_id_safe}",
+    }
+
+
+@app.get("/api/classify-progress/{trip_id}")
+def get_classify_progress(trip_id: str):
+    """Get progress of a running classify-all batch."""
+    trip_id_safe = _safe_filename(trip_id)
+    pb = _get_progress(trip_id_safe)
+    if pb is None:
+        # No progress record — check if there's anything to classify
+        trip_dir = PHOTO_ROOT / trip_id_safe
+        if not trip_dir.exists():
+            raise HTTPException(404, "Trip not found")
+        return {
+            "ok": True,
+            "trip_id": trip_id_safe,
+            "status": "idle",
+            "total": 0,
+            "done": 0,
+            "errors": 0,
+            "pct": 0,
+            "results": [],
+        }
+
+    total = pb["total"]
+    done = pb["done"]
+    errors = pb["errors"]
+    pct = (done + errors) / total * 100 if total > 0 else 0
+
+    status = "running"
+    if pb["finished"] is not None:
+        elapsed = round(pb["finished"] - pb["started"], 1)
+        status = f"finished ({elapsed}s)"
+
+    return {
+        "ok": True,
+        "trip_id": trip_id_safe,
+        "status": status,
+        "total": total,
+        "done": done,
+        "errors": errors,
+        "pct": round(pct, 1),
+        "results": sorted(pb.get("results", []), key=lambda r: r["key"]),
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Update Photo Metadata (PATCH)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@app.patch("/api/photo/{trip_id}/{key}")
-def update_photo_meta(trip_id: str, key: str, day: int = Form(0), spot: str = Form(""), caption: str = Form("")):
-    """Update photo metadata: day, spot, caption."""
+@app.patch("/api/photo/{trip_id}/{key:path}")
+def update_photo_meta(trip_id: str, key: str, body: dict = Body(None)):
+    """Update photo metadata via JSON body.
+
+    Accepts JSON body with any subset of: day, spot, caption.
+    Only provided fields are updated.
+    Example: {"day": 3, "caption": "Osaka Castle in autumn"}
+    """
+    body = body or {}
     trip_dir = PHOTO_ROOT / _safe_filename(trip_id)
     safe_key = _safe_filename(key)
     photo_path = trip_dir / safe_key
     if not photo_path.exists():
         raise HTTPException(404, "Photo not found")
 
-    meta = _load_meta(trip_dir)
-    if safe_key not in meta:
-        meta[safe_key] = {}
+    # Use _load_meta_safe (cached) then write under lock
+    def _apply(entry):
+        if "day" in body:
+            entry["day"] = body["day"]
+        elif "day" not in entry:
+            entry["day"] = 0
 
-    if day > 0:
-        meta[safe_key]["day"] = day
-    elif "day" not in meta[safe_key]:
-        meta[safe_key]["day"] = 0
+        if "spot" in body:
+            entry["spot"] = body["spot"]
+        elif "spot" not in entry:
+            entry["spot"] = "unknown"
 
-    if spot:
-        meta[safe_key]["spot"] = spot
-    elif "spot" not in meta[safe_key]:
-        meta[safe_key]["spot"] = "unknown"
+        if "caption" in body:
+            entry["caption"] = body["caption"]
 
-    if caption is not None:
-        meta[safe_key]["caption"] = caption
+        return entry
 
-    meta["updated"] = datetime.now().isoformat()
-    _save_meta(trip_dir, meta)
-
+    meta = _atomic_update_meta(trip_dir, safe_key, _apply)
+    entry = meta.get(safe_key, {})
     return {
         "ok": True,
         "key": safe_key,
-        "day": meta[safe_key].get("day", 0),
-        "spot": meta[safe_key].get("spot", ""),
-        "caption": meta[safe_key].get("caption", ""),
+        "day": entry.get("day", 0),
+        "spot": entry.get("spot", ""),
+        "caption": entry.get("caption", ""),
     }
 
 
