@@ -43,6 +43,15 @@ except ImportError:
     ImageOps = None
     print("[WARN] Pillow not installed — thumbnails disabled. Run: pip install pillow")
 
+# BlurHash for progressive image placeholders
+try:
+    import blurhash as _blurhash
+    _HAS_BLURHASH = True
+    print("[BlurHash] blurhash module loaded — placeholder enabled")
+except ImportError:
+    _HAS_BLURHASH = False
+    print("[BlurHash] blurhash not installed. Run: pip install blurhash")
+
 # ── Config ──────────────────────────────────────────────────────────────────
 PHOTO_ROOT = Path(r"C:\Users\Win 11\sf-hubs-photos")
 THUMB_WIDTH = 480
@@ -441,31 +450,64 @@ def _thumb_key(key: str) -> str:
     """Derive thumbnail filename: always .webp regardless of original extension."""
     return Path(key).stem + ".webp"
 
-def _generate_thumb(trip_dir: Path, key: str) -> str | None:
-    """Generate a 480px-wide WebP thumbnail (~33% smaller than JPEG). Returns thumb filename or None."""
-    if Image is None:
+def _generate_blurhash(src_path: Path) -> str | None:
+    """Generate a BlurHash string (~100 bytes) from a thumbnail-sized image."""
+    if not _HAS_BLURHASH:
         return None
+    try:
+        with Image.open(src_path) as img:
+            img = ImageOps.exif_transpose(img)
+            img = img.convert("RGB")
+            # Use a tiny 32x32 preview for the hash — enough for blur guidance
+            img.thumbnail((32, 32), Image.LANCZOS)
+            width, height = img.size
+            pixels = img.load()
+            # Build pixel array for blurhash
+            pixel_array = []
+            for y in range(height):
+                for x in range(width):
+                    r, g, b = pixels[x, y]
+                    pixel_array.append((r, g, b))
+            bhash = _blurhash.encode(pixel_array, width, height, x_comp=4, y_comp=3)
+            return bhash
+    except Exception as e:
+        print(f"[BlurHash] Failed for {src_path.name}: {e}")
+        return None
+
+def _generate_thumb(trip_dir: Path, key: str) -> tuple[str | None, str | None]:
+    """Generate a 480px-wide WebP thumbnail (~33% smaller than JPEG).
+    
+    Returns (thumb_filename, blurhash_string).
+    If WebP generation fails, falls back to JPEG.
+    If blurhash generation fails, blurhash is None.
+    """
+    if Image is None:
+        return None, None
     src = trip_dir / key
     thumbs_dir = trip_dir / "thumbs"
     thumbs_dir.mkdir(exist_ok=True)
     tkey = _thumb_key(key)
     thumb_path = thumbs_dir / tkey
+    blurhash_str = None
     if thumb_path.exists():
-        return tkey  # already generated
+        # Re-use existing thumb: still try to get blurhash from metadata
+        return tkey, None  # blurhash will be populated from metadata if available
     try:
         with Image.open(src) as img:
             img = ImageOps.exif_transpose(img)  # Apply EXIF orientation (fix portrait→landscape)
             img = img.convert("RGB")
+            # Generate blurhash from full-res before resize (more accurate colors)
+            blurhash_str = _generate_blurhash_from_img(img)
             w, h = img.size
             if w > THUMB_WIDTH:
                 ratio = THUMB_WIDTH / w
                 img = img.resize((THUMB_WIDTH, int(h * ratio)), Image.LANCZOS)
             img.save(thumb_path, "WebP", quality=80, optimize=True)
-        print(f"[Thumb] {tkey} — saved as WebP (q=80)")
-        return tkey
+        print(f"[Thumb] {tkey} — saved as WebP (q=80), blurhash={blurhash_str[:20] if blurhash_str else 'N/A'}...")
+        return tkey, blurhash_str
     except Exception as e:
         print(f"[WARN] Thumbnail failed for {key}: {e}")
-        # Fallback: try saving as JPEG as WebP may fail on some envs
+        # Fallback: try saving as JPEG
         try:
             fallback_tkey = Path(key).stem + ".jpg"
             fallback_path = thumbs_dir / fallback_tkey
@@ -479,9 +521,30 @@ def _generate_thumb(trip_dir: Path, key: str) -> str | None:
                         img = img.resize((THUMB_WIDTH, int(h * ratio)), Image.LANCZOS)
                     img.save(fallback_path, "JPEG", quality=82, optimize=True)
                 print(f"[Thumb] {fallback_tkey} — fallback to JPEG")
-                return fallback_tkey
+                return fallback_tkey, None
         except Exception as e2:
             print(f"[WARN] Thumbnail fallback also failed for {key}: {e2}")
+        return None, None
+
+
+def _generate_blurhash_from_img(img: Image.Image) -> str | None:
+    """Generate blurhash from an already-opened PIL Image."""
+    if not _HAS_BLURHASH:
+        return None
+    try:
+        thumb = img.copy()
+        thumb.thumbnail((32, 32), Image.LANCZOS)
+        tw, th = thumb.size
+        # blurhash.encode expects: image[y][x][r,g,b] 3D array, 0-255 sRGB integers
+        pixels = [[[thumb.getpixel((x, y))[0],
+                     thumb.getpixel((x, y))[1],
+                     thumb.getpixel((x, y))[2]]
+                    for x in range(tw)]
+                   for y in range(th)]
+        bhash = _blurhash.encode(pixels, components_x=4, components_y=3)
+        return bhash
+    except Exception as e:
+        print(f"[BlurHash] encode failed: {e}")
         return None
 
 
@@ -574,6 +637,7 @@ def list_photos(trip_id: str):
             "caption": info.get("caption", ""),
             "day": info.get("day", 0),
             "spot": info.get("spot", ""),
+            "blurhash": info.get("blurhash"),
             "uploaded": info.get("uploaded", ""),
             "size": f.stat().st_size,
             "classifying": classifying,
@@ -611,8 +675,9 @@ async def upload_photo(
     # Save original
     (trip_dir / key).write_bytes(content)
 
-    # Generate thumbnail
-    has_thumb = _generate_thumb(trip_dir, key)
+    # Generate thumbnail + blurhash
+    thumb_key, blurhash_str = _generate_thumb(trip_dir, key)
+    has_thumb = thumb_key is not None
 
     # Update metadata
     meta = _load_meta_safe(trip_dir)
@@ -623,6 +688,8 @@ async def upload_photo(
         "uploaded": datetime.now().isoformat(),
         "original_name": file.filename,
     }
+    if blurhash_str:
+        meta[key]["blurhash"] = blurhash_str
     meta["updated"] = datetime.now().isoformat()
     meta["trip_label"] = meta.get("trip_label", trip_id_safe)
     _save_meta_safe(trip_dir, meta)

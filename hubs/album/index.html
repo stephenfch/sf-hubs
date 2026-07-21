@@ -7,6 +7,10 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖼️</text></svg>">
   <!-- Phase 1.1: Self-hosted Tailwind (甩 CDN) -->
   <link rel="stylesheet" href="output.css">
+  <link rel="preconnect" href="https://album.sf-hubs.dev">
+  <link rel="dns-prefetch" href="https://album.sf-hubs.dev">
+  <!-- Phase 6: BlurHash decode for progressive image placeholders -->
+  <script src="https://cdn.jsdelivr.net/npm/blurhash@2.0.5/dist/blurhash.min.js" defer></script>
   <style>
     /* ═══════════════════════════════════════════════════════════════════════
        Album Hub — Design System: Soft Glass + Warm Minimal
@@ -165,7 +169,30 @@
     .photo-card img {
       width: 100%;
       display: block;
-      transition: transform .5s ease, filter .3s ease;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      transition: transform .5s ease, filter .3s ease, opacity .4s cubic-bezier(0.16,1,0.3,1);
+      position: relative;
+      z-index: 1;
+      opacity: 0;
+      /* Background-color as fallback while blurhash canvas loads */
+      background: var(--surface);
+    }
+    .photo-card img.img-loaded {
+      opacity: 1;
+    }
+    /* BlurHash placeholder canvas — sits behind img, shows colors instantly */
+    .photo-card .blurhash-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      transition: opacity .6s cubic-bezier(0.16,1,0.3,1);
+    }
+    .photo-card .blurhash-canvas.fade-out {
+      opacity: 0;
+      pointer-events: none;
     }
     .photo-card:hover img {
       transform: scale(1.06);
@@ -974,12 +1001,15 @@
             const badges = (dayBadge || spotBadge)
               ? `<div class="badge-row">${dayBadge}${spotBadge}</div>`
               : "";
-            // fetchpriority="high" for first 6 photos (viewport), rest auto
+            // Phase 6: BlurHash canvas as placeholder, data-src for lazy loading, no src initially
+            const blurhashAttr = p.blurhash ? ` data-blurhash="${escAttr(p.blurhash)}"` : '';
+            const blurhashCanvas = `<canvas class="blurhash-canvas"${blurhashAttr} width="480" height="360"></canvas>`;
             const fetchPrio = isFristBatch ? ' fetchpriority="high"' : '';
             card.innerHTML = `
               <button class="del-btn" title="刪除" data-key="${escAttr(p.key)}">✕</button>
               ${badges}
-              <img src="${escUrl(p.thumb_url)}" alt="${escAttr(p.caption)}" loading="lazy" decoding="async" width="480" data-idx="${idx}"${fetchPrio}>
+              ${blurhashCanvas}
+              <img data-src="${escUrl(p.thumb_url)}" alt="${escAttr(p.caption)}" width="480" data-idx="${idx}"${fetchPrio}>
               ${p.caption ? `<p class="caption-text">${esc(p.caption)}</p>` : `<p class="caption-text caption-placeholder" style="color:var(--text-faint);font-size:11px;">Click to add caption</p>`}`;
             card.querySelector("img").addEventListener("click", () => openLightbox(idx));
             card.querySelector(".del-btn").addEventListener("click", (e) => {
@@ -995,6 +1025,51 @@
             }
             makeBadgeEditable(card, p);
             grid.appendChild(card);
+
+            // ── Phase 6: BlurHash decode into canvas ──
+            const canvas = card.querySelector(".blurhash-canvas");
+            if (canvas && p.blurhash && typeof blurhash !== 'undefined') {
+              try {
+                const pixels = blurhash.decode(p.blurhash, 32, 24);
+                canvas.width = 32;
+                canvas.height = 24;
+                const ctx = canvas.getContext("2d");
+                const imageData = ctx.createImageData(32, 24);
+                imageData.data.set(pixels);
+                ctx.putImageData(imageData, 0, 0);
+              } catch (e) {
+                // blurhash decode failed silently
+              }
+            }
+
+            // ── Phase 6: IntersectionObserver lazy src + decode fade-in ──
+            const img = card.querySelector("img");
+            const imgLazyObserver = new IntersectionObserver((entries, obs) => {
+              for (const entry of entries) {
+                if (entry.isIntersecting) {
+                  obs.unobserve(entry.target);
+                  const target = entry.target;
+                  if (target.dataset.src) {
+                    const src = target.dataset.src;
+                    target.src = src;
+                    // img.decode() → native decode callback → fade in
+                    if (target.decode) {
+                      target.decode().then(() => {
+                        target.classList.add("img-loaded");
+                        const blrCvs = target.parentElement.querySelector(".blurhash-canvas");
+                        if (blrCvs) blrCvs.classList.add("fade-out");
+                      }).catch(() => {
+                        // decode not supported, fallback to load event
+                        target.classList.add("img-loaded");
+                      });
+                    } else {
+                      target.classList.add("img-loaded");
+                    }
+                  }
+                }
+              }
+            }, { rootMargin: "200px" });
+            imgLazyObserver.observe(img);
           }
           renderIdx = batchEnd;
 
