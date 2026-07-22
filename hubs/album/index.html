@@ -759,7 +759,9 @@
     let selectedFiles = [];
     let lightboxIdx = -1;
     let lazyObserver = null;
+    let imgLazyObserver = null;     // Shared IntersectionObserver for lazy image src (reused across loads)
     let lightboxZoomLevel = 0;  // Phase 2.2: 0=normal, 1=2x, 2=3x
+    let loadGeneration = 0;     // Debounce rapid trip switches
 
     // ── DOM refs ──
     const $ = (s) => document.querySelector(s);
@@ -887,6 +889,7 @@
     // ── Init ──
     async function init() {
       initTheme();
+      initLazyReveal();   // phase 1.3: IntersectionObserver for below-fold card reveal
 
       const params = new URLSearchParams(location.search);
       const tripParam = params.get("trip");
@@ -922,6 +925,12 @@
             <div class="font-medium">${esc(t.label)}</div>
             <div class="text-xs opacity-60 mt-0.5">${t.photo_count} 張相 · ${fmtDate(t.updated)}</div>`;
           btn.addEventListener("click", () => selectTrip(t.id));
+          // Phase 6: hover prefetch — preload photos on mouse enter for instant switch
+          btn.addEventListener("mouseenter", () => {
+            if (t.id !== currentTrip) {
+              fetch(`${API}/api/photos/${encodeURIComponent(t.id)}`, { priority: "low" }).catch(() => {});
+            }
+          }, { once: true });
           list.appendChild(btn);
         });
       } catch (err) {
@@ -949,6 +958,10 @@
 
     // ── Load photos (with batch progressive render) ──
     async function loadPhotos(tripId) {
+      const gen = ++loadGeneration;   // Phase 6: race guard for rapid trip switches
+      // Disconnect stale observers from previous loadPhotos() call
+      if (typeof scrollObserver !== 'undefined' && scrollObserver) scrollObserver.disconnect();
+      // imgLazyObserver is shared and reused (no need to disconnect)
       const grid = $("#photo-grid");
       const empty = $("#photo-empty");
       grid.innerHTML = "";
@@ -959,6 +972,7 @@
       try {
         const resp = await fetch(`${API}/api/photos/${encodeURIComponent(tripId)}`);
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        if (gen !== loadGeneration) return;   // stale response, abort
         const photos = await resp.json();
         currentPhotos = photos.map(p => ({
           ...p,
@@ -984,13 +998,37 @@
         let renderIdx = 0;
         let scrollObserver = null;
 
+        // Phase 6: reuse imgLazyObserver — disconnect stale then re-init
+        if (imgLazyObserver) imgLazyObserver.disconnect();
+        imgLazyObserver = new IntersectionObserver((entries, obs) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              obs.unobserve(entry.target);
+              const t = entry.target;
+              if (t.dataset.src) {
+                t.src = t.dataset.src;
+                if (t.decode) {
+                  t.decode().then(() => {
+                    t.classList.add("img-loaded");
+                    const blrCvs = t.parentElement.querySelector(".blurhash-canvas");
+                    if (blrCvs) blrCvs.classList.add("fade-out");
+                  }).catch(() => { t.classList.add("img-loaded"); });
+                } else {
+                  t.classList.add("img-loaded");
+                }
+              }
+            }
+          }
+        }, { rootMargin: "200px" });
+
         function renderBatch() {
           const batchEnd = Math.min(renderIdx + BATCH_SIZE, currentPhotos.length);
+          const isInitialBatch = renderIdx === 0;
           for (let idx = renderIdx; idx < batchEnd; idx++) {
             const p = currentPhotos[idx];
             const card = document.createElement("div");
             card.className = "photo-card lazy-load";
-            const isFristBatch = idx < 6;
+            const isViewport = idx < 6;
             const dayBadge = p.day > 0 ? `<span class="badge-day">D${esc(p.day)}</span>` : "";
             const spotBadge = p.classifying
               ? `<span class="badge-spot" style="background:rgba(99,102,241,0.5);">⏳ classifying...</span>`
@@ -1001,15 +1039,18 @@
             const badges = (dayBadge || spotBadge)
               ? `<div class="badge-row">${dayBadge}${spotBadge}</div>`
               : "";
-            // Phase 6: BlurHash canvas as placeholder, data-src for lazy loading, no src initially
             const blurhashAttr = p.blurhash ? ` data-blurhash="${escAttr(p.blurhash)}"` : '';
             const blurhashCanvas = `<canvas class="blurhash-canvas"${blurhashAttr} width="480" height="360"></canvas>`;
-            const fetchPrio = isFristBatch ? ' fetchpriority="high"' : '';
+            const fetchPrio = isViewport ? ' fetchpriority="high"' : '';
+            // Phase 6: first batch uses src directly (immediate load), keeps blurhash + decode fade-in
+            const imgSrc = isInitialBatch
+              ? `src="${escUrl(p.thumb_url)}"`
+              : `data-src="${escUrl(p.thumb_url)}"`;
             card.innerHTML = `
               <button class="del-btn" title="刪除" data-key="${escAttr(p.key)}">✕</button>
               ${badges}
               ${blurhashCanvas}
-              <img data-src="${escUrl(p.thumb_url)}" alt="${escAttr(p.caption)}" width="480" data-idx="${idx}"${fetchPrio}>
+              <img ${imgSrc} alt="${escAttr(p.caption)}" width="480" data-idx="${idx}"${fetchPrio}>
               ${p.caption ? `<p class="caption-text">${esc(p.caption)}</p>` : `<p class="caption-text caption-placeholder" style="color:var(--text-faint);font-size:11px;">Click to add caption</p>`}`;
             card.querySelector("img").addEventListener("click", () => openLightbox(idx));
             card.querySelector(".del-btn").addEventListener("click", (e) => {
@@ -1037,39 +1078,28 @@
                 const imageData = ctx.createImageData(32, 24);
                 imageData.data.set(pixels);
                 ctx.putImageData(imageData, 0, 0);
-              } catch (e) {
-                // blurhash decode failed silently
-              }
+              } catch (e) {}
             }
 
-            // ── Phase 6: IntersectionObserver lazy src + decode fade-in ──
+            // ── Phase 6: img.decode() fade-in — both initial & lazy batches ──
             const img = card.querySelector("img");
-            const imgLazyObserver = new IntersectionObserver((entries, obs) => {
-              for (const entry of entries) {
-                if (entry.isIntersecting) {
-                  obs.unobserve(entry.target);
-                  const target = entry.target;
-                  if (target.dataset.src) {
-                    const src = target.dataset.src;
-                    target.src = src;
-                    // img.decode() → native decode callback → fade in
-                    if (target.decode) {
-                      target.decode().then(() => {
-                        target.classList.add("img-loaded");
-                        const blrCvs = target.parentElement.querySelector(".blurhash-canvas");
-                        if (blrCvs) blrCvs.classList.add("fade-out");
-                      }).catch(() => {
-                        // decode not supported, fallback to load event
-                        target.classList.add("img-loaded");
-                      });
-                    } else {
-                      target.classList.add("img-loaded");
-                    }
-                  }
-                }
+            if (isInitialBatch) {
+              // First batch: img already has src set, just fade in via decode()
+              if (img.decode) {
+                img.decode().then(() => {
+                  img.classList.add("img-loaded");
+                  const blrCvs = card.querySelector(".blurhash-canvas");
+                  if (blrCvs) blrCvs.classList.add("fade-out");
+                }).catch(() => {
+                  img.classList.add("img-loaded");
+                });
+              } else {
+                img.classList.add("img-loaded");
               }
-            }, { rootMargin: "200px" });
-            imgLazyObserver.observe(img);
+            } else {
+              // Subsequent batches: shared IntersectionObserver lazy src + decode fade-in
+              imgLazyObserver.observe(img);
+            }
           }
           renderIdx = batchEnd;
 
@@ -1083,13 +1113,19 @@
         // Set up scroll observer for remaining batches
         if (renderIdx < currentPhotos.length) {
           scrollObserver = new IntersectionObserver((entries) => {
-            // Use last rendered card as sentinel
-            const sentinel = grid.querySelector('.photo-card:last-child');
-            if (sentinel && entries.some(e => e.target === sentinel && e.isIntersecting)) {
-              renderBatch();
-              if (renderIdx >= currentPhotos.length && scrollObserver) {
-                scrollObserver.disconnect();
-                scrollObserver = null;
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                scrollObserver.unobserve(entry.target);
+                renderBatch();
+                if (renderIdx >= currentPhotos.length) {
+                  scrollObserver.disconnect();
+                  scrollObserver = null;
+                } else {
+                  // Re-observe the new last card so subsequent batches also load
+                  const newLast = grid.querySelector('.photo-card:last-child');
+                  if (newLast && scrollObserver) scrollObserver.observe(newLast);
+                }
+                break;
               }
             }
           }, { rootMargin: '400px 0px' });
@@ -1356,15 +1392,18 @@
     async function deletePhoto(key) {
       if (!confirm("確定刪除呢張相？")) return;
       const prevIdx = lightboxIdx;
+      const tripAtDelete = currentTrip;   // Phase 6: capture trip to avoid race on rapid switch
       try {
-        const resp = await fetch(`${API}/api/photo/${encodeURIComponent(currentTrip)}/${encodeURIComponent(key)}`, {
+        const resp = await fetch(`${API}/api/photo/${encodeURIComponent(tripAtDelete)}/${encodeURIComponent(key)}`, {
           method: "DELETE",
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         closeLightbox();
         toast("🗑️ 已刪除", {
+          key: key,
+          trip: tripAtDelete,
           label: "↩️ 復原",
-          action: () => restorePhoto(key),
+          action: () => restorePhoto(tripAtDelete, key),
         });
         await loadPhotos(currentTrip);
         await loadTrips();
@@ -1373,9 +1412,9 @@
       }
     }
 
-    async function restorePhoto(key) {
+    async function restorePhoto(tripId, key) {
       try {
-        const resp = await fetch(`${API}/api/photo/${encodeURIComponent(currentTrip)}/${encodeURIComponent(key)}/restore`, {
+        const resp = await fetch(`${API}/api/photo/${encodeURIComponent(tripId)}/${encodeURIComponent(key)}/restore`, {
           method: "POST",
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -1417,6 +1456,7 @@
         btn.textContent = undo.label || "↩️ 復原";
         btn.style.cssText = "margin-left:12px;background:none;border:1px solid var(--accent-pink);color:var(--accent-pink);padding:2px 10px;border-radius:8px;font-size:12px;cursor:pointer;";
         btn.addEventListener("click", () => {
+          clearTimeout(t._deleteTimer);
           t.remove();
           undo.action();
         });
@@ -1424,7 +1464,23 @@
         t.id = "undo-toast";
       }
       document.body.appendChild(t);
-      setTimeout(() => t.remove(), undo ? 6000 : 3000);
+      // Phase 6: undoable toast → 30s auto permanent delete; normal toast → 3s auto dismiss
+      const timeout = undo ? 30000 : 3000;
+      const timer = setTimeout(async () => {
+        t.remove();
+        // If this was an undoable delete toast, call permanent delete API after timeout
+        if (undo) {
+          try {
+            await fetch(`${API}/api/trash/${encodeURIComponent(undo.trip || currentTrip)}/${encodeURIComponent(undo.key)}`, {
+              method: "DELETE",
+            });
+          } catch (e) {
+            console.warn("permanent delete failed:", e);
+          }
+        }
+      }, timeout);
+      // Expose so users can cancel the timer via undo button
+      t._deleteTimer = timer;
     }
 
     // ═════════════════════════════════════════════
