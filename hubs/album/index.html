@@ -95,6 +95,11 @@
       border-bottom: 1px solid rgba(255,255,255,0.06);
       box-shadow: 0 4px 24px rgba(0,0,0,0.25);
     }
+    /* Mobile nav tighter */
+    @media (max-width: 640px) {
+      .glass-nav-inner { padding-left: 10px; padding-right: 10px; }
+      .nav-actions { gap: 6px; }
+    }
 
     /* ── Theme Toggle ── */
     .theme-toggle {
@@ -133,7 +138,8 @@
     }
     @media (max-width: 1100px) { .photo-grid { columns: 3; } }
     @media (max-width: 760px)  { .photo-grid { columns: 2; column-gap: 12px; } }
-    @media (max-width: 480px)  { .photo-grid { columns: 1; } }
+    @media (max-width: 640px)  { .photo-grid { columns: 2; column-gap: 8px; } .photo-card { margin-bottom: 10px; border-radius: 14px; } }
+    @media (max-width: 380px)  { .photo-grid { columns: 1; } }
 
     /* ── Photo Card ── */
     .photo-card {
@@ -155,6 +161,9 @@
       content-visibility: auto;
       contain-intrinsic-size: auto 300px;
     }
+    @media (max-width: 640px) {
+      .photo-card { contain-intrinsic-size: auto 200px; border-radius: 14px; margin-bottom: 10px; }
+    }
     .photo-card.revealed {
       opacity: 1;
       transform: translateY(0);
@@ -169,7 +178,7 @@
     .photo-card img {
       width: 100%;
       display: block;
-      aspect-ratio: 4 / 3;
+      aspect-ratio: auto;
       object-fit: cover;
       transition: transform .5s ease, filter .3s ease, opacity .4s cubic-bezier(0.16,1,0.3,1);
       position: relative;
@@ -236,6 +245,11 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    @media (max-width: 640px) {
+      .badge-spot { max-width: calc(100% - 8px); font-size: 11px; padding: 3px 8px; white-space: normal; overflow: visible; text-overflow: clip; }
+      .badge-day { font-size: 10px; padding: 2px 6px; }
+      .badge-row { left: 6px; top: 6px; gap: 4px; }
+    }
     .photo-card:hover .badge-spot { transform: translateY(-2px); }
 
     /* ── Delete Button ── */
@@ -267,7 +281,7 @@
       transform: scale(1.15);
     }
     @media (hover: none) {
-      .del-btn { opacity: 1; }
+      .del-btn { opacity: 1; width: 36px; height: 36px; font-size: 16px; top: 8px; right: 8px; }
       .photo-card:hover { transform: none; box-shadow: var(--shadow-soft); }
       .photo-card:hover img { transform: none; filter: none; }
       .photo-card:hover .badge-spot { transform: none; }
@@ -289,6 +303,10 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       transition: color .3s ease;
+    }
+    @media (max-width: 640px) {
+      .caption-text { font-size: 11px; margin: 2px 6px 6px; padding: 6px 8px; }
+      .photo-card p { font-size: 12px; padding: 6px 8px 8px; }
     }
 
     /* ── Trip Buttons ── */
@@ -339,6 +357,7 @@
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
+    @media (max-width: 640px) { .upload-zone { padding: 18px 12px; } }
     .upload-zone:hover, .upload-zone.drag-over {
       border-color: var(--primary);
       background: rgba(232,85,45,0.05);
@@ -398,12 +417,20 @@
       cursor: pointer;
       opacity: 0.5;
       transition: opacity .2s;
-      padding: 12px;
+      padding: 16px;
       user-select: none;
     }
     .lightbox .nav:hover { opacity: 1; }
-    .lightbox .prev { left: 12px; }
-    .lightbox .next { right: 12px; }
+    .lightbox .prev { left: 8px; }
+    .lightbox .next { right: 8px; }
+    @media (max-width: 640px) {
+      .lightbox .nav { font-size: 36px; padding: 20px 12px; }
+      .lightbox .prev { left: 4px; }
+      .lightbox .next { right: 4px; }
+      .lightbox .close { top: 12px; right: 16px; font-size: 28px; padding: 10px; }
+      .lightbox img { max-width: 96vw; max-height: 80vh; }
+      .lightbox .dots span { width: 10px; height: 10px; }
+    }
     .lightbox .dots {
       margin-top: 12px;
       display: flex;
@@ -639,6 +666,9 @@
 
   <!-- ═══ Main ═══ -->
   <main class="max-w-6xl mx-auto px-6 py-8 pb-24">
+    <style>
+      @media (max-width: 640px) { main.max-w-6xl { padding-left: 12px; padding-right: 12px; padding-top: 16px; } }
+    </style>
 
     <!-- ── Trip Selector ── -->
     <section id="section-select" class="mb-8 fade-in">
