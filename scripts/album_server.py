@@ -59,8 +59,8 @@ ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".heic",
 ITINERARY_PATH = Path(__file__).resolve().parent.parent / "data" / "osaka-2026.json"
 
 # ── Bounded Classifier Worker Pool ────────────────────────────────────────────
-_CLASSIFY_WORKERS = 2          # max concurrent Ollama calls
-_CLASSIFY_RETRY_MAX = 2        # max retries on LLM failure
+_CLASSIFY_WORKERS = 4          # max concurrent Ollama calls (qwen3.5:9b on RTX 4070 can handle 4 parallel)
+_CLASSIFY_RETRY_MAX = 1        # fewer retries — GPS+date pre-filter catches most easy cases
 _CLASSIFY_RETRY_BACKOFF = [1.0, 3.0]  # seconds between retries
 
 _executor = ThreadPoolExecutor(max_workers=_CLASSIFY_WORKERS)
@@ -87,7 +87,11 @@ def _call_ollama_classify(prompt: str, img_b64: str, retries: int = _CLASSIFY_RE
                     "images": [img_b64],
                 }],
                 "stream": False,
-                "options": {"temperature": 0},
+                "options": {
+                    "temperature": 0,
+                    "num_ctx": 8192,      # cap context — 32k default wastes VRAM for single-photo classification
+                    "num_batch": 256,      # increase batch size for GPU parallelism
+                },
             }).encode("utf-8")
             req = urllib.request.Request(
                 "http://127.0.0.1:11434/api/chat",
@@ -288,13 +292,14 @@ def _classify_one(filepath: str, trip_id: str, key: str, progress_callback=None)
                 from PIL import Image as PILImage
                 pil_img = PILImage.open(filepath)
                 pil_img = pil_img.convert("RGB")
-                # Resize if needed
+                # Resize if needed (match classifier _VISION_MAX_DIM=640)
+                max_dim = 640
                 w, h = pil_img.size
-                if max(w, h) > 1024:
-                    ratio = min(1024 / w, 1024 / h)
+                if max(w, h) > max_dim:
+                    ratio = min(max_dim / w, max_dim / h)
                     pil_img = pil_img.resize((int(w * ratio), int(h * ratio)), PILImage.LANCZOS)
                 tmp_jpg = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
-                pil_img.save(tmp_jpg, format='JPEG', quality=85, optimize=True)
+                pil_img.save(tmp_jpg, format='JPEG', quality=60, optimize=True)
                 filepath = tmp_jpg.name
                 tmp_file_created = True
                 print(f"[Classifier] HEIC→JPEG converted {key} -> {_os.path.basename(filepath)}")
